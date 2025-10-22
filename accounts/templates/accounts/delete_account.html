@@ -1,0 +1,235 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Supprimer le compte - EduSmart{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Supprimer mon compte
+                        </h4>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        <div class="alert alert-danger">
+                            <h5 class="alert-heading">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Attention ! Cette action est irréversible
+                            </h5>
+                            <p class="mb-0">
+                                La suppression de votre compte entraînera la perte définitive de toutes vos données, 
+                                y compris votre profil, vos informations personnelles et votre historique.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">Ce qui sera supprimé :</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="bi bi-x-circle text-danger me-2"></i>
+                                    Toutes vos informations de profil
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-x-circle text-danger me-2"></i>
+                                    Votre photo de profil
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-x-circle text-danger me-2"></i>
+                                    Votre historique de connexion
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-x-circle text-danger me-2"></i>
+                                    Toutes vos données personnelles
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">Informations du compte à supprimer :</h6>
+                            <div class="bg-light p-3 rounded">
+                                <div class="row">
+                                    <div class="col-sm-4 fw-semibold">Nom d'utilisateur:</div>
+                                    <div class="col-sm-8">{{ user.username }}</div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-sm-4 fw-semibold">Email:</div>
+                                    <div class="col-sm-8">{{ user.email }}</div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-sm-4 fw-semibold">Nom complet:</div>
+                                    <div class="col-sm-8">{{ user.full_name|default:"Non renseigné" }}</div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-sm-4 fw-semibold">Type:</div>
+                                    <div class="col-sm-8">
+                                        <span class="user-type-badge user-type-{{ user.user_type }}">
+                                            {{ user.get_user_type_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-sm-4 fw-semibold">Membre depuis:</div>
+                                    <div class="col-sm-8">{{ user.created_at|date:"d F Y" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                                <label class="form-check-label fw-semibold" for="confirmDelete">
+                                    Je comprends que cette action est irréversible et je souhaite supprimer définitivement mon compte.
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <form method="post" id="deleteForm" style="display: none;">
+                            {% csrf_token %}
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-danger" id="confirmDeleteBtn">
+                                    <i class="bi bi-trash me-2"></i>Supprimer définitivement mon compte
+                                </button>
+                                <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>Annuler et retourner au profil
+                                </a>
+                            </div>
+                        </form>
+                        
+                        <div id="initialButtons">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-danger" id="enableDeleteBtn" disabled>
+                                    <i class="bi bi-trash me-2"></i>Supprimer définitivement mon compte
+                                </button>
+                                <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>Annuler et retourner au profil
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alternatives à la suppression -->
+                <div class="card mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Alternatives à la suppression
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">Avant de supprimer votre compte, considérez ces alternatives :</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-pencil-square text-primary me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="mb-1">Modifier vos informations</h6>
+                                        <p class="small text-muted mb-2">
+                                            Mettez à jour vos données personnelles si elles sont incorrectes.
+                                        </p>
+                                        <a href="{% url 'accounts:edit_profile' %}" class="btn btn-sm btn-outline-primary">
+                                            Modifier le profil
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-shield-lock text-warning me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="mb-1">Changer le mot de passe</h6>
+                                        <p class="small text-muted mb-2">
+                                            Sécurisez votre compte avec un nouveau mot de passe.
+                                        </p>
+                                        <a href="{% url 'accounts:change_password' %}" class="btn btn-sm btn-outline-warning">
+                                            Changer le mot de passe
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmDelete');
+    const enableDeleteBtn = document.getElementById('enableDeleteBtn');
+    const deleteForm = document.getElementById('deleteForm');
+    const initialButtons = document.getElementById('initialButtons');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    
+    // Activer/désactiver le bouton de suppression
+    confirmCheckbox.addEventListener('change', function() {
+        enableDeleteBtn.disabled = !this.checked;
+        enableDeleteBtn.classList.toggle('btn-danger', this.checked);
+        enableDeleteBtn.classList.toggle('btn-outline-danger', !this.checked);
+    });
+    
+    // Afficher le formulaire de confirmation
+    enableDeleteBtn.addEventListener('click', function() {
+        if (confirmCheckbox.checked) {
+            // Double confirmation
+            const confirmed = confirm(
+                'DERNIÈRE CONFIRMATION\n\n' +
+                'Êtes-vous absolument certain(e) de vouloir supprimer votre compte ?\n\n' +
+                'Cette action est IRRÉVERSIBLE et toutes vos données seront perdues définitivement.\n\n' +
+                'Tapez "SUPPRIMER" pour confirmer ou annulez.'
+            );
+            
+            if (confirmed) {
+                const finalConfirm = prompt(
+                    'Pour confirmer la suppression, tapez exactement "SUPPRIMER" (en majuscules) :'
+                );
+                
+                if (finalConfirm === 'SUPPRIMER') {
+                    initialButtons.style.display = 'none';
+                    deleteForm.style.display = 'block';
+                    
+                    // Compte à rebours avant activation du bouton final
+                    let countdown = 5;
+                    confirmDeleteBtn.disabled = true;
+                    confirmDeleteBtn.innerHTML = `<i class="bi bi-hourglass-split me-2"></i>Attendre ${countdown} secondes...`;
+                    
+                    const countdownInterval = setInterval(() => {
+                        countdown--;
+                        if (countdown > 0) {
+                            confirmDeleteBtn.innerHTML = `<i class="bi bi-hourglass-split me-2"></i>Attendre ${countdown} secondes...`;
+                        } else {
+                            clearInterval(countdownInterval);
+                            confirmDeleteBtn.disabled = false;
+                            confirmDeleteBtn.innerHTML = '<i class="bi bi-trash me-2"></i>Supprimer définitivement mon compte';
+                            confirmDeleteBtn.classList.add('btn-danger');
+                        }
+                    }, 1000);
+                } else if (finalConfirm !== null) {
+                    alert('Confirmation incorrecte. Suppression annulée.');
+                }
+            }
+        }
+    });
+    
+    // Animation d'entrée
+    const card = document.querySelector('.card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+        card.style.transition = 'all 0.6s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+    }, 100);
+});
+</script>
+{% endblock %}

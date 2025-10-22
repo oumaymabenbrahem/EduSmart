@@ -97,17 +97,34 @@
           </li>
           <li class="nav-item nav-profile dropdown">
             <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
-             <img src="{% static 'images/faces/face28.jpg' %}" alt="profile"/>
-
+              {% if current_user.profile_picture %}
+                <img src="{{ current_user.profile_picture.url }}" alt="profile"/>
+              {% else %}
+                <img src="{% static 'images/faces/face28.jpg' %}" alt="profile"/>
+              {% endif %}
             </a>
             <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-              <a class="dropdown-item">
-                <i class="ti-settings text-primary"></i>
-                Settings
+              <div class="dropdown-header text-center">
+                <strong>{{ current_user.full_name|default:current_user.username }}</strong>
+                <div class="small text-muted">{{ current_user.get_user_type_display }}</div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                <i class="ti-user text-primary"></i>
+                Mon Profil
               </a>
-              <a class="dropdown-item">
+              <a class="dropdown-item" href="{% url 'accounts:edit_profile' %}">
+                <i class="ti-settings text-primary"></i>
+                Paramètres
+              </a>
+              <a class="dropdown-item" href="{% url 'accounts:users_list' %}">
+                <i class="ti-id-badge text-primary"></i>
+                Gestion Utilisateurs
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{% url 'accounts:logout' %}">
                 <i class="ti-power-off text-primary"></i>
-                Logout
+                Déconnexion
               </a>
             </div>
           </li>
@@ -298,10 +315,30 @@
       <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <ul class="nav">
           <li class="nav-item">
-            <a class="nav-link" href="{% static 'index.html' %}">
+            <a class="nav-link" href="{% url 'template_back:dashboard' %}">
               <i class="icon-grid menu-icon"></i>
               <span class="menu-title">Dashboard</span>
             </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'template_front:index' %}">
+              <i class="icon-home menu-icon"></i>
+              <span class="menu-title">Site Web</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#user-management" aria-expanded="false" aria-controls="user-management">
+              <i class="icon-head menu-icon"></i>
+              <span class="menu-title">Gestion Utilisateurs</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="user-management">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:users_list' %}">Liste des Utilisateurs</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}">Ajouter Utilisateur</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:profile' %}">Mon Profil</a></li>
+              </ul>
+            </div>
           </li>
           <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
@@ -406,8 +443,8 @@
             <div class="col-md-12 grid-margin">
               <div class="row">
                 <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                  <h3 class="font-weight-bold">Welcome Aamir</h3>
-                  <h6 class="font-weight-normal mb-0">All systems are running smoothly! You have <span class="text-primary">3 unread alerts!</span></h6>
+                  <h3 class="font-weight-bold">Bienvenue {{ current_user.first_name|default:current_user.username }}</h3>
+                  <h6 class="font-weight-normal mb-0">Tableau de bord administrateur EduSmart - <span class="text-primary">{{ total_users }} utilisateur{{ total_users|pluralize }} enregistré{{ total_users|pluralize }}</span></h6>
                 </div>
                 <div class="col-12 col-xl-4">
                  <div class="justify-content-end d-flex">
@@ -452,18 +489,18 @@
                 <div class="col-md-6 mb-4 stretch-card transparent">
                   <div class="card card-tale">
                     <div class="card-body">
-                      <p class="mb-4">Today’s Bookings</p>
-                      <p class="fs-30 mb-2">4006</p>
-                      <p>10.00% (30 days)</p>
+                      <p class="mb-4">Total Utilisateurs</p>
+                      <p class="fs-30 mb-2">{{ total_users }}</p>
+                      <p><i class="ti-user"></i> Tous types confondus</p>
                     </div>
                   </div>
                 </div>
                 <div class="col-md-6 mb-4 stretch-card transparent">
                   <div class="card card-dark-blue">
                     <div class="card-body">
-                      <p class="mb-4">Total Bookings</p>
-                      <p class="fs-30 mb-2">61344</p>
-                      <p>22.00% (30 days)</p>
+                      <p class="mb-4">Étudiants</p>
+                      <p class="fs-30 mb-2">{{ students_count }}</p>
+                      <p><i class="ti-book"></i> Utilisateurs étudiants</p>
                     </div>
                   </div>
                 </div>
@@ -472,18 +509,18 @@
                 <div class="col-md-6 mb-4 mb-lg-0 stretch-card transparent">
                   <div class="card card-light-blue">
                     <div class="card-body">
-                      <p class="mb-4">Number of Meetings</p>
-                      <p class="fs-30 mb-2">34040</p>
-                      <p>2.00% (30 days)</p>
+                      <p class="mb-4">Enseignants</p>
+                      <p class="fs-30 mb-2">{{ teachers_count }}</p>
+                      <p><i class="ti-blackboard"></i> Formateurs actifs</p>
                     </div>
                   </div>
                 </div>
                 <div class="col-md-6 stretch-card transparent">
                   <div class="card card-light-danger">
                     <div class="card-body">
-                      <p class="mb-4">Number of Clients</p>
-                      <p class="fs-30 mb-2">47033</p>
-                      <p>0.22% (30 days)</p>
+                      <p class="mb-4">Comptes Vérifiés</p>
+                      <p class="fs-30 mb-2">{{ verified_users }}</p>
+                      <p><i class="ti-check"></i> Utilisateurs validés</p>
                     </div>
                   </div>
                 </div>

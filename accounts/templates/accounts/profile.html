@@ -1,0 +1,213 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Profil de {{ profile_user.full_name|default:profile_user.username }} - EduSmart{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container py-4">
+        <div class="row">
+            <!-- Carte de profil principale -->
+            <div class="col-lg-4 mb-4">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        {% if profile_user.profile_picture %}
+                            <img src="{{ profile_user.profile_picture.url }}" alt="Profile" class="profile-avatar">
+                        {% else %}
+                            <div class="profile-avatar d-flex align-items-center justify-content-center bg-light">
+                                <i class="bi bi-person-fill display-4 text-muted"></i>
+                            </div>
+                        {% endif %}
+                        <h3 class="mb-1">{{ profile_user.full_name|default:profile_user.username }}</h3>
+                        <p class="mb-2 opacity-75">{{ profile_user.email }}</p>
+                        <span class="user-type-badge user-type-{{ profile_user.user_type }}">
+                            {{ profile_user.get_user_type_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="p-4">
+                        {% if is_own_profile %}
+                        <div class="d-grid gap-2 mb-4">
+                            <a href="{% url 'accounts:edit_profile' %}" class="btn btn-primary">
+                                <i class="bi bi-pencil me-2"></i>Modifier le profil
+                            </a>
+                            <a href="{% url 'accounts:change_password' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-shield-lock me-2"></i>Changer le mot de passe
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <strong>Statut:</strong>
+                            {% if profile_user.is_verified %}
+                                <span class="badge bg-success ms-2">
+                                    <i class="bi bi-check-circle me-1"></i>Vérifié
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning ms-2">
+                                    <i class="bi bi-clock me-1"></i>En attente
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Membre depuis:</strong>
+                            <span class="ms-2">{{ profile_user.created_at|date:"d F Y" }}</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Dernière connexion:</strong>
+                            <span class="ms-2">
+                                {% if profile_user.last_login %}
+                                    {{ profile_user.last_login|timesince }} ago
+                                {% else %}
+                                    Jamais connecté
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations détaillées -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Informations personnelles
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-muted">Prénom</label>
+                                <p class="mb-0">{{ profile_user.first_name|default:"Non renseigné" }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-muted">Nom</label>
+                                <p class="mb-0">{{ profile_user.last_name|default:"Non renseigné" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-muted">Nom d'utilisateur</label>
+                                <p class="mb-0">{{ profile_user.username }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-muted">Email</label>
+                                <p class="mb-0">{{ profile_user.email }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-muted">Téléphone</label>
+                                <p class="mb-0">{{ profile_user.phone_number|default:"Non renseigné" }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-muted">Date de naissance</label>
+                                <p class="mb-0">
+                                    {% if profile_user.date_of_birth %}
+                                        {{ profile_user.date_of_birth|date:"d F Y" }}
+                                    {% else %}
+                                        Non renseignée
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {% if profile_user.bio %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-muted">Biographie</label>
+                            <p class="mb-0">{{ profile_user.bio }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Informations d'adresse -->
+                {% if profile_user.address or profile_user.city or profile_user.country %}
+                <div class="card mt-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            Adresse
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-semibold text-muted">Adresse</label>
+                                <p class="mb-0">{{ profile_user.address|default:"Non renseignée" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-muted">Ville</label>
+                                <p class="mb-0">{{ profile_user.city|default:"Non renseignée" }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold text-muted">Pays</label>
+                                <p class="mb-0">{{ profile_user.country|default:"Non renseigné" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Actions dangereuses (seulement pour son propre profil) -->
+                {% if is_own_profile %}
+                <div class="card mt-4 border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Zone dangereuse
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">
+                            Cette action est irréversible. Toutes vos données seront définitivement supprimées.
+                        </p>
+                        <a href="{% url 'accounts:delete_account' %}" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-2"></i>Supprimer mon compte
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation d'entrée
+    const profileCard = document.querySelector('.profile-card');
+    const infoCards = document.querySelectorAll('.card');
+    
+    profileCard.style.opacity = '0';
+    profileCard.style.transform = 'translateX(-30px)';
+    
+    setTimeout(() => {
+        profileCard.style.transition = 'all 0.6s ease';
+        profileCard.style.opacity = '1';
+        profileCard.style.transform = 'translateX(0)';
+    }, 100);
+    
+    infoCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateX(0)';
+        }, 200 + (index * 100));
+    });
+});
+</script>
+{% endblock %}

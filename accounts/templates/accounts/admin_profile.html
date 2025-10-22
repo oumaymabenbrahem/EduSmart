@@ -1,0 +1,142 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Mon Profil - Dashboard Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12 grid-margin">
+    <div class="row">
+      <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+        <h3 class="font-weight-bold">Mon Profil</h3>
+        <h6 class="font-weight-normal mb-0">Gérez vos informations personnelles</h6>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-4 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <div class="text-center">
+          {% if user.profile_picture %}
+            <img src="{{ user.profile_picture.url }}" alt="Profile" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+          {% else %}
+            <img src="{% static 'images/faces/face28.jpg' %}" alt="Profile" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+          {% endif %}
+          <h4 class="card-title">{{ user.full_name|default:user.username }}</h4>
+          <p class="card-description">
+            <span class="badge badge-{% if user.user_type == 'admin' %}danger{% elif user.user_type == 'teacher' %}warning{% else %}info{% endif %}">
+              {{ user.get_user_type_display }}
+            </span>
+          </p>
+          {% if user.is_verified %}
+            <span class="badge badge-success"><i class="ti-check"></i> Compte vérifié</span>
+          {% else %}
+            <span class="badge badge-warning"><i class="ti-time"></i> En attente de vérification</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-8 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">Informations personnelles</h4>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label><strong>Nom d'utilisateur</strong></label>
+              <p class="text-muted">{{ user.username }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label><strong>Email</strong></label>
+              <p class="text-muted">{{ user.email }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label><strong>Prénom</strong></label>
+              <p class="text-muted">{{ user.first_name|default:"Non renseigné" }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label><strong>Nom</strong></label>
+              <p class="text-muted">{{ user.last_name|default:"Non renseigné" }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label><strong>Téléphone</strong></label>
+              <p class="text-muted">{{ user.phone_number|default:"Non renseigné" }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label><strong>Date de naissance</strong></label>
+              <p class="text-muted">{{ user.date_of_birth|default:"Non renseignée" }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label><strong>Biographie</strong></label>
+          <p class="text-muted">{{ user.bio|default:"Aucune biographie" }}</p>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label><strong>Adresse complète</strong></label>
+              <p class="text-muted">
+                {% if user.address %}
+                  {{ user.address }}
+                  {% if user.city %}, {{ user.city }}{% endif %}
+                  {% if user.country %}, {{ user.country }}{% endif %}
+                {% else %}
+                  Non renseignée
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label><strong>Membre depuis</strong></label>
+              <p class="text-muted">{{ user.created_at|date:"d F Y" }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label><strong>Dernière modification</strong></label>
+              <p class="text-muted">{{ user.updated_at|date:"d F Y à H:i" }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-4">
+          <a href="{% url 'accounts:edit_profile' %}" class="btn btn-primary">
+            <i class="ti-pencil"></i> Modifier le profil
+          </a>
+          <a href="{% url 'accounts:change_password' %}" class="btn btn-warning">
+            <i class="ti-lock"></i> Changer le mot de passe
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
