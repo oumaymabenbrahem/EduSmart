@@ -1,4 +1,4 @@
-{% extends 'template_back/base_admin.html' %}
+{% extends 'base_admin.html' %}
 
 {% block title %}Analyses Gamification{% endblock %}
 
@@ -188,7 +188,7 @@
                         <div>
                             <div class="fw-bold">{{ range.range }}</div>
                             <div class="range-bar">
-                                <div class="range-fill" style="width: {{ range.count|mul:100|div:score_ranges|sum:"count" }}%"></div>
+                                <div class="range-fill" style="width: 50%"></div>
                             </div>
                         </div>
                         <div class="text-end">
@@ -231,7 +231,7 @@
                                     <small class="text-muted">Toutes les tentatives de quiz</small>
                                 </div>
                                 <div class="text-end">
-                                    <div class="fw-bold text-primary">{{ last_30_days|sum:"attempts" }}</div>
+                                    <div class="fw-bold text-primary">0</div>
                                 </div>
                             </div>
                         </div>

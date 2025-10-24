@@ -143,12 +143,6 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if 'gamification' in request.path %}active{% endif %}" href="{% url 'gamification:home' %}">
-              <i class="icon-trophy menu-icon"></i>
-              <span class="menu-title">Gamification</span>
-            </a>
-          </li>
-          <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#user-management" aria-expanded="false" aria-controls="user-management">
               <i class="icon-head menu-icon"></i>
               <span class="menu-title">Gestion Utilisateurs</span>
@@ -163,20 +157,20 @@
             </div>
           </li>
           <li class="nav-item">
-            <a class="nav-link" data-toggle="collapse" href="#gamification-management" aria-expanded="false" aria-controls="gamification-management">
+            <a class="nav-link {% if 'gamification' in request.path %}active{% endif %}" data-toggle="collapse" href="#gamification-management" aria-expanded="false" aria-controls="gamification-management">
               <i class="icon-trophy menu-icon"></i>
-              <span class="menu-title">Gestion Gamification</span>
+              <span class="menu-title">Gamification</span>
               <i class="menu-arrow"></i>
             </a>
             <div class="collapse" id="gamification-management">
               <ul class="nav flex-column sub-menu">
-                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_dashboard' %}">Dashboard Admin</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_quiz_management' %}">Gestion Quiz</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_user_management' %}">Gestion Utilisateurs</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_badge_management' %}">Gestion Badges</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_analytics' %}">Analyses</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:home' %}">Interface Utilisateur</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_dashboard' %}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_quiz_management' %}">Gérer les Quiz</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_user_management' %}">Gérer les Utilisateurs</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_badge_management' %}">Gérer les Badges</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_analytics' %}">Statistiques</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'gamification:leaderboard' %}">Classements</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:home' %}">Interface Utilisateur</a></li>
                 <li class="nav-item"><a class="nav-link" href="/admin/gamification/">Admin Django</a></li>
               </ul>
             </div>

@@ -1,4 +1,4 @@
-{% extends 'template_back/base_admin.html' %}
+{% extends 'base_admin.html' %}
 
 {% block title %}Gestion des Utilisateurs{% endblock %}
 
@@ -282,7 +282,7 @@
                                     </div>
                                     
                                     <div class="level-progress">
-                                        <div class="level-progress-fill" style="width: {{ user.gamification_profile.level|default:1|mul:5 }}%"></div>
+                                        <div class="level-progress-fill" style="width: {% widthratio user.gamification_profile.level|default:1 20 100 %}%"></div>
                                     </div>
                                 </div>
                                 

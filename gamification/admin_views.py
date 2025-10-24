@@ -1,6 +1,5 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count, Avg, Sum, Q
 from django.http import JsonResponse
 from django.utils import timezone
@@ -14,7 +13,8 @@ from accounts.models import CustomUser
 def is_admin(user):
     return user.is_staff or user.user_type == 'admin'
 
-@staff_member_required
+@login_required
+@user_passes_test(is_admin)
 def admin_dashboard(request):
     """Tableau de bord admin avec statistiques de gamification"""
     
@@ -34,19 +34,19 @@ def admin_dashboard(request):
     
     # Top matières par popularité
     popular_subjects = Subject.objects.annotate(
-        quiz_count=Count('quiz'),
-        attempt_count=Count('quiz__quizattempt')
+        quiz_count=Count('quizzes'),
+        attempt_count=Count('quizzes__attempts')
     ).order_by('-attempt_count')[:5]
     
     # Statistiques des badges
     badge_stats = Badge.objects.annotate(
-        earned_count=Count('userbadge')
+        earned_count=Count('users')
     ).order_by('-earned_count')[:5]
     
     # Statistiques des quiz
     quiz_stats = Quiz.objects.annotate(
-        attempt_count=Count('quizattempt'),
-        avg_score=Avg('quizattempt__percentage')
+        attempt_count=Count('attempts'),
+        avg_score=Avg('attempts__percentage')
     ).order_by('-attempt_count')[:5]
     
     # Activité récente
@@ -56,9 +56,9 @@ def admin_dashboard(request):
     
     # Statistiques par niveau de difficulté
     difficulty_stats = DifficultyLevel.objects.annotate(
-        quiz_count=Count('quiz'),
-        attempt_count=Count('quiz__quizattempt'),
-        avg_score=Avg('quiz__quizattempt__percentage')
+        quiz_count=Count('quizzes'),
+        attempt_count=Count('quizzes__attempts'),
+        avg_score=Avg('quizzes__attempts__percentage')
     ).order_by('level')
     
     context = {
@@ -78,13 +78,14 @@ def admin_dashboard(request):
     
     return render(request, 'gamification/admin/dashboard.html', context)
 
-@staff_member_required
+@login_required
+@user_passes_test(is_admin)
 def admin_quiz_management(request):
     """Gestion des quiz par l'admin"""
     
     quizzes = Quiz.objects.select_related('subject', 'difficulty').annotate(
-        attempt_count=Count('quizattempt'),
-        avg_score=Avg('quizattempt__percentage')
+        attempt_count=Count('attempts'),
+        avg_score=Avg('attempts__percentage')
     ).order_by('-created_at')
     
     subjects = Subject.objects.all()
@@ -98,7 +99,8 @@ def admin_quiz_management(request):
     
     return render(request, 'gamification/admin/quiz_management.html', context)
 
-@staff_member_required
+@login_required
+@user_passes_test(is_admin)
 def admin_user_management(request):
     """Gestion des utilisateurs et leurs statistiques de gamification"""
     
@@ -118,7 +120,8 @@ def admin_user_management(request):
     
     return render(request, 'gamification/admin/user_management.html', context)
 
-@staff_member_required
+@login_required
+@user_passes_test(is_admin)
 def admin_leaderboard_management(request):
     """Gestion des classements"""
     
@@ -129,9 +132,9 @@ def admin_leaderboard_management(request):
     subject_leaderboards = {}
     for subject in Subject.objects.all():
         subject_leaderboards[subject] = UserProfile.objects.filter(
-            user__quizattempt__quiz__subject=subject
+            user__quiz_attempts__quiz__subject=subject
         ).annotate(
-            subject_points=Sum('user__quizattempt__points_earned')
+            subject_points=Sum('user__quiz_attempts__points_earned')
         ).order_by('-subject_points')[:10]
     
     context = {
@@ -141,18 +144,19 @@ def admin_leaderboard_management(request):
     
     return render(request, 'gamification/admin/leaderboard_management.html', context)
 
-@staff_member_required
+@login_required
+@user_passes_test(is_admin)
 def admin_badge_management(request):
     """Gestion des badges"""
     
     badges = Badge.objects.annotate(
-        earned_count=Count('userbadge'),
-        recent_earned=Count('userbadge', filter=Q(userbadge__earned_at__gte=timezone.now() - timedelta(days=7)))
+        earned_count=Count('users'),
+        recent_earned=Count('users', filter=Q(users__earned_at__gte=timezone.now() - timedelta(days=7)))
     ).order_by('-created_at')
     
     # Statistiques des badges les plus populaires
     popular_badges = Badge.objects.annotate(
-        earned_count=Count('userbadge')
+        earned_count=Count('users')
     ).order_by('-earned_count')[:10]
     
     context = {
@@ -162,7 +166,8 @@ def admin_badge_management(request):
     
     return render(request, 'gamification/admin/badge_management.html', context)
 
-@staff_member_required
+@login_required
+@user_passes_test(is_admin)
 def admin_analytics(request):
     """Analyses et rapports détaillés"""
     
