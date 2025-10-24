@@ -1,0 +1,139 @@
+{% extends 'gamification/base_gamification.html' %}
+
+{% block title %}Mes Badges{% endblock %}
+
+{% block gamification_content %}
+<!-- Statistiques des badges -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <div class="row text-center">
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-award-fill"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user_badges.count }}</h4>
+                        <p class="text-muted mb-0">Badges obtenus</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <h4 class="mb-1">{{ badges_by_rarity|length }}</h4>
+                        <p class="text-muted mb-0">Types de rareté</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-trophy-fill"></i>
+                        </div>
+                        <h4 class="mb-1">
+                            {% for rarity, badges in badges_by_rarity.items %}
+                                {% if rarity == 'Légendaire' %}{{ badges|length }}{% endif %}
+                            {% endfor %}
+                        </h4>
+                        <p class="text-muted mb-0">Badges légendaires</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-fire"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user.gamification_profile.total_points|default:0 }}</h4>
+                        <p class="text-muted mb-0">Points totaux</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Badges par rareté -->
+{% if badges_by_rarity %}
+<div class="row">
+    {% for rarity, badges in badges_by_rarity.items %}
+    <div class="col-12 mb-4">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-gem me-2"></i>
+                {{ rarity }}
+                <span class="badge bg-primary ms-2">{{ badges|length }} badge{{ badges|length|pluralize }}</span>
+            </h3>
+            <div class="row">
+                {% for user_badge in badges %}
+                <div class="col-md-4 col-lg-3 mb-3">
+                    <div class="badge-item" style="--badge-color: {{ user_badge.badge.color }}">
+                        <div class="mb-2">
+                            <i class="{{ user_badge.badge.icon }} display-6"></i>
+                        </div>
+                        <h6 class="mb-1">{{ user_badge.badge.name }}</h6>
+                        <p class="mb-2">{{ user_badge.badge.description }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="opacity-75">{{ user_badge.earned_at|date:"d/m/Y" }}</small>
+                            <div class="text-end">
+                                <small class="fw-bold">+{{ user_badge.badge.points_reward }} pts</small>
+                                <br>
+                                <small class="text-warning">+{{ user_badge.badge.experience_reward }} XP</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="gamification-card p-5 text-center">
+            <i class="bi bi-award display-1 text-muted mb-3"></i>
+            <h4 class="text-muted mb-3">Aucun badge obtenu</h4>
+            <p class="text-muted mb-4">Commencez par faire des quiz pour gagner vos premiers badges !</p>
+            <a href="{% url 'gamification:select_quiz' %}" class="btn btn-gamification">
+                <i class="bi bi-play-circle me-2"></i>Commencer un quiz
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-lightning-fill me-2 text-warning"></i>
+                Actions
+            </h3>
+            <div class="row text-center">
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'gamification:select_quiz' %}" class="btn btn-gamification w-100 py-3">
+                        <i class="bi bi-play-circle display-6 d-block mb-2"></i>
+                        Nouveau Quiz
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'gamification:badges_gallery' %}" class="btn btn-gamification-secondary w-100 py-3">
+                        <i class="bi bi-eye display-6 d-block mb-2"></i>
+                        Voir tous les badges
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'gamification:leaderboard' %}" class="btn btn-gamification-warning w-100 py-3">
+                        <i class="bi bi-trophy display-6 d-block mb-2"></i>
+                        Classement
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

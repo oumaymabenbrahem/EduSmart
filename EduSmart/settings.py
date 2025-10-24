@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'template_front',
     'template_back',
     'forum',
+    'gamification',
 ]
 
 MIDDLEWARE = [

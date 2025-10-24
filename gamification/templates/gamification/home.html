@@ -1,0 +1,274 @@
+{% extends 'gamification/base_gamification.html' %}
+
+{% block title %}Gamification - EduSmart{% endblock %}
+
+{% block gamification_content %}
+<!-- Statistiques générales -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="bi bi-trophy-fill"></i>
+            </div>
+            <h3 class="mb-1">{{ total_quizzes }}</h3>
+            <p class="text-muted mb-0">Quiz disponibles</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <h3 class="mb-1">{{ total_users }}</h3>
+            <p class="text-muted mb-0">Joueurs actifs</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <h3 class="mb-1">{{ subjects.count }}</h3>
+            <p class="text-muted mb-0">Matières</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="bi bi-award-fill"></i>
+            </div>
+            <h3 class="mb-1">50+</h3>
+            <p class="text-muted mb-0">Badges à gagner</p>
+        </div>
+    </div>
+</div>
+
+<!-- Sélection de matière -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-book-fill me-2 text-primary"></i>
+                Choisissez votre matière
+            </h3>
+            <div class="row">
+                {% for subject in subjects %}
+                <div class="col-md-4 col-lg-3 mb-3">
+                    <div class="subject-card" style="--subject-color: {{ subject.color }}" onclick="selectSubject('{{ subject.name }}')">
+                        <div class="mb-3">
+                            <i class="{{ subject.icon }} display-4"></i>
+                        </div>
+                        <h5 class="mb-2">{{ subject.name }}</h5>
+                        <p class="mb-0 opacity-75">{{ subject.description|truncatechars:50 }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Niveaux de difficulté -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-speedometer2 me-2 text-warning"></i>
+                Niveau de difficulté
+            </h3>
+            <div class="row text-center">
+                {% for difficulty in difficulty_levels %}
+                <div class="col-md-2 col-sm-4 col-6 mb-3">
+                    <div class="difficulty-badge difficulty-{{ difficulty.level }}" onclick="selectDifficulty({{ difficulty.level }})">
+                        <div class="fw-bold">{{ difficulty.level }}</div>
+                        <small>{{ difficulty.name }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Classement rapide -->
+{% if top_users %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <div class="row align-items-center mb-3">
+                <div class="col-md-8">
+                    <h3 class="mb-0">
+                        <i class="bi bi-trophy-fill me-2 text-warning"></i>
+                        Top 5 des joueurs
+                    </h3>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{% url 'gamification:leaderboard' %}" class="btn btn-gamification-warning">
+                        <i class="bi bi-arrow-right me-2"></i>Voir tout
+                    </a>
+                </div>
+            </div>
+            <div class="row">
+                {% for profile in top_users %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="leaderboard-item">
+                        <div class="rank-number rank-{{ forloop.counter }}">
+                            {{ forloop.counter }}
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                {% if profile.user.profile_picture %}
+                                    <img src="{{ profile.user.profile_picture.url }}" alt="Profile" class="rounded-circle" width="40" height="40">
+                                {% else %}
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person-fill text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ profile.user.full_name|default:profile.user.username }}</h6>
+                                <small class="text-muted">Niveau {{ profile.level }}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-primary">{{ profile.experience_points }} XP</div>
+                                <small class="text-muted">{{ profile.total_points }} pts</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal de génération de quiz -->
+<div class="modal fade" id="generateQuizModal" tabindex="-1" aria-labelledby="generateQuizModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateQuizModalLabel">
+                    <i class="bi bi-magic me-2"></i>Générer un quiz avec IA
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'gamification:generate_quiz' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="subject" class="form-label">Matière</label>
+                            <select class="form-select" id="subject" name="subject" required>
+                                <option value="">Choisissez une matière</option>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.name }}">{{ subject.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="difficulty" class="form-label">Difficulté</label>
+                            <select class="form-select" id="difficulty" name="difficulty" required>
+                                {% for difficulty in difficulty_levels %}
+                                <option value="{{ difficulty.level }}">{{ difficulty.name }} ({{ difficulty.level }}/5)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="num_questions" class="form-label">Nombre de questions</label>
+                            <select class="form-select" id="num_questions" name="num_questions">
+                                <option value="5">5 questions</option>
+                                <option value="10" selected>10 questions</option>
+                                <option value="15">15 questions</option>
+                                <option value="20">20 questions</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Temps estimé</label>
+                            <div class="form-control-plaintext">
+                                <span id="estimatedTime">20 minutes</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>IA Intelligente :</strong> Notre système génère automatiquement des questions adaptées à votre niveau et à la matière choisie.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-gamification">
+                        <i class="bi bi-magic me-2"></i>Générer le quiz
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedSubject = '';
+let selectedDifficulty = 1;
+
+function selectSubject(subject) {
+    selectedSubject = subject;
+    document.getElementById('subject').value = subject;
+    updateEstimatedTime();
+}
+
+function selectDifficulty(difficulty) {
+    selectedDifficulty = difficulty;
+    document.getElementById('difficulty').value = difficulty;
+    updateEstimatedTime();
+}
+
+function updateEstimatedTime() {
+    const numQuestions = parseInt(document.getElementById('num_questions').value) || 10;
+    const difficulty = parseInt(document.getElementById('difficulty').value) || 1;
+    
+    // Calculer le temps estimé (2 minutes par question + bonus difficulté)
+    const baseTime = numQuestions * 2;
+    const difficultyMultiplier = 1 + (difficulty * 0.2);
+    const estimatedTime = Math.round(baseTime * difficultyMultiplier);
+    
+    document.getElementById('estimatedTime').textContent = estimatedTime + ' minutes';
+}
+
+// Mettre à jour le temps estimé quand les paramètres changent
+document.getElementById('num_questions').addEventListener('change', updateEstimatedTime);
+document.getElementById('difficulty').addEventListener('change', updateEstimatedTime);
+
+// Ouvrir le modal si des paramètres sont présélectionnés
+document.addEventListener('DOMContentLoaded', function() {
+    if (selectedSubject || selectedDifficulty !== 1) {
+        const modal = new bootstrap.Modal(document.getElementById('generateQuizModal'));
+        modal.show();
+    }
+});
+
+// Animation des cartes de matière
+document.querySelectorAll('.subject-card').forEach(card => {
+    card.addEventListener('click', function() {
+        // Effet de sélection
+        this.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            this.style.transform = 'scale(1.05)';
+        }, 150);
+    });
+});
+
+// Animation des badges de difficulté
+document.querySelectorAll('.difficulty-badge').forEach(badge => {
+    badge.addEventListener('click', function() {
+        // Effet de sélection
+        this.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            this.style.transform = 'scale(1.1)';
+        }, 150);
+    });
+});
+</script>
+{% endblock %}

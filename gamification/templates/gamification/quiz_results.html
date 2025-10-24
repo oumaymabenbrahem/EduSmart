@@ -1,0 +1,272 @@
+{% extends 'gamification/base_gamification.html' %}
+
+{% block title %}Résultats du Quiz{% endblock %}
+
+{% block gamification_content %}
+<!-- Résumé du quiz -->
+<div class="row mb-4">
+    <div class="col-md-8 mb-4">
+        <div class="gamification-card p-4">
+            <h2 class="mb-3">
+                <i class="bi bi-clipboard-check me-2 text-primary"></i>
+                {{ quiz.title }}
+            </h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge" style="background-color: {{ quiz.subject.color }}; color: white; margin-right: 1rem;">
+                            {{ quiz.subject.name }}
+                        </span>
+                        <span class="difficulty-badge difficulty-{{ quiz.difficulty.level }}">
+                            {{ quiz.difficulty.name }}
+                        </span>
+                    </div>
+                    <p class="text-muted">{{ quiz.description }}</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="fw-bold text-primary">{{ attempt.percentage|floatformat:0 }}%</div>
+                            <small class="text-muted">Score</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold text-success">{{ attempt.points_earned }}</div>
+                            <small class="text-muted">Points</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold text-warning">{{ attempt.experience_earned }}</div>
+                            <small class="text-muted">XP</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="gamification-card p-4 text-center">
+            <div class="mb-3">
+                {% if attempt.is_passed %}
+                    <i class="bi bi-check-circle-fill display-1 text-success"></i>
+                    <h4 class="text-success mb-0">Réussi !</h4>
+                {% else %}
+                    <i class="bi bi-x-circle-fill display-1 text-danger"></i>
+                    <h4 class="text-danger mb-0">Échoué</h4>
+                {% endif %}
+            </div>
+            <p class="text-muted mb-3">
+                Tentative {{ attempt.attempt_number }} sur {{ quiz.max_attempts }}
+            </p>
+            <div class="mb-3">
+                <small class="text-muted">Temps utilisé :</small>
+                <div class="fw-bold">{{ attempt.get_time_taken_display }}</div>
+            </div>
+            <div class="mb-3">
+                <small class="text-muted">Date :</small>
+                <div class="fw-bold">{{ attempt.completed_at|date:"d/m/Y H:i" }}</div>
+            </div>
+            <a href="{% url 'gamification:select_quiz' %}" class="btn btn-gamification">
+                <i class="bi bi-play-circle me-2"></i>Nouveau Quiz
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Détail des questions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-list-check me-2 text-info"></i>
+                Détail des réponses
+            </h3>
+            
+            {% for question_data in questions_data %}
+            <div class="question-result mb-4 p-3 {% if question_data.is_correct %}bg-success bg-opacity-10{% else %}bg-danger bg-opacity-10{% endif %}" style="border-radius: 15px;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="mb-0">
+                        Question {{ forloop.counter }}
+                        {% if question_data.is_correct %}
+                            <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                        {% else %}
+                            <i class="bi bi-x-circle-fill text-danger ms-2"></i>
+                        {% endif %}
+                    </h5>
+                    <div class="text-end">
+                        <span class="badge {% if question_data.is_correct %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if question_data.is_correct %}+{{ question_data.points }} pts{% else %}0 pts{% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>{{ question_data.question.question_text }}</strong>
+                </div>
+                
+                {% if question_data.question.question_type == 'multiple_choice' %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <strong>Votre réponse :</strong>
+                                <div class="mt-1">
+                                    {% if question_data.user_answer %}
+                                        <span class="badge bg-primary">{{ question_data.user_answer }}</span>
+                                        {% for option_letter, option_text in question_data.question.get_options %}
+                                            {% if option_letter == question_data.user_answer %}
+                                                {{ option_text }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">Aucune réponse</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <strong>Réponse correcte :</strong>
+                                <div class="mt-1">
+                                    <span class="badge bg-success">{{ question_data.correct_answer }}</span>
+                                    {% for option_letter, option_text in question_data.question.get_options %}
+                                        {% if option_letter == question_data.correct_answer %}
+                                            {{ option_text }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% elif question_data.question.question_type == 'true_false' %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <strong>Votre réponse :</strong>
+                                <div class="mt-1">
+                                    {% if question_data.user_answer %}
+                                        <span class="badge {% if question_data.user_answer == 'True' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {% if question_data.user_answer == 'True' %}Vrai{% else %}Faux{% endif %}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">Aucune réponse</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <strong>Réponse correcte :</strong>
+                                <div class="mt-1">
+                                    <span class="badge {% if question_data.correct_answer == 'True' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if question_data.correct_answer == 'True' %}Vrai{% else %}Faux{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if question_data.question.explanation %}
+                <div class="mt-3">
+                    <strong>Explication :</strong>
+                    <p class="mb-0 mt-1">{{ question_data.question.explanation }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques du quiz -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-graph-up me-2 text-warning"></i>
+                Statistiques du quiz
+            </h3>
+            <div class="row text-center">
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-question-circle-fill"></i>
+                        </div>
+                        <h4 class="mb-1">{{ questions_data|length }}</h4>
+                        <p class="text-muted mb-0">Questions totales</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h4 class="mb-1">
+                            {% for question_data in questions_data %}
+                                {% if question_data.is_correct %}{{ forloop.counter0|add:1 }}{% endif %}
+                            {% endfor %}
+                        </h4>
+                        <p class="text-muted mb-0">Bonnes réponses</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-clock-fill"></i>
+                        </div>
+                        <h4 class="mb-1">{{ attempt.get_time_taken_display }}</h4>
+                        <p class="text-muted mb-0">Temps utilisé</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-trophy-fill"></i>
+                        </div>
+                        <h4 class="mb-1">{{ attempt.points_earned }}</h4>
+                        <p class="text-muted mb-0">Points obtenus</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-lightning-fill me-2 text-warning"></i>
+                Actions
+            </h3>
+            <div class="row text-center">
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'gamification:quiz_detail' quiz.slug %}" class="btn btn-gamification w-100 py-3">
+                        <i class="bi bi-arrow-repeat display-6 d-block mb-2"></i>
+                        Refaire le quiz
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'gamification:select_quiz' %}" class="btn btn-gamification-secondary w-100 py-3">
+                        <i class="bi bi-play-circle display-6 d-block mb-2"></i>
+                        Nouveau Quiz
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'gamification:my_profile' %}" class="btn btn-gamification-warning w-100 py-3">
+                        <i class="bi bi-person-circle display-6 d-block mb-2"></i>
+                        Mon Profil
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{% url 'gamification:leaderboard' %}" class="btn btn-gamification-danger w-100 py-3">
+                        <i class="bi bi-trophy display-6 d-block mb-2"></i>
+                        Classement
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

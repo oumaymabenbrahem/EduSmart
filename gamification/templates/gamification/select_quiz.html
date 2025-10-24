@@ -1,0 +1,260 @@
+{% extends 'gamification/base_gamification.html' %}
+
+{% block title %}Sélectionner un Quiz{% endblock %}
+
+{% block gamification_content %}
+<!-- Formulaire de génération de quiz -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-magic me-2 text-primary"></i>
+                Générer un quiz avec IA
+            </h3>
+            
+            <form method="post" action="{% url 'gamification:generate_quiz' %}" class="row">
+                {% csrf_token %}
+                <div class="col-md-4 mb-3">
+                    <label for="subject" class="form-label">Matière</label>
+                    <select class="form-select form-select-lg" id="subject" name="subject" required>
+                        <option value="">Choisissez une matière</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.name }}">{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="difficulty" class="form-label">Difficulté</label>
+                    <select class="form-select form-select-lg" id="difficulty" name="difficulty" required>
+                        {% for difficulty in difficulty_levels %}
+                        <option value="{{ difficulty.level }}">{{ difficulty.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="num_questions" class="form-label">Questions</label>
+                    <select class="form-select form-select-lg" id="num_questions" name="num_questions">
+                        <option value="5">5 questions</option>
+                        <option value="10" selected>10 questions</option>
+                        <option value="15">15 questions</option>
+                        <option value="20">20 questions</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-gamification w-100">
+                        <i class="bi bi-magic me-2"></i>Générer
+                    </button>
+                </div>
+            </form>
+            
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Temps estimé :</strong> <span id="estimatedTime">20 minutes</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-award me-2"></i>
+                        <strong>Points disponibles :</strong> <span id="estimatedPoints">100 points</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quiz récents -->
+{% if recent_quizzes %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-clock-history me-2 text-info"></i>
+                Quiz récents
+            </h3>
+            <div class="row">
+                {% for quiz in recent_quizzes %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="quiz-card" style="--quiz-color: {{ quiz.subject.color }}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">{{ quiz.title }}</h6>
+                            <span class="badge bg-primary">{{ quiz.subject.name }}</span>
+                        </div>
+                        <p class="text-muted small mb-2">{{ quiz.description|truncatechars:80 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="difficulty-badge difficulty-{{ quiz.difficulty.level }}">
+                                    Niveau {{ quiz.difficulty.level }}
+                                </span>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">{{ quiz.questions.count }} questions</small>
+                                <div>
+                                    <a href="{% url 'gamification:quiz_detail' quiz.slug %}" class="btn btn-sm btn-gamification">
+                                        <i class="bi bi-play me-1"></i>Commencer
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Mes tentatives récentes -->
+{% if user_attempts %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <div class="row align-items-center mb-3">
+                <div class="col-md-8">
+                    <h3 class="mb-0">
+                        <i class="bi bi-person-check me-2 text-success"></i>
+                        Mes tentatives récentes
+                    </h3>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{% url 'gamification:my_attempts' %}" class="btn btn-gamification-secondary">
+                        <i class="bi bi-arrow-right me-2"></i>Voir tout
+                    </a>
+                </div>
+            </div>
+            <div class="row">
+                {% for attempt in user_attempts %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="quiz-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">{{ attempt.quiz.title }}</h6>
+                            <span class="badge {% if attempt.is_passed %}bg-success{% else %}bg-danger{% endif %}">
+                                {% if attempt.is_passed %}Réussi{% else %}Échoué{% endif %}
+                            </span>
+                        </div>
+                        <div class="row text-center mb-2">
+                            <div class="col-4">
+                                <div class="fw-bold text-primary">{{ attempt.percentage|floatformat:0 }}%</div>
+                                <small class="text-muted">Score</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold text-success">{{ attempt.points_earned }}</div>
+                                <small class="text-muted">Points</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold text-warning">{{ attempt.experience_earned }}</div>
+                                <small class="text-muted">XP</small>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ attempt.started_at|date:"d/m/Y H:i" }}</small>
+                            <a href="{% url 'gamification:quiz_results' attempt.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye me-1"></i>Résultats
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Statistiques personnelles -->
+{% if user.is_authenticated %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-graph-up me-2 text-warning"></i>
+                Mes statistiques
+            </h3>
+            <div class="row text-center">
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-trophy-fill"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user.gamification_profile.quizzes_completed|default:0 }}</h4>
+                        <p class="text-muted mb-0">Quiz complétés</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user.gamification_profile.quizzes_passed|default:0 }}</h4>
+                        <p class="text-muted mb-0">Quiz réussis</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-fire"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user.gamification_profile.current_streak|default:0 }}</h4>
+                        <p class="text-muted mb-0">Série actuelle</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-award-fill"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user.gamification_profile.total_points|default:0 }}</h4>
+                        <p class="text-muted mb-0">Points totaux</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateEstimatedTime() {
+    const numQuestions = parseInt(document.getElementById('num_questions').value) || 10;
+    const difficulty = parseInt(document.getElementById('difficulty').value) || 1;
+    
+    // Calculer le temps estimé (2 minutes par question + bonus difficulté)
+    const baseTime = numQuestions * 2;
+    const difficultyMultiplier = 1 + (difficulty * 0.2);
+    const estimatedTime = Math.round(baseTime * difficultyMultiplier);
+    
+    document.getElementById('estimatedTime').textContent = estimatedTime + ' minutes';
+    
+    // Calculer les points estimés
+    const estimatedPoints = numQuestions * 10 * difficultyMultiplier;
+    document.getElementById('estimatedPoints').textContent = Math.round(estimatedPoints) + ' points';
+}
+
+// Mettre à jour le temps estimé quand les paramètres changent
+document.getElementById('num_questions').addEventListener('change', updateEstimatedTime);
+document.getElementById('difficulty').addEventListener('change', updateEstimatedTime);
+
+// Initialiser les valeurs
+document.addEventListener('DOMContentLoaded', function() {
+    updateEstimatedTime();
+});
+
+// Animation des cartes de quiz
+document.querySelectorAll('.quiz-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-5px) scale(1.02)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+    });
+});
+</script>
+{% endblock %}

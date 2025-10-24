@@ -47,6 +47,7 @@
           <li><a href="#about">À propos</a></li>
           <li><a href="#courses">Cours</a></li>
           <li><a href="{% url 'forum:index' %}" class="{% if 'forum' in request.path %}active{% endif %}"><i class="bi bi-chat-dots me-1"></i>Forum</a></li>
+          <li><a href="{% url 'gamification:home' %}" class="{% if 'gamification' in request.path %}active{% endif %}"><i class="bi bi-trophy me-1"></i>Gamification</a></li>
           <li><a href="#trainers">Formateurs</a></li>
           <li><a href="#events">Événements</a></li>
           <li><a href="#contact">Contact</a></li>
@@ -55,6 +56,8 @@
             <ul>
               <li><a href="{% url 'accounts:dashboard' %}"><i class="bi bi-speedometer2 me-1"></i>Tableau de bord</a></li>
               <li><a href="{% url 'accounts:profile' %}"><i class="bi bi-person me-1"></i>Mon Profil</a></li>
+              <li><a href="{% url 'gamification:my_profile' %}"><i class="bi bi-trophy me-1"></i>Gamification</a></li>
+              <li><a href="{% url 'gamification:select_quiz' %}"><i class="bi bi-play-circle me-1"></i>Nouveau Quiz</a></li>
               <li><a href="{% url 'accounts:users_list' %}"><i class="bi bi-people me-1"></i>Utilisateurs</a></li>
               {% if user.user_type == 'admin' %}
               <li><a href="{% url 'template_back:dashboard' %}"><i class="bi bi-gear me-1"></i>Administration</a></li>

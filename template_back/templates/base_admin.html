@@ -143,6 +143,12 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link {% if 'gamification' in request.path %}active{% endif %}" href="{% url 'gamification:home' %}">
+              <i class="icon-trophy menu-icon"></i>
+              <span class="menu-title">Gamification</span>
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#user-management" aria-expanded="false" aria-controls="user-management">
               <i class="icon-head menu-icon"></i>
               <span class="menu-title">Gestion Utilisateurs</span>
@@ -153,6 +159,21 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'accounts:users_list' %}">Liste des Utilisateurs</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}">Ajouter Utilisateur</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'accounts:profile' %}">Mon Profil</a></li>
+              </ul>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#gamification-management" aria-expanded="false" aria-controls="gamification-management">
+              <i class="icon-trophy menu-icon"></i>
+              <span class="menu-title">Gestion Gamification</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="gamification-management">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:home' %}">Tableau de bord</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:leaderboard' %}">Classements</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:badges_gallery' %}">Badges</a></li>
+                <li class="nav-item"><a class="nav-link" href="/admin/gamification/">Administration</a></li>
               </ul>
             </div>
           </li>

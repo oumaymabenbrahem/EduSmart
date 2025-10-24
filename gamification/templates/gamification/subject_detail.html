@@ -1,0 +1,212 @@
+{% extends 'gamification/base_gamification.html' %}
+
+{% block title %}{{ subject.name }}{% endblock %}
+
+{% block gamification_content %}
+<!-- En-tête de la matière -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <i class="{{ subject.icon }} display-4" style="color: {{ subject.color }};"></i>
+                        </div>
+                        <div>
+                            <h2 class="mb-1">{{ subject.name }}</h2>
+                            <p class="text-muted mb-0">{{ subject.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex justify-content-md-end gap-2">
+                        <a href="{% url 'gamification:select_quiz' %}" class="btn btn-gamification">
+                            <i class="bi bi-play-circle me-2"></i>Nouveau Quiz
+                        </a>
+                        <a href="{% url 'gamification:home' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quiz disponibles -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-list-check me-2 text-primary"></i>
+                Quiz disponibles pour {{ subject.name }}
+            </h3>
+            
+            {% if quizzes_page %}
+            <div class="row">
+                {% for quiz in quizzes_page %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="quiz-card" style="--quiz-color: {{ quiz.subject.color }}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">{{ quiz.title }}</h6>
+                            <span class="difficulty-badge difficulty-{{ quiz.difficulty.level }}">
+                                Niveau {{ quiz.difficulty.level }}
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-2">{{ quiz.description|truncatechars:80 }}</p>
+                        <div class="row text-center mb-2">
+                            <div class="col-4">
+                                <div class="fw-bold text-primary">{{ quiz.questions.count }}</div>
+                                <small class="text-muted">Questions</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold text-success">{{ quiz.time_limit }}min</div>
+                                <small class="text-muted">Durée</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold text-warning">{{ quiz.points_available }}</div>
+                                <small class="text-muted">Points</small>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ quiz.created_at|date:"d/m/Y" }}</small>
+                            <a href="{% url 'gamification:quiz_detail' quiz.slug %}" class="btn btn-sm btn-gamification">
+                                <i class="bi bi-play me-1"></i>Commencer
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if quizzes_page.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if quizzes_page.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">Premier</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ quizzes_page.previous_page_number }}">Précédent</a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Page {{ quizzes_page.number }} sur {{ quizzes_page.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if quizzes_page.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ quizzes_page.next_page_number }}">Suivant</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ quizzes_page.paginator.num_pages }}">Dernier</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-book display-1 text-muted mb-3"></i>
+                <h4 class="text-muted mb-3">Aucun quiz disponible</h4>
+                <p class="text-muted mb-4">Il n'y a pas encore de quiz pour cette matière.</p>
+                <a href="{% url 'gamification:select_quiz' %}" class="btn btn-gamification">
+                    <i class="bi bi-magic me-2"></i>Générer un quiz avec IA
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques de la matière -->
+{% if user.is_authenticated %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-graph-up me-2 text-success"></i>
+                Mes statistiques pour {{ subject.name }}
+            </h3>
+            <div class="row text-center">
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-trophy-fill"></i>
+                        </div>
+                        <h4 class="mb-1">0</h4>
+                        <p class="text-muted mb-0">Quiz complétés</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h4 class="mb-1">0</h4>
+                        <p class="text-muted mb-0">Quiz réussis</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h4 class="mb-1">0%</h4>
+                        <p class="text-muted mb-0">Score moyen</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-award-fill"></i>
+                        </div>
+                        <h4 class="mb-1">0</h4>
+                        <p class="text-muted mb-0">Points gagnés</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-lightning-fill me-2 text-warning"></i>
+                Actions
+            </h3>
+            <div class="row text-center">
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'gamification:select_quiz' %}" class="btn btn-gamification w-100 py-3">
+                        <i class="bi bi-magic display-6 d-block mb-2"></i>
+                        Générer Quiz IA
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'gamification:leaderboard' %}" class="btn btn-gamification-secondary w-100 py-3">
+                        <i class="bi bi-trophy display-6 d-block mb-2"></i>
+                        Classement
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'gamification:home' %}" class="btn btn-gamification-warning w-100 py-3">
+                        <i class="bi bi-house display-6 d-block mb-2"></i>
+                        Accueil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

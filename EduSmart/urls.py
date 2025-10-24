@@ -25,6 +25,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('dashboard/', include('template_back.urls')),
     path('forum/', include('forum.urls')),
+    path('gamification/', include('gamification.urls')),
 ]
 
 # Servir les fichiers média en développement

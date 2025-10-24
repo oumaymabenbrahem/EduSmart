@@ -1,0 +1,141 @@
+{% extends 'gamification/base_gamification.html' %}
+
+{% block title %}Mes Tentatives{% endblock %}
+
+{% block gamification_content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-clock-history me-2 text-info"></i>
+                Historique de mes tentatives
+            </h3>
+            
+            {% if attempts_page %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Quiz</th>
+                            <th>Matière</th>
+                            <th>Score</th>
+                            <th>Points</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attempt in attempts_page %}
+                        <tr>
+                            <td>
+                                <strong>{{ attempt.quiz.title }}</strong>
+                                <br>
+                                <small class="text-muted">Tentative {{ attempt.attempt_number }}</small>
+                            </td>
+                            <td>
+                                <span class="badge" style="background-color: {{ attempt.quiz.subject.color }}; color: white;">
+                                    {{ attempt.quiz.subject.name }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-bold {% if attempt.is_passed %}text-success{% else %}text-danger{% endif %}">
+                                    {{ attempt.percentage|floatformat:0 }}%
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-primary">{{ attempt.points_earned }}</span>
+                                <br>
+                                <small class="text-warning">+{{ attempt.experience_earned }} XP</small>
+                            </td>
+                            <td>
+                                <small>{{ attempt.started_at|date:"d/m/Y H:i" }}</small>
+                            </td>
+                            <td>
+                                <a href="{% url 'gamification:quiz_results' attempt.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if attempts_page.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if attempts_page.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">Premier</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ attempts_page.previous_page_number }}">Précédent</a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Page {{ attempts_page.number }} sur {{ attempts_page.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if attempts_page.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ attempts_page.next_page_number }}">Suivant</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ attempts_page.paginator.num_pages }}">Dernier</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-clock-history display-1 text-muted mb-3"></i>
+                <h4 class="text-muted mb-3">Aucune tentative</h4>
+                <p class="text-muted mb-4">Commencez par faire des quiz pour voir votre historique !</p>
+                <a href="{% url 'gamification:select_quiz' %}" class="btn btn-gamification">
+                    <i class="bi bi-play-circle me-2"></i>Commencer un quiz
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-lightning-fill me-2 text-warning"></i>
+                Actions
+            </h3>
+            <div class="row text-center">
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'gamification:select_quiz' %}" class="btn btn-gamification w-100 py-3">
+                        <i class="bi bi-play-circle display-6 d-block mb-2"></i>
+                        Nouveau Quiz
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'gamification:my_profile' %}" class="btn btn-gamification-secondary w-100 py-3">
+                        <i class="bi bi-person-circle display-6 d-block mb-2"></i>
+                        Mon Profil
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'gamification:leaderboard' %}" class="btn btn-gamification-warning w-100 py-3">
+                        <i class="bi bi-trophy display-6 d-block mb-2"></i>
+                        Classement
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
