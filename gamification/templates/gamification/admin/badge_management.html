@@ -1,0 +1,242 @@
+{% extends 'template_back/base_admin.html' %}
+
+{% block title %}Gestion des Badges{% endblock %}
+
+{% block extra_css %}
+<style>
+    .badge-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--badge-color, #ffc107);
+    }
+    
+    .badge-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .badge-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, var(--badge-color, #ffc107) 0%, rgba(255, 193, 7, 0.8) 100%);
+        color: white;
+    }
+    
+    .badge-stats {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #007bff;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        justify-content: center;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-edit {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-view {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .create-badge-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 1rem 2rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .create-badge-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-panel">
+    <div class="content-wrapper">
+        <!-- En-tête -->
+        <div class="row">
+            <div class="col-12">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="icon-award menu-icon"></i>
+                        Gestion des Badges
+                    </h1>
+                    <p class="page-description">Créer, modifier et gérer tous les badges de la plateforme</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="/admin/gamification/badge/add/" class="create-badge-btn">
+                            <i class="icon-plus me-2"></i>Créer un Nouveau Badge
+                        </a>
+                        <a href="{% url 'gamification:admin_dashboard' %}" class="btn btn-outline-secondary ms-2">
+                            <i class="icon-arrow-left me-2"></i>Retour au Dashboard
+                        </a>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary fs-6">{{ badges.count }} Badges au total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Badges populaires -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="icon-star text-warning me-2"></i>
+                            Badges les Plus Populaires
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for badge in popular_badges %}
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <div class="badge-icon" style="--badge-color: {{ badge.color }};">
+                                        <i class="{{ badge.icon }}"></i>
+                                    </div>
+                                    <h6>{{ badge.name }}</h6>
+                                    <p class="text-muted small">{{ badge.description|truncatechars:50 }}</p>
+                                    <span class="badge bg-success">{{ badge.earned_count }} obtenus</span>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12 text-center">
+                                <p class="text-muted">Aucun badge trouvé.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des badges -->
+        <div class="row">
+            {% for badge in badges %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="badge-card" style="--badge-color: {{ badge.color }};">
+                    <div class="text-center">
+                        <div class="badge-icon">
+                            <i class="{{ badge.icon }}"></i>
+                        </div>
+                        <h5 class="mb-2">{{ badge.name }}</h5>
+                        <p class="text-muted mb-3">{{ badge.description }}</p>
+                        
+                        <div class="badge-stats">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ badge.earned_count|default:0 }}</div>
+                                <div class="stat-label">Obtenus</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">{{ badge.recent_earned|default:0 }}</div>
+                                <div class="stat-label">Cette semaine</div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <a href="/admin/gamification/badge/{{ badge.id }}/change/" class="btn-action btn-edit">
+                                <i class="icon-pencil me-1"></i>Modifier
+                            </a>
+                            <a href="/admin/gamification/badge/{{ badge.id }}/delete/" class="btn-action btn-delete">
+                                <i class="icon-trash me-1"></i>Supprimer
+                            </a>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                Créé le {{ badge.created_at|date:"d/m/Y" }}
+                                {% if badge.created_by %}
+                                    par {{ badge.created_by.get_full_name|default:badge.created_by.username }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="icon-award display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted mb-3">Aucun badge trouvé</h4>
+                    <p class="text-muted mb-4">Commencez par créer votre premier badge !</p>
+                    <a href="/admin/gamification/badge/add/" class="create-badge-btn">
+                        <i class="icon-plus me-2"></i>Créer un Badge
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

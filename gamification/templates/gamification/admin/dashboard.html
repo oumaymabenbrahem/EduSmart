@@ -1,0 +1,387 @@
+{% extends 'template_back/base_admin.html' %}
+
+{% block title %}Tableau de Bord Gamification{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+    }
+    
+    .stats-card h3 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-card p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .stats-icon {
+        font-size: 3rem;
+        opacity: 0.8;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .admin-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .admin-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .quick-action-btn {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 1rem 2rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin: 0.5rem;
+    }
+    
+    .quick-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        color: white;
+    }
+    
+    .quick-action-btn.secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    }
+    
+    .quick-action-btn.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: black;
+    }
+    
+    .quick-action-btn.danger {
+        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    }
+    
+    .leaderboard-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    
+    .leaderboard-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .rank-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        margin-right: 1rem;
+    }
+    
+    .rank-1 { background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); }
+    .rank-2 { background: linear-gradient(135deg, #c0c0c0 0%, #e5e5e5 100%); }
+    .rank-3 { background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%); }
+    .rank-other { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-panel">
+    <div class="content-wrapper">
+        <!-- En-tête -->
+        <div class="row">
+            <div class="col-12">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="icon-trophy menu-icon"></i>
+                        Tableau de Bord Gamification
+                    </h1>
+                    <p class="page-description">Gestion complète du système de gamification EduSmart</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="admin-card">
+                    <h4 class="mb-3">
+                        <i class="icon-lightning menu-icon"></i>
+                        Actions Rapides
+                    </h4>
+                    <div class="d-flex flex-wrap">
+                        <a href="{% url 'gamification:admin_quiz_management' %}" class="quick-action-btn">
+                            <i class="icon-book-open me-2"></i>Gérer les Quiz
+                        </a>
+                        <a href="{% url 'gamification:admin_user_management' %}" class="quick-action-btn secondary">
+                            <i class="icon-people me-2"></i>Gérer les Utilisateurs
+                        </a>
+                        <a href="{% url 'gamification:admin_badge_management' %}" class="quick-action-btn warning">
+                            <i class="icon-award me-2"></i>Gérer les Badges
+                        </a>
+                        <a href="{% url 'gamification:admin_analytics' %}" class="quick-action-btn danger">
+                            <i class="icon-chart me-2"></i>Analyses
+                        </a>
+                        <a href="/admin/gamification/" class="quick-action-btn">
+                            <i class="icon-settings me-2"></i>Admin Django
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques principales -->
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3>{{ total_users }}</h3>
+                            <p>Utilisateurs Total</p>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="icon-people"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3>{{ total_quizzes }}</h3>
+                            <p>Quiz Créés</p>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="icon-book-open"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3>{{ total_attempts }}</h3>
+                            <p>Tentatives Total</p>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="icon-target"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3>{{ total_badges }}</h3>
+                            <p>Badges Disponibles</p>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="icon-award"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques récentes -->
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="stats-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3>{{ recent_attempts_count }}</h3>
+                            <p>Tentatives (30 derniers jours)</p>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="icon-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-4">
+                <div class="stats-card" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); color: black;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3>{{ recent_users_count }}</h3>
+                            <p>Nouveaux Utilisateurs (30 derniers jours)</p>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="icon-user-plus"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top utilisateurs -->
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="table-container">
+                    <h4 class="mb-3">
+                        <i class="icon-trophy me-2"></i>
+                        Top 10 Utilisateurs
+                    </h4>
+                    {% for profile in top_users %}
+                    <div class="leaderboard-item">
+                        <div class="rank-badge {% if forloop.counter <= 3 %}rank-{{ forloop.counter }}{% else %}rank-other{% endif %}">
+                            {{ forloop.counter }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">{{ profile.user.get_full_name|default:profile.user.username }}</div>
+                            <small class="text-muted">{{ profile.user.user_type|title }}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-primary">{{ profile.total_points }} pts</div>
+                            <small class="text-muted">Niveau {{ profile.level }}</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">Aucun utilisateur trouvé.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Matières populaires -->
+            <div class="col-lg-6 mb-4">
+                <div class="table-container">
+                    <h4 class="mb-3">
+                        <i class="icon-book me-2"></i>
+                        Matières Populaires
+                    </h4>
+                    {% for subject in popular_subjects %}
+                    <div class="leaderboard-item">
+                        <div class="rank-badge rank-other">
+                            <i class="{{ subject.icon }}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">{{ subject.name }}</div>
+                            <small class="text-muted">{{ subject.description|truncatechars:50 }}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-success">{{ subject.attempt_count }} tentatives</div>
+                            <small class="text-muted">{{ subject.quiz_count }} quiz</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">Aucune matière trouvée.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Activité récente -->
+        <div class="row">
+            <div class="col-12">
+                <div class="table-container">
+                    <h4 class="mb-3">
+                        <i class="icon-clock me-2"></i>
+                        Activité Récente
+                    </h4>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Utilisateur</th>
+                                    <th>Quiz</th>
+                                    <th>Score</th>
+                                    <th>Points</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attempt in recent_activity %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                <i class="icon-user"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ attempt.student.get_full_name|default:attempt.student.username }}</div>
+                                                <small class="text-muted">{{ attempt.student.user_type|title }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">{{ attempt.quiz.title }}</div>
+                                        <small class="text-muted">{{ attempt.quiz.subject.name }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if attempt.is_passed %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ attempt.percentage|floatformat:0 }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-primary">{{ attempt.points_earned }}</span>
+                                    </td>
+                                    <td>
+                                        <small>{{ attempt.started_at|date:"d/m/Y H:i" }}</small>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Aucune activité récente.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

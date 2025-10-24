@@ -170,10 +170,14 @@
             </a>
             <div class="collapse" id="gamification-management">
               <ul class="nav flex-column sub-menu">
-                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:home' %}">Tableau de bord</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_dashboard' %}">Dashboard Admin</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_quiz_management' %}">Gestion Quiz</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_user_management' %}">Gestion Utilisateurs</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_badge_management' %}">Gestion Badges</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:admin_analytics' %}">Analyses</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:home' %}">Interface Utilisateur</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'gamification:leaderboard' %}">Classements</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'gamification:badges_gallery' %}">Badges</a></li>
-                <li class="nav-item"><a class="nav-link" href="/admin/gamification/">Administration</a></li>
+                <li class="nav-item"><a class="nav-link" href="/admin/gamification/">Admin Django</a></li>
               </ul>
             </div>
           </li>

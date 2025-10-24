@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import admin_views
 
 app_name = 'gamification'
 
@@ -29,4 +30,12 @@ urlpatterns = [
     
     # Matières
     path('subject/<slug:slug>/', views.subject_detail, name='subject_detail'),
+    
+    # Pages admin
+    path('admin/dashboard/', admin_views.admin_dashboard, name='admin_dashboard'),
+    path('admin/quiz-management/', admin_views.admin_quiz_management, name='admin_quiz_management'),
+    path('admin/user-management/', admin_views.admin_user_management, name='admin_user_management'),
+    path('admin/leaderboard-management/', admin_views.admin_leaderboard_management, name='admin_leaderboard_management'),
+    path('admin/badge-management/', admin_views.admin_badge_management, name='admin_badge_management'),
+    path('admin/analytics/', admin_views.admin_analytics, name='admin_analytics'),
 ]
