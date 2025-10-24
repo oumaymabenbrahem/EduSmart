@@ -1,0 +1,234 @@
+{% extends 'template_front/base_front.html' %}
+{% load static %}
+
+{% block title %}Cours - {{ block.super }}{% endblock %}
+
+{% block content %}
+<section id="courses" class="courses section">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="section-title">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h2>Cours Disponibles</h2>
+              <p>Découvrez notre cours</p>
+            </div>
+            {% if user.is_authenticated and user.user_type == 'teacher' %}
+            <a href="{% url 'cours:course_create' %}" class="btn btn-primary btn-lg">
+              <i class="bi bi-plus-circle me-2"></i>Ajouter un cours
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="row mb-4">
+      <div class="col-lg-12">
+        <div class="course-filters">
+          <form method="get" class="row g-3">
+            <div class="col-md-4">
+              <input type="text" name="search" class="form-control" placeholder="Rechercher un cours..."
+                     value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+              <select name="subject" class="form-select">
+                <option value="">Toutes les matières</option>
+                {% for subject in subjects %}
+                <option value="{{ subject.slug }}" {% if subject.slug == current_subject %}selected{% endif %}>
+                  {{ subject.name }} ({{ subject.course_count }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="level" class="form-select">
+                <option value="">Tous niveaux</option>
+                <option value="beginner" {% if current_level == 'beginner' %}selected{% endif %}>Débutant</option>
+                <option value="intermediate" {% if current_level == 'intermediate' %}selected{% endif %}>Intermédiaire</option>
+                <option value="advanced" {% if current_level == 'advanced' %}selected{% endif %}>Avancé</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="sort" class="form-select">
+                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Plus récent</option>
+                <option value="views" {% if sort_by == 'views' %}selected{% endif %}>Plus populaire</option>
+                <option value="enrollments" {% if sort_by == 'enrollments' %}selected{% endif %}>Plus suivi</option>
+                <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Mieux noté</option>
+              </select>
+            </div>
+            <div class="col-md-1">
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des cours -->
+    <div class="row">
+      {% for course in page_obj %}
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="course-card card h-100">
+          {% if course.thumbnail %}
+          <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
+          {% else %}
+          <div class="card-img-top bg-primary d-flex align-items-center justify-content-center text-white"
+               style="height: 180px;">
+            <i class="bi {{ course.subject.icon }} fs-1"></i>
+          </div>
+          {% endif %}
+
+          <div class="card-body d-flex flex-column">
+            <div class="course-meta mb-2">
+              <span class="badge bg-{{ course.level|lower }}">{{ course.get_level_display }}</span>
+              <span class="badge bg-secondary">{{ course.subject.name }}</span>
+            </div>
+
+            <h5 class="card-title">
+              <a href="{{ course.get_absolute_url }}" class="text-decoration-none">
+                {{ course.title }}
+              </a>
+            </h5>
+
+            <p class="card-text flex-grow-1">{{ course.description|truncatechars:100 }}</p>
+
+            <div class="course-stats mb-3">
+              <small class="text-muted">
+                <i class="bi bi-eye me-1"></i>{{ course.total_views }} vues
+                <i class="bi bi-person-check ms-2 me-1"></i>{{ course.total_enrollments }} inscrits
+              </small>
+            </div>
+
+            {% if course.average_rating > 0 %}
+            <div class="course-rating mb-3">
+              <div class="rating">
+                {% for i in "12345"|make_list %}
+                <i class="bi bi-star{% if forloop.counter <= course.average_rating|floatformat:0 %}-fill{% endif %} text-warning"></i>
+                {% endfor %}
+                <span class="ms-1">{{ course.average_rating }}</span>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="course-footer mt-auto">
+              <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                  <i class="bi bi-clock me-1"></i>{{ course.duration_hours }}h
+                </small>
+                <div class="d-flex gap-1">
+                  {% if user.is_authenticated and user.user_type == 'teacher' and course.instructor == user %}
+                  <a href="{% url 'cours:course_module_create' course.slug %}" class="btn btn-outline-success btn-sm" title="Ajouter une leçon">
+                    <i class="bi bi-plus-circle"></i>
+                  </a>
+                  <a href="{% url 'cours:course_resource_create' course.slug %}" class="btn btn-outline-info btn-sm" title="Ajouter une ressource">
+                    <i class="bi bi-file-earmark-plus"></i>
+                  </a>
+                  {% endif %}
+                  <a href="{{ course.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
+                    Voir
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="text-center py-5">
+          <i class="bi bi-book fs-1 text-muted mb-3"></i>
+          <h4>Aucun cours trouvé</h4>
+          <p class="text-muted">Essayez de modifier vos critères de recherche.</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="row">
+      <div class="col-12">
+        <nav aria-label="Pagination des cours">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_level %}&level={{ current_level }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                Précédent
+              </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+              <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_level %}&level={{ current_level }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                {{ num }}
+              </a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_level %}&level={{ current_level }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                Suivant
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.course-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+}
+
+.course-meta .badge {
+  margin-right: 0.5rem;
+}
+
+.course-rating .rating {
+  display: flex;
+  align-items: center;
+}
+
+.course-filters {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .course-filters .col-md-4,
+  .course-filters .col-md-3,
+  .course-filters .col-md-2,
+  .course-filters .col-md-1 {
+    margin-bottom: 1rem;
+  }
+}
+</style>
+{% endblock %}

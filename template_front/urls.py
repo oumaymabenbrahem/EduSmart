@@ -5,4 +5,5 @@ app_name = 'template_front'
 
 urlpatterns = [
     path('', views.index, name='index'),
+ 
 ]

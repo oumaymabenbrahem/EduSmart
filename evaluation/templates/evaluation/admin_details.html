@@ -1,0 +1,236 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h4 class="card-title mb-1">{{ evaluation.title }}</h4>
+            <p class="text-muted mb-0">Créé par {{ evaluation.created_by.get_full_name|default:evaluation.created_by.username }} le {{ evaluation.created_at|date:"d/m/Y à H:i" }}</p>
+          </div>
+          <a href="{% url 'evaluation:admin_list' %}" class="btn btn-secondary">
+            <i class="mdi mdi-arrow-left"></i> Retour à la liste
+          </a>
+        </div>
+
+        <!-- Informations générales -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="card border">
+              <div class="card-body">
+                <h5 class="card-title">Informations générales</h5>
+                <div class="row">
+                  <div class="col-sm-6">
+                    <p><strong>Description:</strong></p>
+                    <p class="text-muted">{{ evaluation.description|default:"Aucune description" }}</p>
+                  </div>
+                  <div class="col-sm-6">
+                    <p><strong>Statut:</strong>
+                      {% if evaluation.is_published %}
+                        <span class="badge badge-success">Publié</span>
+                      {% else %}
+                        <span class="badge badge-warning">Brouillon</span>
+                      {% endif %}
+                    </p>
+                    <p><strong>Points totaux:</strong> {{ evaluation.total_points }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border">
+              <div class="card-body">
+                <h5 class="card-title">Période</h5>
+                {% if evaluation.start_date and evaluation.end_date %}
+                  <p><strong>Début:</strong> {{ evaluation.start_date|date:"d/m/Y à H:i" }}</p>
+                  <p><strong>Fin:</strong> {{ evaluation.end_date|date:"d/m/Y à H:i" }}</p>
+                {% else %}
+                  <p class="text-muted">Non programmé</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <div class="card border">
+              <div class="card-body">
+                <h5 class="card-title">Statistiques</h5>
+                <div class="row text-center">
+                  <div class="col-md-3">
+                    <div class="metric">
+                      <h3 class="metric-value">{{ total_attempts }}</h3>
+                      <p class="metric-label">Tentatives totales</p>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="metric">
+                      <h3 class="metric-value">{{ completed_attempts }}</h3>
+                      <p class="metric-label">Évaluations terminées</p>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="metric">
+                      <h3 class="metric-value">{{ average_score }}%</h3>
+                      <p class="metric-label">Score moyen</p>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="metric">
+                      <h3 class="metric-value">{{ questions|length }}</h3>
+                      <p class="metric-label">Questions</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Questions -->
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <div class="card border">
+              <div class="card-body">
+                <h5 class="card-title">Questions ({{ questions|length }})</h5>
+                <div class="accordion" id="questionsAccordion">
+                  {% for question in questions %}
+                  <div class="card">
+                    <div class="card-header" id="heading{{ question.id }}">
+                      <h6 class="mb-0">
+                        <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapse{{ question.id }}" aria-expanded="false" aria-controls="collapse{{ question.id }}">
+                          <strong>Question {{ forloop.counter }}:</strong> {{ question.question_text|truncatechars:100 }}
+                          <span class="badge badge-info ml-2">{{ question.get_question_type_display }}</span>
+                          <span class="badge badge-secondary ml-1">{{ question.points }} pts</span>
+                        </button>
+                      </h6>
+                    </div>
+                    <div id="collapse{{ question.id }}" class="collapse" aria-labelledby="heading{{ question.id }}" data-parent="#questionsAccordion">
+                      <div class="card-body">
+                        <p><strong>Question complète:</strong></p>
+                        <p>{{ question.question_text }}</p>
+
+                        {% if question.question_type == 'qcm' %}
+                          <p><strong>Options:</strong></p>
+                          <ul>
+                            {% for option in question.options %}
+                            <li {% if option == question.correct_answer %}class="text-success font-weight-bold"{% endif %}>
+                              {{ option }}{% if option == question.correct_answer %} ✓ (Bonne réponse){% endif %}
+                            </li>
+                            {% endfor %}
+                          </ul>
+                        {% endif %}
+
+                        <p><strong>Type:</strong> {{ question.get_question_type_display }}</p>
+                        <p><strong>Points:</strong> {{ question.points }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tentatives récentes -->
+        {% if attempts %}
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card border">
+              <div class="card-body">
+                <h5 class="card-title">Tentatives récentes</h5>
+                <div class="table-responsive">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Étudiant</th>
+                        <th>Statut</th>
+                        <th>Score</th>
+                        <th>Date de soumission</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for attempt in attempts|slice:":10" %}
+                      <tr>
+                        <td>{{ attempt.student.get_full_name|default:attempt.student.username }}</td>
+                        <td>
+                          {% if attempt.status == 'completed' %}
+                            <span class="badge badge-success">Terminée</span>
+                          {% else %}
+                            <span class="badge badge-warning">En cours</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if attempt.status == 'completed' %}
+                            {{ attempt.score_percentage }}% ({{ attempt.total_score }}/{{ attempt.max_score }})
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if attempt.completed_at %}
+                            {{ attempt.completed_at|date:"d/m/Y H:i" }}
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                {% if attempts|length > 10 %}
+                  <p class="text-muted mt-2">Affichage des 10 dernières tentatives seulement.</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.metric {
+  padding: 20px 0;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #007bff;
+  margin-bottom: 5px;
+}
+
+.metric-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin: 0;
+}
+
+.card-header button {
+  text-decoration: none;
+  color: inherit;
+}
+
+.card-header button:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
+.badge {
+  font-size: 0.75rem;
+}
+</style>
+{% endblock %}

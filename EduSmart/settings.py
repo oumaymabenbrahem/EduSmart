@@ -37,11 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'accounts',
     'template_front',
     'template_back',
     'forum',
     'gamification',
+    'evaluation',
+    'cours',
 ]
 
 MIDDLEWARE = [
@@ -59,7 +62,9 @@ ROOT_URLCONF = 'EduSmart.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / 'templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -68,6 +73,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries': {
+                'evaluation_tags': 'evaluation.templatetags.evaluation_tags',
+            },
         },
     },
 ]

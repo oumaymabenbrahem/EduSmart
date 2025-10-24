@@ -1,0 +1,103 @@
+{% extends 'template_front/base_front.html' %}
+{% load static %}
+
+{% block title %}Matières - {{ block.super }}{% endblock %}
+
+{% block content %}
+<section id="subjects" class="subjects section">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="section-title">
+          <h2>Nos Matières</h2>
+          <p>Explorez les différentes matières disponibles dans notre plateforme</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      {% for subject in subjects %}
+      <div class="col-lg-4 col-md-6 mb-4">
+        <div class="subject-card card h-100">
+          <div class="card-body text-center d-flex flex-column">
+            <div class="subject-icon mb-3">
+              <i class="bi {{ subject.icon }} fs-1 text-primary"></i>
+            </div>
+
+            <h5 class="card-title mb-3">
+              <a href="{{ subject.get_absolute_url }}" class="text-decoration-none">
+                {{ subject.name }}
+              </a>
+            </h5>
+
+            <p class="card-text flex-grow-1">{{ subject.description|truncatechars:150 }}</p>
+
+            <div class="subject-stats mt-3">
+              <span class="badge bg-primary">{{ subject.course_count }} cours disponibles</span>
+            </div>
+
+            <div class="card-footer bg-transparent border-0 mt-auto">
+              <a href="{{ subject.get_absolute_url }}" class="btn btn-outline-primary">
+                Voir les cours <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="text-center py-5">
+          <i class="bi bi-book fs-1 text-muted mb-3"></i>
+          <h4>Aucune matière disponible</h4>
+          <p class="text-muted">Les matières seront bientôt ajoutées.</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.subject-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.subject-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+}
+
+.subject-icon {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subject-card .card-title a {
+  color: #2c3e50;
+}
+
+.subject-card .card-title a:hover {
+  color: #3498db;
+}
+
+.subject-stats {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .subject-icon {
+    height: 60px;
+  }
+
+  .subject-icon .fs-1 {
+    font-size: 2rem !important;
+  }
+}
+</style>
+{% endblock %}

@@ -340,6 +340,36 @@
               </ul>
             </div>
           </li>
+          
+          <li class="nav-item">
+            <a class="nav-link {% if 'evaluation' in request.path %}active{% endif %}" data-toggle="collapse" href="#evaluation-management" aria-expanded="{% if 'evaluation' in request.path %}true{% else %}false{% endif %}" aria-controls="evaluation-management">
+              <i class="icon-notebook menu-icon"></i>
+              <span class="menu-title">Gestion Évaluations</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse {% if 'evaluation' in request.path %}show{% endif %}" id="evaluation-management">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'create' %}active{% endif %}" href="{% url 'evaluation:create' %}">Créer Évaluation</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'admin_list' %}active{% endif %}" href="{% url 'evaluation:admin_list' %}">Liste des Évaluations</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Statistiques</a></li>
+              </ul>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link {% if 'cours' in request.path %}active{% endif %}" data-toggle="collapse" href="#course-management" aria-expanded="{% if 'cours' in request.path %}true{% else %}false{% endif %}" aria-controls="course-management">
+              <i class="icon-book menu-icon"></i>
+              <span class="menu-title">Gestion de Cours</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse {% if 'cours' in request.path %}show{% endif %}" id="course-management">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link" href="{% url 'cours:admin_course_list' %}">Liste des Cours</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'cours:course_create' %}">Créer un Cours</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'cours:subject_list' %}">Gestion Matières</a></li>
+              </ul>
+            </div>
+          </li>
           <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
               <i class="icon-layout menu-icon"></i>

@@ -1,0 +1,498 @@
+{% extends 'template_front/base_front.html' %}
+{% load static %}
+
+{% block title %}
+{% if action == 'create_module' %}
+Ajouter un module - {{ course.title }}
+{% elif action == 'edit_module' %}
+Modifier un module - {{ course.title }}
+{% elif action == 'delete_module' %}
+Supprimer un module - {{ course.title }}
+{% elif action == 'create_resource' %}
+Ajouter une ressource - {{ course.title }}
+{% elif action == 'edit_resource' %}
+Modifier une ressource - {{ course.title }}
+{% elif action == 'delete_resource' %}
+Supprimer une ressource - {{ course.title }}
+{% else %}
+Créer un cours - {{ block.super }}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="course-create section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="mb-0">
+              {% if action == 'create_module' %}
+              <i class="bi bi-plus-circle me-2"></i>Ajouter un module à "{{ course.title }}"
+              {% elif action == 'edit_module' %}
+              <i class="bi bi-pencil me-2"></i>Modifier un module de "{{ course.title }}"
+              {% elif action == 'delete_module' %}
+              <i class="bi bi-trash me-2"></i>Supprimer un module de "{{ course.title }}"
+              {% elif action == 'create_resource' %}
+              <i class="bi bi-plus-circle me-2"></i>Ajouter une ressource à "{{ course.title }}"
+              {% elif action == 'edit_resource' %}
+              <i class="bi bi-pencil me-2"></i>Modifier une ressource de "{{ course.title }}"
+              {% elif action == 'delete_resource' %}
+              <i class="bi bi-trash me-2"></i>Supprimer une ressource de "{{ course.title }}"
+              {% else %}
+              <i class="bi bi-plus-circle me-2"></i>Créer un nouveau cours
+              {% endif %}
+            </h2>
+          </div>
+          <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+
+              {% if action == 'create_module' %}
+              <!-- Titre du module -->
+              <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">
+                  <strong>Titre du module</strong> <span class="text-danger">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                  <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Description du module -->
+              <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                  <strong>Description du module</strong>
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Fichier du module -->
+              <div class="mb-3">
+                <label for="{{ form.content_file.id_for_label }}" class="form-label">
+                  <strong>Fichier du module</strong> <span class="text-danger">*</span>
+                </label>
+                {{ form.content_file }}
+                {% if form.content_file.errors %}
+                  <div class="text-danger small">{{ form.content_file.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">Formats acceptés: PDF, DOC, DOCX, PPT, PPTX, etc.</div>
+              </div>
+
+              <!-- Ordre du module -->
+              <div class="mb-3">
+                <label for="{{ form.order.id_for_label }}" class="form-label">
+                  <strong>Ordre d'affichage</strong>
+                </label>
+                {{ form.order }}
+                {% if form.order.errors %}
+                  <div class="text-danger small">{{ form.order.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">Ordre d'affichage du module (laissez vide pour automatique)</div>
+              </div>
+
+              {% elif action == 'edit_module' %}
+              <!-- Titre du module -->
+              <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">
+                  <strong>Titre du module</strong> <span class="text-danger">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                  <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Description du module -->
+              <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                  <strong>Description du module</strong>
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Fichier du module -->
+              <div class="mb-3">
+                <label for="{{ form.content_file.id_for_label }}" class="form-label">
+                  <strong>Fichier du module</strong> <span class="text-danger">*</span>
+                </label>
+                {{ form.content_file }}
+                {% if form.content_file.errors %}
+                  <div class="text-danger small">{{ form.content_file.errors.0 }}</div>
+                {% endif %}
+                {% if module.content_file %}
+                <div class="form-text">Fichier actuel: <a href="{{ module.content_file.url }}" target="_blank">{{ module.content_file.name }}</a></div>
+                {% endif %}
+                <div class="form-text">Formats acceptés: PDF, DOC, DOCX, PPT, PPTX, etc. Laissez vide pour conserver le fichier actuel.</div>
+              </div>
+
+              <!-- Ordre du module -->
+              <div class="mb-3">
+                <label for="{{ form.order.id_for_label }}" class="form-label">
+                  <strong>Ordre d'affichage</strong>
+                </label>
+                {{ form.order }}
+                {% if form.order.errors %}
+                  <div class="text-danger small">{{ form.order.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">Ordre d'affichage du module (laissez vide pour automatique)</div>
+              </div>
+
+              {% elif action == 'delete_module' %}
+              <div class="alert alert-warning">
+                <h5><i class="bi bi-exclamation-triangle me-2"></i>Confirmer la suppression</h5>
+                <p>Êtes-vous sûr de vouloir supprimer le module "<strong>{{ module.title }}</strong>" ?</p>
+                <p class="mb-0">Cette action est irréversible et supprimera également toutes les ressources associées à ce module.</p>
+              </div>
+
+              {% elif action == 'create_resource' %}
+              <!-- Titre de la ressource -->
+              <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">
+                  <strong>Titre de la ressource</strong> <span class="text-danger">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                  <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Type de ressource -->
+              <div class="mb-3">
+                <label for="{{ form.resource_type.id_for_label }}" class="form-label">
+                  <strong>Type de ressource</strong> <span class="text-danger">*</span>
+                </label>
+                {{ form.resource_type }}
+                {% if form.resource_type.errors %}
+                  <div class="text-danger small">{{ form.resource_type.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Description de la ressource -->
+              <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                  <strong>Description de la ressource</strong>
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Module associé (optionnel) -->
+              <div class="mb-3">
+                <label for="{{ form.module.id_for_label }}" class="form-label">
+                  <strong>Module associé (optionnel)</strong>
+                </label>
+                {{ form.module }}
+                {% if form.module.errors %}
+                  <div class="text-danger small">{{ form.module.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">Associez cette ressource à un module spécifique</div>
+              </div>
+
+              <!-- Fichier ou URL -->
+              <div class="mb-3">
+                <label for="{{ form.file.id_for_label }}" class="form-label">
+                  <strong>Fichier à télécharger</strong>
+                </label>
+                {{ form.file }}
+                {% if form.file.errors %}
+                  <div class="text-danger small">{{ form.file.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">Ou saisissez une URL ci-dessous</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ form.url.id_for_label }}" class="form-label">
+                  <strong>URL externe</strong>
+                </label>
+                {{ form.url }}
+                {% if form.url.errors %}
+                  <div class="text-danger small">{{ form.url.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">Pour les liens externes, vidéos, etc.</div>
+              </div>
+
+              {% elif action == 'edit_resource' %}
+              <!-- Titre de la ressource -->
+              <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">
+                  <strong>Titre de la ressource</strong> <span class="text-danger">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                  <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Type de ressource -->
+              <div class="mb-3">
+                <label for="{{ form.resource_type.id_for_label }}" class="form-label">
+                  <strong>Type de ressource</strong> <span class="text-danger">*</span>
+                </label>
+                {{ form.resource_type }}
+                {% if form.resource_type.errors %}
+                  <div class="text-danger small">{{ form.resource_type.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Description de la ressource -->
+              <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                  <strong>Description de la ressource</strong>
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Module associé (optionnel) -->
+              <div class="mb-3">
+                <label for="{{ form.module.id_for_label }}" class="form-label">
+                  <strong>Module associé (optionnel)</strong>
+                </label>
+                {{ form.module }}
+                {% if form.module.errors %}
+                  <div class="text-danger small">{{ form.module.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text">Associez cette ressource à un module spécifique</div>
+              </div>
+
+              <!-- Fichier ou URL -->
+              <div class="mb-3">
+                <label for="{{ form.file.id_for_label }}" class="form-label">
+                  <strong>Fichier à télécharger</strong>
+                </label>
+                {{ form.file }}
+                {% if form.file.errors %}
+                  <div class="text-danger small">{{ form.file.errors.0 }}</div>
+                {% endif %}
+                {% if resource.file %}
+                <div class="form-text">Fichier actuel: <a href="{{ resource.file.url }}" target="_blank">{{ resource.file.name }}</a></div>
+                {% endif %}
+                <div class="form-text">Ou saisissez une URL ci-dessous. Laissez vide pour conserver le fichier actuel.</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ form.url.id_for_label }}" class="form-label">
+                  <strong>URL externe</strong>
+                </label>
+                {{ form.url }}
+                {% if form.url.errors %}
+                  <div class="text-danger small">{{ form.url.errors.0 }}</div>
+                {% endif %}
+                {% if resource.url %}
+                <div class="form-text">URL actuelle: <a href="{{ resource.url }}" target="_blank">{{ resource.url }}</a></div>
+                {% endif %}
+                <div class="form-text">Pour les liens externes, vidéos, etc.</div>
+              </div>
+
+              {% elif action == 'delete_resource' %}
+              <div class="alert alert-warning">
+                <h5><i class="bi bi-exclamation-triangle me-2"></i>Confirmer la suppression</h5>
+                <p>Êtes-vous sûr de vouloir supprimer la ressource "<strong>{{ resource.title }}</strong>" ?</p>
+                <p class="mb-0">Cette action est irréversible.</p>
+              </div>
+
+              {% else %}
+              <!-- Titre -->
+              <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">
+                  <strong>Titre du cours</strong> <span class="text-danger">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                  <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Description -->
+              <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                  <strong>Description</strong> <span class="text-danger">*</span>
+                </label>
+                {{ form.description }}
+                <div class="form-text">Décrivez brièvement le contenu du cours</div>
+              </div>
+              {% endif %}
+
+              <!-- Boutons -->
+              <div class="d-flex justify-content-between">
+                <a href="{% if course %}{{ course.get_absolute_url }}{% else %}{% url 'cours:course_list' %}{% endif %}"
+                   class="btn btn-outline-secondary">
+                  <i class="bi bi-arrow-left me-2"></i>Retour
+                </a>
+                {% if action == 'delete_module' or action == 'delete_resource' %}
+                <div>
+                  <a href="{% if course %}{{ course.get_absolute_url }}{% else %}{% url 'cours:course_list' %}{% endif %}"
+                     class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-x me-2"></i>Annuler
+                  </a>
+                  <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-2"></i>
+                    {% if action == 'delete_module' %}Supprimer le module{% else %}Supprimer la ressource{% endif %}
+                  </button>
+                </div>
+                {% else %}
+                <button type="submit" class="btn btn-primary">
+                  {% if action == 'create_module' %}
+                  <i class="bi bi-plus-circle me-2"></i>Ajouter le module
+                  {% elif action == 'edit_module' %}
+                  <i class="bi bi-pencil me-2"></i>Modifier le module
+                  {% elif action == 'create_resource' %}
+                  <i class="bi bi-plus-circle me-2"></i>Ajouter la ressource
+                  {% elif action == 'edit_resource' %}
+                  <i class="bi bi-pencil me-2"></i>Modifier la ressource
+                  {% else %}
+                  <i class="bi bi-plus-circle me-2"></i>Créer le cours
+                  {% endif %}
+                </button>
+                {% endif %}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.course-create {
+  padding: 60px 0;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom: none;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.form-control, .form-select {
+  border: 2px solid #e9ecef;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+.btn-outline-secondary {
+  border: 2px solid #6c757d;
+  color: #6c757d;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  transform: translateY(-1px);
+}
+
+.form-text {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Validation côté client basique
+  const form = document.querySelector('form');
+
+  form.addEventListener('submit', function(e) {
+    const requiredFields = form.querySelectorAll('[required]');
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+      if (!field.value.trim()) {
+        field.style.borderColor = '#dc3545';
+        isValid = false;
+      } else {
+        field.style.borderColor = '#e9ecef';
+      }
+    });
+
+    if (!isValid) {
+      e.preventDefault();
+      alert('Veuillez remplir tous les champs obligatoires.');
+    }
+  });
+
+  // Reset border color on input
+  const inputs = form.querySelectorAll('input, select, textarea');
+  inputs.forEach(input => {
+    input.addEventListener('input', function() {
+      if (this.value.trim()) {
+        this.style.borderColor = '#e9ecef';
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

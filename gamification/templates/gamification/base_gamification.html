@@ -349,7 +349,7 @@
           <li><a href="#courses">Cours</a></li>
           <li><a href="{% url 'forum:index' %}" class="{% if 'forum' in request.path %}active{% endif %}"><i class="bi bi-chat-dots me-1"></i>Forum</a></li>
           <li><a href="{% url 'gamification:home' %}" class="{% if 'gamification' in request.path %}active{% endif %}"><i class="bi bi-trophy me-1"></i>Gamification</a></li>
-          <li><a href="#trainers">Formateurs</a></li>
+          <li><a href="{% url 'evaluation:list' %}">Évaluations</a></li>
           <li><a href="#events">Événements</a></li>
           <li><a href="#contact">Contact</a></li>
           {% if user.is_authenticated %}

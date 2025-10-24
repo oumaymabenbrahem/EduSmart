@@ -1,0 +1,86 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Administration des Évaluations{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-4">
+          <h4 class="card-title mb-0">Liste des Évaluations</h4>
+          <a href="{% url 'evaluation:create' %}" class="btn btn-primary">
+            <i class="mdi mdi-plus"></i> Nouvelle Évaluation
+          </a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Titre</th>
+                <th>Créé par</th>
+                <th>Date de création</th>
+                <th>Status</th>
+                <th>Période</th>
+                <th>Questions</th>
+                <th>Tentatives</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for evaluation in evaluations %}
+              <tr>
+                <td>{{ evaluation.title }}</td>
+                <td>{{ evaluation.created_by.get_full_name|default:evaluation.created_by.username }}</td>
+                <td>{{ evaluation.created_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                  {% if evaluation.is_published %}
+                    <span class="badge badge-success">Publié</span>
+                  {% else %}
+                    <span class="badge badge-warning">Brouillon</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if evaluation.start_date and evaluation.end_date %}
+                    Du {{ evaluation.start_date|date:"d/m/Y H:i" }}<br>
+                    au {{ evaluation.end_date|date:"d/m/Y H:i" }}
+                  {% else %}
+                    Non programmé
+                  {% endif %}
+                </td>
+                <td>{{ evaluation.questions_count }}</td>
+                <td>{{ evaluation.evaluationattempt_set.count }}</td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Actions
+                    </button>
+                    <div class="dropdown-menu">
+                      <a class="dropdown-item" href="{% url 'evaluation:admin_edit' evaluation.id %}"><i class="mdi mdi-pencil"></i> Modifier</a>
+                      <a class="dropdown-item" href="#"><i class="mdi mdi-chart-bar"></i> Statistiques</a>
+                      <a class="dropdown-item" href="{% url 'evaluation:admin_details' evaluation.id %}"><i class="mdi mdi-format-list-bulleted"></i> Détails</a>
+                      {% if evaluation.is_published %}
+                        <a class="dropdown-item text-warning" href="{% url 'evaluation:admin_toggle_publish' evaluation.id %}"><i class="mdi mdi-eye-off"></i> Dépublier</a>
+                      {% else %}
+                        <a class="dropdown-item text-success" href="{% url 'evaluation:admin_toggle_publish' evaluation.id %}"><i class="mdi mdi-eye"></i> Publier</a>
+                      {% endif %}
+                      <div class="dropdown-divider"></div>
+                      <a class="dropdown-item text-danger" href="{% url 'evaluation:admin_delete' evaluation.id %}"><i class="mdi mdi-delete"></i> Supprimer</a>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" class="text-center">Aucune évaluation n'a encore été créée</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Supprimer Évaluation{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-4">
+          <h4 class="card-title mb-0">Confirmer la suppression</h4>
+          <a href="{% url 'evaluation:admin_list' %}" class="btn btn-secondary">
+            <i class="mdi mdi-arrow-left"></i> Retour à la liste
+          </a>
+        </div>
+
+        <div class="alert alert-warning" role="alert">
+          <h4 class="alert-heading"><i class="mdi mdi-alert-circle-outline"></i> Attention !</h4>
+          <p>Vous êtes sur le point de supprimer définitivement l'évaluation suivante :</p>
+          <hr>
+          <p class="mb-0">
+            <strong>Titre :</strong> {{ evaluation.title }}<br>
+            <strong>Créé par :</strong> {{ evaluation.created_by.get_full_name|default:evaluation.created_by.username }}<br>
+            <strong>Date de création :</strong> {{ evaluation.created_at|date:"d/m/Y H:i" }}<br>
+            <strong>Questions :</strong> {{ evaluation.questions_count }}<br>
+            <strong>Tentatives :</strong> {{ evaluation.evaluationattempt_set.count }}
+          </p>
+        </div>
+
+        <p class="text-danger">
+          <strong>Cette action est irréversible.</strong> Toutes les données liées à cette évaluation (questions, réponses des étudiants, tentatives) seront supprimées.
+        </p>
+
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="mdi mdi-delete"></i> Confirmer la suppression
+          </button>
+          <a href="{% url 'evaluation:admin_list' %}" class="btn btn-secondary ml-2">
+            Annuler
+          </a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
