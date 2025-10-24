@@ -1,0 +1,53 @@
+{% extends 'base_front.html' %}
+{% load static %}
+
+{% block title %}Supprimer le sujet - Forum EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirmation de suppression</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle"></i> Cette action est irréversible !
+                    </div>
+                    
+                    <p class="mb-3">Êtes-vous sûr de vouloir supprimer le sujet suivant ?</p>
+                    
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ object.title }}</h5>
+                            <p class="card-text text-muted mb-0">
+                                <small>
+                                    Créé le {{ object.created_at|date:"d M Y à H:i" }} par {{ object.author.get_full_name|default:object.author.username }}
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+
+                    <p class="text-danger fw-bold">
+                        <i class="bi bi-exclamation-circle"></i> 
+                        Toutes les réponses et commentaires associés à ce sujet seront également supprimés.
+                    </p>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'forum:topic_detail' object.category.slug object.slug %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Oui, supprimer définitivement
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

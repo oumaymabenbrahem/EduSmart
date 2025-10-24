@@ -1,0 +1,424 @@
+{% extends 'base_front.html' %}
+{% load static %}
+
+{% block title %}{{ topic.title }} - Forum EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'forum:index' %}">Forum</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'forum:category_detail' topic.category.slug %}">{{ topic.category.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ topic.title|truncatewords:5 }}</li>
+        </ol>
+    </nav>
+
+    <!-- Topic Header -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h2 class="mb-2">{{ topic.title }}</h2>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        {% if topic.status == 'closed' %}
+                        <span class="badge bg-secondary">Fermé</span>
+                        {% elif topic.status == 'pinned' %}
+                        <span class="badge bg-warning text-dark">Épinglé</span>
+                        {% endif %}
+                        {% if topic.has_solution %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Résolu
+                        </span>
+                        {% endif %}
+                        {% for tag in topic.tags %}
+                        <span class="badge bg-light text-dark">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="text-muted small">
+                        <i class="bi bi-eye"></i> {{ topic.views }} vues • 
+                        <i class="bi bi-chat"></i> {{ topic.get_posts_count }} réponses •
+                        <i class="bi bi-clock"></i> Créé {{ topic.created_at|timesince }}
+                    </div>
+                    
+                    <!-- Indicateur de popularité -->
+                    {% if topic.popularity_data %}
+                    <div class="mt-2">
+                        <span class="badge bg-{% if topic.popularity_data.score >= 80 %}danger{% elif topic.popularity_data.score >= 60 %}success{% elif topic.popularity_data.score >= 40 %}info{% else %}secondary{% endif %} bg-opacity-75">
+                            {% if topic.popularity_data.score >= 80 %}🔥 Très populaire
+                            {% elif topic.popularity_data.score >= 60 %}⭐ Populaire
+                            {% elif topic.popularity_data.score >= 40 %}📊 Modéré
+                            {% else %}💤 Calme{% endif %}
+                        </span>
+                        {% if topic.popularity_data.is_trending %}
+                        <span class="badge bg-danger">
+                            <i class="bi bi-graph-up-arrow"></i> TRENDING
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                    {% if user.is_authenticated and user != topic.author %}
+                    <button class="btn btn-outline-danger btn-sm report-topic-btn" data-topic-id="{{ topic.id }}" title="Signaler ce sujet">
+                        <i class="bi bi-flag"></i>
+                    </button>
+                    {% endif %}
+                    {% if user == topic.author or user.is_staff %}
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% if user == topic.author %}
+                            <li><a class="dropdown-item" href="{% url 'forum:topic_update' topic.category.slug topic.slug %}">
+                                <i class="bi bi-pencil"></i> Modifier
+                            </a></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'forum:topic_delete' topic.category.slug topic.slug %}">
+                                <i class="bi bi-trash"></i> Supprimer
+                            </a></li>
+                            {% endif %}
+                            {% if user.is_staff %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="bi bi-pin-angle"></i> Épingler
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="bi bi-lock"></i> Fermer
+                            </a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Posts -->
+    <div id="posts-container">
+        {% for post in posts %}
+        <div class="card shadow-sm mb-3" id="post-{{ post.id }}">
+            <div class="card-body">
+                <!-- Post Author Info -->
+                <div class="d-flex align-items-start mb-3">
+                    <img src="{% if post.author.profile_picture %}{{ post.author.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                         alt="{{ post.author.get_full_name }}" 
+                         class="rounded-circle me-3" 
+                         width="50" 
+                         height="50">
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-0">{{ post.author.get_full_name|default:post.author.username }}</h6>
+                                <small class="text-muted">
+                                    {{ post.created_at|date:"d M Y à H:i" }}
+                                    {% if post.updated_at != post.created_at %}
+                                    <span class="ms-1">(modifié)</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if post.is_solution %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Solution
+                                </span>
+                                {% elif user.is_authenticated and forloop.first == False %}
+                                    {% if user == topic.author or user.is_staff %}
+                                    <a href="{% url 'forum:mark_solution' post.id %}" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-check-circle"></i> Marquer comme solution
+                                    </a>
+                                    {% endif %}
+                                {% endif %}
+                                {% if user.is_authenticated %}
+                                    {% if user == post.author or user.is_staff %}
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="{% url 'forum:post_edit' post.id %}">
+                                                <i class="bi bi-pencil"></i> Modifier
+                                            </a></li>
+                                            <li><a class="dropdown-item text-danger" href="{% url 'forum:post_delete' post.id %}">
+                                                <i class="bi bi-trash"></i> Supprimer
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Post Content -->
+                <div class="post-content mb-3">
+                    {{ post.content|safe }}
+                </div>
+
+                <!-- Post Actions -->
+                <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-sm btn-outline-primary like-btn" data-post-id="{{ post.id }}">
+                            <i class="bi {% if user in post.likes.all %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                            <span class="like-count">{{ post.likes.count }}</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary toggle-comments" data-post-id="{{ post.id }}">
+                            <i class="bi bi-chat"></i> {{ post.active_comments_count }} commentaire{{ post.active_comments_count|pluralize }}
+                        </button>
+                        {% if user.is_authenticated %}
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleCommentForm({{ post.id }})">
+                            <i class="bi bi-reply"></i> Répondre
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% if user.is_authenticated and user != post.author %}
+                    <button class="btn btn-sm btn-outline-danger report-btn" data-post-id="{{ post.id }}">
+                        <i class="bi bi-flag"></i> Signaler
+                    </button>
+                    {% endif %}
+                </div>
+
+                <!-- Comment Form -->
+                {% if user.is_authenticated %}
+                <div id="comment-form-{{ post.id }}" class="mt-3 d-none">
+                    <form class="comment-form" data-post-id="{{ post.id }}">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            <textarea class="form-control" name="content" rows="2" placeholder="Votre commentaire..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary">Envoyer</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleCommentForm({{ post.id }})">Annuler</button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- Comments -->
+                <div id="comments-{{ post.id }}" class="mt-3 d-none">
+                    <div class="comments-list">
+                        {% for comment in post.comments.all %}
+                        {% if comment.is_active %}
+                        <div class="d-flex align-items-start mb-2 ps-3 border-start border-primary">
+                            <img src="{% if comment.author.profile_picture %}{{ comment.author.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                                 alt="{{ comment.author.get_full_name }}" 
+                                 class="rounded-circle me-2" 
+                                 width="30" 
+                                 height="30">
+                            <div class="flex-grow-1">
+                                <div class="bg-light rounded p-2">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <small class="fw-bold">{{ comment.author.get_full_name|default:comment.author.username }}</small>
+                                        {% if user.is_authenticated %}
+                                            {% if user == comment.author or user.is_staff %}
+                                            <a href="{% url 'forum:comment_delete' comment.id %}" class="text-danger" title="Supprimer">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    <p class="mb-0 small">{{ comment.content }}</p>
+                                </div>
+                                <small class="text-muted">{{ comment.created_at|timesince }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if posts.has_other_pages %}
+    <nav aria-label="Posts pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if posts.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ posts.previous_page_number }}">Précédent</a>
+            </li>
+            {% endif %}
+
+            {% for num in posts.paginator.page_range %}
+                {% if posts.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if posts.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ posts.next_page_number }}">Suivant</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Add Post Form -->
+    {% if user.is_authenticated and topic.status == 'open' %}
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Répondre au sujet</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ post_form.as_p }}
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-send"></i> Envoyer la réponse
+                </button>
+            </form>
+        </div>
+    </div>
+    {% elif not user.is_authenticated %}
+    <div class="alert alert-info mt-4">
+        <i class="bi bi-info-circle"></i> Vous devez être <a href="{% url 'accounts:login' %}">connecté</a> pour répondre.
+    </div>
+    {% elif topic.status == 'closed' %}
+    <div class="alert alert-warning mt-4">
+        <i class="bi bi-lock"></i> Ce sujet est fermé. Vous ne pouvez plus y répondre.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Signalement -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="reportModalLabel">
+                    <i class="bi bi-flag-fill"></i> Signaler un contenu
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'forum:report_content' %}" id="reportForm">
+                {% csrf_token %}
+                <input type="hidden" name="content_type" id="report_content_type" value="post">
+                <input type="hidden" name="content_id" id="report_content_id" value="">
+                <input type="hidden" name="return_url" value="{{ request.path }}">
+                
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="report_reason" class="form-label">Raison du signalement <span class="text-danger">*</span></label>
+                        <select class="form-select" name="reason" id="report_reason" required>
+                            <option value="">Choisissez une raison...</option>
+                            <option value="spam">Spam</option>
+                            <option value="offensive">Contenu offensant</option>
+                            <option value="inappropriate">Contenu inapproprié</option>
+                            <option value="other">Autre</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="report_description" class="form-label">Description (optionnel)</label>
+                        <textarea class="form-control" name="description" id="report_description" rows="4" placeholder="Décrivez le problème..."></textarea>
+                    </div>
+                    <div class="alert alert-info small mb-0">
+                        <i class="bi bi-info-circle"></i> Votre signalement sera examiné par l'équipe de modération.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-flag"></i> Envoyer le signalement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCommentForm(postId) {
+    const form = document.getElementById(`comment-form-${postId}`);
+    form.classList.toggle('d-none');
+}
+
+// Toggle comments visibility
+document.querySelectorAll('.toggle-comments').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        const comments = document.getElementById(`comments-${postId}`);
+        comments.classList.toggle('d-none');
+    });
+});
+
+// Like button
+document.querySelectorAll('.like-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        fetch(`/forum/post/${postId}/like/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            this.querySelector('.like-count').textContent = data.likes_count;
+            const icon = this.querySelector('i');
+            if (data.liked) {
+                icon.classList.remove('bi-heart');
+                icon.classList.add('bi-heart-fill');
+            } else {
+                icon.classList.remove('bi-heart-fill');
+                icon.classList.add('bi-heart');
+            }
+        });
+    });
+});
+
+// Comment form submission
+document.querySelectorAll('.comment-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const postId = this.dataset.postId;
+        const formData = new FormData(this);
+        
+        fetch(`/forum/post/${postId}/comment/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    });
+});
+
+// Report button
+document.querySelectorAll('.report-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        document.getElementById('report_content_id').value = postId;
+        document.getElementById('report_content_type').value = 'post';
+        
+        // Ouvrir le modal Bootstrap
+        const modal = new bootstrap.Modal(document.getElementById('reportModal'));
+        modal.show();
+    });
+});
+
+// Report topic button
+document.querySelectorAll('.report-topic-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const topicId = this.dataset.topicId;
+        document.getElementById('report_content_id').value = topicId;
+        document.getElementById('report_content_type').value = 'topic';
+        
+        // Ouvrir le modal Bootstrap
+        const modal = new bootstrap.Modal(document.getElementById('reportModal'));
+        modal.show();
+    });
+});
+</script>
+{% endblock %}

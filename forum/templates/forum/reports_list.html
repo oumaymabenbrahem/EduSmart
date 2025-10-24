@@ -1,0 +1,192 @@
+{% extends 'base_front.html' %}
+{% load static %}
+
+{% block title %}Gestion des Signalements - Forum EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-flag-fill text-danger"></i> Gestion des Signalements</h2>
+                <a href="{% url 'forum:index' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour au forum
+                </a>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center {% if status_filter == 'pending' %}border-warning{% endif %}">
+                        <div class="card-body">
+                            <h3 class="text-warning">{{ stats.pending }}</h3>
+                            <p class="mb-0">En attente</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center {% if status_filter == 'reviewed' %}border-info{% endif %}">
+                        <div class="card-body">
+                            <h3 class="text-info">{{ stats.reviewed }}</h3>
+                            <p class="mb-0">Examinés</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center {% if status_filter == 'resolved' %}border-success{% endif %}">
+                        <div class="card-body">
+                            <h3 class="text-success">{{ stats.resolved }}</h3>
+                            <p class="mb-0">Résolus</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center {% if status_filter == 'rejected' %}border-secondary{% endif %}">
+                        <div class="card-body">
+                            <h3 class="text-secondary">{{ stats.rejected }}</h3>
+                            <p class="mb-0">Rejetés</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <a href="?status=pending" class="btn btn-{% if status_filter == 'pending' %}warning{% else %}outline-warning{% endif %}">
+                            En attente
+                        </a>
+                        <a href="?status=reviewed" class="btn btn-{% if status_filter == 'reviewed' %}info{% else %}outline-info{% endif %}">
+                            Examinés
+                        </a>
+                        <a href="?status=resolved" class="btn btn-{% if status_filter == 'resolved' %}success{% else %}outline-success{% endif %}">
+                            Résolus
+                        </a>
+                        <a href="?status=rejected" class="btn btn-{% if status_filter == 'rejected' %}secondary{% else %}outline-secondary{% endif %}">
+                            Rejetés
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des signalements -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Signalements ({{ reports.paginator.count }})</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for report in reports %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge bg-{% if report.content_type == 'topic' %}primary{% elif report.content_type == 'post' %}success{% else %}info{% endif %} me-2">
+                                        {{ report.get_content_type_display }}
+                                    </span>
+                                    <span class="badge bg-{% if report.reason == 'spam' %}danger{% elif report.reason == 'offensive' %}warning{% else %}secondary{% endif %} me-2">
+                                        {{ report.get_reason_display }}
+                                    </span>
+                                    <small class="text-muted">
+                                        ID: #{{ report.content_id }}
+                                    </small>
+                                </div>
+                                
+                                <p class="mb-2">
+                                    <strong>Signalé par :</strong> {{ report.reporter.get_full_name|default:report.reporter.username }}
+                                    <span class="text-muted">• {{ report.created_at|timesince }}</span>
+                                </p>
+                                
+                                {% if report.description %}
+                                <p class="mb-2 text-muted small">
+                                    <i class="bi bi-chat-quote"></i> {{ report.description }}
+                                </p>
+                                {% endif %}
+                                
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {% if report.content_type == 'topic' %}
+                                        {% with topic=report.content_type|add:report.content_id %}
+                                        <a href="#" class="btn btn-outline-primary btn-sm" title="Voir le contenu">
+                                            <i class="bi bi-eye"></i> Voir
+                                        </a>
+                                        {% endwith %}
+                                    {% endif %}
+                                    
+                                    {% if report.status == 'pending' %}
+                                    <button class="btn btn-outline-success btn-sm" onclick="updateReportStatus({{ report.id }}, 'resolved')">
+                                        <i class="bi bi-check-circle"></i> Résoudre
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="updateReportStatus({{ report.id }}, 'rejected')">
+                                        <i class="bi bi-x-circle"></i> Rejeter
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="text-end">
+                                <span class="badge bg-{% if report.status == 'pending' %}warning{% elif report.status == 'resolved' %}success{% elif report.status == 'rejected' %}secondary{% else %}info{% endif %}">
+                                    {{ report.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3 mb-0">Aucun signalement dans cette catégorie.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if reports.has_other_pages %}
+            <nav aria-label="Reports pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if reports.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?status={{ status_filter }}&page={{ reports.previous_page_number }}">Précédent</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in reports.paginator.page_range %}
+                        {% if reports.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > reports.number|add:'-3' and num < reports.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?status={{ status_filter }}&page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if reports.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?status={{ status_filter }}&page={{ reports.next_page_number }}">Suivant</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info mt-4">
+    <h6><i class="bi bi-info-circle"></i> Règles de Modération Automatique</h6>
+    <ul class="mb-0">
+        <li><strong>3 signalements</strong> sur un contenu → Masquage automatique</li>
+        <li><strong>5 signalements</strong> sur les contenus d'un utilisateur → Compte suspendu</li>
+        <li>Les contenus masqués ne sont plus visibles mais peuvent être restaurés</li>
+    </ul>
+</div>
+
+<script>
+function updateReportStatus(reportId, newStatus) {
+    // Cette fonction nécessiterait une vue AJAX pour mettre à jour le statut
+    // Pour l'instant, on peut rediriger vers l'admin Django
+    window.location.href = `/admin/forum/report/${reportId}/change/`;
+}
+</script>
+{% endblock %}

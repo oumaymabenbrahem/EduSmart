@@ -1,0 +1,325 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Dashboard Catégories - Prédictions IA{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="row">
+        <div class="col-md-12 grid-margin">
+            <div class="row">
+                <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+                    <h3 class="font-weight-bold">🤖 Prédiction de Popularité des Catégories</h3>
+                    <h6 class="font-weight-normal mb-0">Analyse IA - {{ timestamp|date:"d/m/Y H:i" }}</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-danger">
+                <strong>❌ Erreur:</strong> {{ error }}
+                <br><small>Entraînez d'abord le modèle avec: <code>python manage.py train_category_popularity</code></small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statistiques Globales -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-9">
+                            <div class="d-flex align-items-center align-self-start">
+                                <h3 class="mb-0">{{ stats.total }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="icon icon-box-success">
+                                <span class="ti-folder text-success icon-item"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="text-muted font-weight-normal">Total Catégories</h6>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-9">
+                            <div class="d-flex align-items-center align-self-start">
+                                <h3 class="mb-0">{{ stats.very_popular }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="icon icon-box-danger">
+                                <span class="ti-fire text-danger icon-item"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="text-muted font-weight-normal">🔥 Très Populaires</h6>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-9">
+                            <div class="d-flex align-items-center align-self-start">
+                                <h3 class="mb-0">{{ stats.popular }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="icon icon-box-info">
+                                <span class="ti-star text-info icon-item"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="text-muted font-weight-normal">⭐ Populaires</h6>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-9">
+                            <div class="d-flex align-items-center align-self-start">
+                                <h3 class="mb-0">{{ trending|length }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="icon icon-box-warning">
+                                <span class="ti-trending-up text-warning icon-item"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="text-muted font-weight-normal">🚀 En Tendance</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Catégories en Tendance -->
+    {% if trending %}
+    <div class="row">
+        <div class="col-12 grid-margin">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">🚀 Catégories en Tendance (Momentum Positif)</h4>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Rang</th>
+                                    <th>Catégorie</th>
+                                    <th>Prédiction</th>
+                                    <th>Score Popularité</th>
+                                    <th>Momentum</th>
+                                    <th>Vues Récentes</th>
+                                    <th>Engagement</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cat in trending %}
+                                <tr>
+                                    <td><strong>#{{ forloop.counter }}</strong></td>
+                                    <td>
+                                        <strong>{{ cat.category_name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ cat.prediction_color }}">
+                                            {{ cat.prediction_emoji }} {{ cat.prediction_label }}
+                                        </span>
+                                        <small class="text-muted">({{ cat.confidence|floatformat:1 }}%)</small>
+                                    </td>
+                                    <td>{{ cat.popularity_score|floatformat:1 }}</td>
+                                    <td>
+                                        <span class="text-success">
+                                            <i class="ti-arrow-up"></i>
+                                            +{{ cat.features.momentum|floatformat:1 }}%
+                                        </span>
+                                    </td>
+                                    <td>{{ cat.features.recent_views }}</td>
+                                    <td>{{ cat.features.engagement_rate|floatformat:1 }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Toutes les Prédictions -->
+    <div class="row">
+        <div class="col-12 grid-margin">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">📊 Toutes les Catégories - Classement par Popularité</h4>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rang</th>
+                                    <th>Catégorie</th>
+                                    <th>Prédiction IA</th>
+                                    <th>Confiance</th>
+                                    <th>Topics</th>
+                                    <th>Vues Totales</th>
+                                    <th>Posts</th>
+                                    <th>Engagement</th>
+                                    <th>Momentum</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pred in predictions %}
+                                <tr>
+                                    <td>
+                                        <strong class="
+                                            {% if pred.rank == 1 %}text-warning
+                                            {% elif pred.rank == 2 %}text-secondary
+                                            {% elif pred.rank == 3 %}text-bronze
+                                            {% endif %}
+                                        ">
+                                            #{{ pred.rank }}
+                                            {% if pred.rank == 1 %}🥇
+                                            {% elif pred.rank == 2 %}🥈
+                                            {% elif pred.rank == 3 %}🥉
+                                            {% endif %}
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <strong>{{ pred.category_name }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ pred.prediction_color }} badge-pill">
+                                            {{ pred.prediction_emoji }} {{ pred.prediction_label }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-{{ pred.prediction_color }}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ pred.confidence }}%"
+                                                 aria-valuenow="{{ pred.confidence }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                {{ pred.confidence|floatformat:0 }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ pred.features.total_topics }}</td>
+                                    <td>{{ pred.features.total_views }}</td>
+                                    <td>{{ pred.features.total_posts }}</td>
+                                    <td>{{ pred.features.engagement_rate|floatformat:1 }}%</td>
+                                    <td>
+                                        {% if pred.features.momentum > 0 %}
+                                        <span class="text-success">
+                                            <i class="ti-arrow-up"></i> {{ pred.features.momentum|floatformat:1 }}%
+                                        </span>
+                                        {% elif pred.features.momentum < 0 %}
+                                        <span class="text-danger">
+                                            <i class="ti-arrow-down"></i> {{ pred.features.momentum|floatformat:1 }}%
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" 
+                                                onclick="viewDetails({{ pred.category_id }})">
+                                            <i class="ti-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommandations -->
+    {% if recommendations %}
+    <div class="row">
+        <div class="col-md-4 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">🔥 Plus Populaires</h4>
+                    <ul class="list-group">
+                        {% for cat in recommendations.very_popular %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{{ cat.category_name }}</strong>
+                            <span class="badge badge-danger badge-pill">
+                                {{ cat.popularity_score|floatformat:0 }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">📈 En Croissance</h4>
+                    <ul class="list-group">
+                        {% for cat in recommendations.growing %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{{ cat.category_name }}</strong>
+                            <span class="badge badge-success badge-pill">
+                                +{{ cat.features.growth_rate|floatformat:0 }}%
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">💬 Plus Actives</h4>
+                    <ul class="list-group">
+                        {% for cat in recommendations.most_active %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{{ cat.category_name }}</strong>
+                            <span class="badge badge-info badge-pill">
+                                {{ cat.features.recent_posts }} posts
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function viewDetails(categoryId) {
+    window.location.href = `/forum/category/${categoryId}/`;
+}
+</script>
+{% endblock %}

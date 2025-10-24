@@ -1,0 +1,58 @@
+{% extends 'base_front.html' %}
+{% load static %}
+
+{% block title %}Modifier la réponse - Forum EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'forum:index' %}">Forum</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'forum:category_detail' post.topic.category.slug %}">{{ post.topic.category.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'forum:topic_detail' post.topic.category.slug post.topic.slug %}">{{ post.topic.title|truncatewords:5 }}</a></li>
+                    <li class="breadcrumb-item active">Modifier la réponse</li>
+                </ol>
+            </nav>
+
+            <!-- Form Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Modifier votre réponse</h4>
+                </div>
+                <div class="card-body">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Erreur :</strong> Veuillez corriger les erreurs ci-dessous.
+                    </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_content" class="form-label fw-bold">Contenu <span class="text-danger">*</span></label>
+                            {{ form.content }}
+                            {% if form.content.errors %}
+                            <div class="text-danger small mt-1">{{ form.content.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">Vous pouvez utiliser le formatage Markdown.</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="{% url 'forum:topic_detail' post.topic.category.slug post.topic.slug %}#post-{{ post.id }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

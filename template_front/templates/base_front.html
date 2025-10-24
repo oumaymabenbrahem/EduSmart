@@ -46,6 +46,7 @@
           <li><a href="{% url 'template_front:index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">Accueil</a></li>
           <li><a href="#about">À propos</a></li>
           <li><a href="#courses">Cours</a></li>
+          <li><a href="{% url 'forum:index' %}" class="{% if 'forum' in request.path %}active{% endif %}"><i class="bi bi-chat-dots me-1"></i>Forum</a></li>
           <li><a href="#trainers">Formateurs</a></li>
           <li><a href="#events">Événements</a></li>
           <li><a href="#contact">Contact</a></li>

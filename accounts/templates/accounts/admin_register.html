@@ -1,0 +1,230 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Ajouter un utilisateur - Dashboard Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12 grid-margin">
+    <div class="row">
+      <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+        <h3 class="font-weight-bold">Ajouter un utilisateur</h3>
+        <h6 class="font-weight-normal mb-0">Créez un nouveau compte utilisateur</h6>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate id="registerForm">
+          {% csrf_token %}
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.first_name.id_for_label }}">Prénom *</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                  <div class="text-danger small mt-1">
+                    {% for error in form.first_name.errors %}
+                      <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.last_name.id_for_label }}">Nom *</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                  <div class="text-danger small mt-1">
+                    {% for error in form.last_name.errors %}
+                      <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Nom d'utilisateur *</label>
+                {{ form.username }}
+                <div id="usernameCheck" class="small mt-1"></div>
+                {% if form.username.errors %}
+                  <div class="text-danger small mt-1">
+                    {% for error in form.username.errors %}
+                      <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Email *</label>
+                {{ form.email }}
+                <div id="emailCheck" class="small mt-1"></div>
+                {% if form.email.errors %}
+                  <div class="text-danger small mt-1">
+                    {% for error in form.email.errors %}
+                      <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.user_type.id_for_label }}">Type d'utilisateur *</label>
+                {{ form.user_type }}
+                {% if form.user_type.errors %}
+                  <div class="text-danger small mt-1">
+                    {% for error in form.user_type.errors %}
+                      <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.phone_number.id_for_label }}">Téléphone</label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}
+                  <div class="text-danger small mt-1">
+                    {% for error in form.phone_number.errors %}
+                      <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.password1.id_for_label }}">Mot de passe *</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                  <div class="text-danger small mt-1">
+                    {% for error in form.password1.errors %}
+                      <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.password2.id_for_label }}">Confirmer le mot de passe *</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                  <div class="text-danger small mt-1">
+                    {% for error in form.password2.errors %}
+                      <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          
+          <div class="mt-4">
+            <button type="submit" class="btn btn-success mr-2">
+              <i class="ti-plus"></i> Créer le compte
+            </button>
+            <a href="{% url 'accounts:users_list' %}" class="btn btn-light">
+              <i class="ti-close"></i> Annuler
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Vérification AJAX du nom d'utilisateur
+  const usernameInput = document.getElementById('{{ form.username.id_for_label }}');
+  const usernameCheck = document.getElementById('usernameCheck');
+  
+  if (usernameInput) {
+    usernameInput.addEventListener('blur', function() {
+      const username = this.value.trim();
+      if (username.length >= 3) {
+        fetch(`/accounts/ajax/check-username/?username=${encodeURIComponent(username)}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.is_available) {
+              usernameCheck.innerHTML = '<i class="ti-check text-success"></i> Nom d\'utilisateur disponible';
+              usernameCheck.className = 'small mt-1 text-success';
+            } else {
+              usernameCheck.innerHTML = '<i class="ti-close text-danger"></i> Nom d\'utilisateur déjà pris';
+              usernameCheck.className = 'small mt-1 text-danger';
+            }
+          })
+          .catch(error => {
+            console.error('Erreur:', error);
+          });
+      } else {
+        usernameCheck.innerHTML = '';
+      }
+    });
+  }
+  
+  // Vérification AJAX de l'email
+  const emailInput = document.getElementById('{{ form.email.id_for_label }}');
+  const emailCheck = document.getElementById('emailCheck');
+  
+  if (emailInput) {
+    emailInput.addEventListener('blur', function() {
+      const email = this.value.trim();
+      if (email.includes('@')) {
+        fetch(`/accounts/ajax/check-email/?email=${encodeURIComponent(email)}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.is_available) {
+              emailCheck.innerHTML = '<i class="ti-check text-success"></i> Email disponible';
+              emailCheck.className = 'small mt-1 text-success';
+            } else {
+              emailCheck.innerHTML = '<i class="ti-close text-danger"></i> Email déjà utilisé';
+              emailCheck.className = 'small mt-1 text-danger';
+            }
+          })
+          .catch(error => {
+            console.error('Erreur:', error);
+          });
+      } else {
+        emailCheck.innerHTML = '';
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

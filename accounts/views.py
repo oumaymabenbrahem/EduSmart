@@ -22,7 +22,10 @@ User = get_user_model()
 
 def register_view(request):
     """Vue d'inscription des utilisateurs"""
-    if request.user.is_authenticated:
+    # Vérifier si c'est un admin qui ajoute un utilisateur
+    from_admin = request.user.is_authenticated and request.user.user_type == 'admin'
+    
+    if request.user.is_authenticated and not from_admin:
         return redirect('accounts:dashboard')
     
     if request.method == 'POST':
@@ -32,7 +35,11 @@ def register_view(request):
             username = form.cleaned_data.get('username')
             messages.success(request, f'Compte créé avec succès pour {username}!')
             
-            # Connexion automatique après inscription
+            # Si admin ajoute un utilisateur, rediriger vers la liste
+            if from_admin:
+                return redirect('accounts:users_list')
+            
+            # Connexion automatique après inscription (utilisateurs publics)
             user = authenticate(
                 username=form.cleaned_data['username'],
                 password=form.cleaned_data['password1']
@@ -43,12 +50,15 @@ def register_view(request):
                 if user.user_type == 'admin':
                     return redirect('template_back:dashboard')
                 else:
-                    return redirect('accounts:dashboard')
+                    # Rediriger vers la page d'accueil (index) pour étudiants et enseignants
+                    return redirect('template_front:index')
     else:
         form = CustomUserCreationForm()
     
-    # Utiliser le template front si on vient du site public
-    if 'from_admin' in request.GET:
+    # Utiliser le template admin si l'utilisateur est admin
+    if from_admin:
+        return render(request, 'accounts/admin_register.html', {'form': form})
+    elif 'from_admin' in request.GET:
         return render(request, 'accounts/register.html', {'form': form})
     else:
         return render(request, 'accounts/front_register.html', {'form': form})
@@ -57,7 +67,11 @@ def register_view(request):
 def login_view(request):
     """Vue de connexion des utilisateurs"""
     if request.user.is_authenticated:
-        return redirect('accounts:dashboard')
+        # Rediriger vers l'index si déjà connecté (sauf admin)
+        if request.user.user_type == 'admin':
+            return redirect('template_back:dashboard')
+        else:
+            return redirect('template_front:index')
     
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
@@ -67,7 +81,9 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                messages.success(request, f'Bienvenue {user.first_name}!')
+                # Afficher le prénom s'il existe, sinon le nom d'utilisateur
+                display_name = user.first_name if user.first_name else user.username
+                messages.success(request, f'Bienvenue {display_name} !')
                 
                 # Redirection conditionnelle selon le type d'utilisateur
                 next_url = request.GET.get('next')
@@ -75,7 +91,8 @@ def login_view(request):
                     if user.user_type == 'admin':
                         next_url = 'template_back:dashboard'
                     else:
-                        next_url = 'accounts:dashboard'
+                        # Rediriger vers la page d'accueil pour étudiants et enseignants
+                        next_url = 'template_front:index'
                 return redirect(next_url)
         else:
             messages.error(request, 'Nom d\'utilisateur ou mot de passe incorrect.')
@@ -115,18 +132,24 @@ def dashboard_view(request):
 def profile_view(request, pk=None):
     """Vue pour afficher le profil d'un utilisateur"""
     if pk:
-        user = get_object_or_404(User, pk=pk)
+        profile_user = get_object_or_404(User, pk=pk)
     else:
-        user = request.user
-    
-    # Utiliser le template admin si l'utilisateur est admin et regarde son propre profil
-    if not pk and request.user.user_type == 'admin':
-        return render(request, 'accounts/admin_profile.html', {'profile_user': user})
+        profile_user = request.user
     
     context = {
-        'profile_user': user,
-        'is_own_profile': user == request.user,
+        'profile_user': profile_user,
+        'is_own_profile': profile_user == request.user,
     }
+    
+    # Utiliser le template admin si l'utilisateur connecté est admin
+    if request.user.user_type == 'admin':
+        # Si c'est son propre profil sans pk spécifié
+        if not pk:
+            return render(request, 'accounts/admin_profile.html', context)
+        # Si c'est le profil d'un autre utilisateur
+        else:
+            return render(request, 'accounts/admin_profile_detail.html', context)
+    
     return render(request, 'accounts/profile.html', context)
 
 
@@ -142,6 +165,10 @@ def edit_profile_view(request):
     else:
         form = UserProfileForm(instance=request.user)
     
+    # Utiliser le template admin si l'utilisateur est admin
+    if request.user.user_type == 'admin':
+        return render(request, 'accounts/admin_edit_profile.html', {'form': form})
+    
     return render(request, 'accounts/edit_profile.html', {'form': form})
 
 
@@ -156,6 +183,10 @@ def change_password_view(request):
             return redirect('accounts:profile')
     else:
         form = PasswordChangeForm(request.user)
+    
+    # Utiliser le template admin si l'utilisateur est admin
+    if request.user.user_type == 'admin':
+        return render(request, 'accounts/admin_change_password.html', {'form': form})
     
     return render(request, 'accounts/change_password.html', {'form': form})
 

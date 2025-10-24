@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'accounts',
     'template_front',
     'template_back',
+    'forum',
 ]
 
 MIDDLEWARE = [
@@ -142,3 +143,22 @@ def get_redirect_url(user):
     if user.user_type == 'admin':
         return 'template_back:dashboard'
     return 'accounts:dashboard'
+
+# ============================================
+# CONFIGURATION IA - MODÉRATION DE CONTENU
+# ============================================
+
+# Google Perspective API pour la modération (100% GRATUIT)
+# Obtenez votre clé gratuite sur: https://developers.perspectiveapi.com/
+# Limite: 1,000,000 requêtes GRATUITES par jour (pas de carte bancaire!)
+PERSPECTIVE_API_KEY = 'AIzaSyDhXFfTR0JisG05NypPJTFFvX0MWGQ4UAY'
+
+# Seuil de modération (0.0 à 1.0)
+# 0.5 = permissif, 0.7 = modéré (recommandé), 0.9 = strict
+AI_MODERATION_THRESHOLD = 0.7
+
+# Activer la modération IA
+AI_MODERATION_ENABLED = False  # ⬅️ Activez après avoir mis votre clé API
+
+# Bloquer automatiquement le contenu inapproprié
+AI_AUTO_BLOCK = True  # False = avertir seulement, True = bloquer

@@ -1,0 +1,147 @@
+{% extends "base_front.html" %}
+{% load static %}
+
+{% block title %}Analyse de Popularité - {{ topic.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Topic Info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">{{ topic.title }}</h2>
+                    <p class="text-muted">
+                        <i class="bi bi-person"></i> {{ topic.author.username }} • 
+                        <i class="bi bi-folder"></i> {{ topic.category.name }} •
+                        <i class="bi bi-clock"></i> {{ topic.created_at|date:"d/m/Y H:i" }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Prédiction vs Réalité -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-graph-up"></i> Analyse de Performance</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-6 mb-3">
+                            <h5>👁️ Vues</h5>
+                            <div class="d-flex justify-content-around align-items-center">
+                                <div>
+                                    <p class="text-muted mb-0">Prévues</p>
+                                    <h3 class="text-info">{{ analysis.predicted_views }}</h3>
+                                </div>
+                                <div>
+                                    <i class="bi bi-arrow-right fs-2"></i>
+                                </div>
+                                <div>
+                                    <p class="text-muted mb-0">Réelles</p>
+                                    <h3 class="text-success">{{ analysis.actual_views }}</h3>
+                                </div>
+                            </div>
+                            <p class="mt-2">
+                                {% if analysis.views_difference > 0 %}
+                                    <span class="badge bg-success">+{{ analysis.views_difference }} vues</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ analysis.views_difference }} vues</span>
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <h5>💬 Réponses</h5>
+                            <div class="d-flex justify-content-around align-items-center">
+                                <div>
+                                    <p class="text-muted mb-0">Prévues</p>
+                                    <h3 class="text-info">{{ analysis.predicted_posts }}</h3>
+                                </div>
+                                <div>
+                                    <i class="bi bi-arrow-right fs-2"></i>
+                                </div>
+                                <div>
+                                    <p class="text-muted mb-0">Réelles</p>
+                                    <h3 class="text-success">{{ analysis.actual_posts }}</h3>
+                                </div>
+                            </div>
+                            <p class="mt-2">
+                                {% if analysis.posts_difference > 0 %}
+                                    <span class="badge bg-success">+{{ analysis.posts_difference }} posts</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ analysis.posts_difference }} posts</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="text-center">
+                        <h4>{{ analysis.performance }}</h4>
+                        <p class="text-muted">Créé il y a {{ analysis.created_days_ago }} jour(s)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Score de Popularité -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-star"></i> Score de Popularité</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h2 class="display-4">{{ prediction.popularity_score }}/100</h2>
+                        <p class="lead">{{ prediction.category }}</p>
+                        <p class="text-muted">Confiance: {{ prediction.confidence }}</p>
+                    </div>
+
+                    <!-- Barre de progression -->
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar 
+                            {% if prediction.popularity_score >= 80 %}bg-danger
+                            {% elif prediction.popularity_score >= 60 %}bg-success
+                            {% elif prediction.popularity_score >= 40 %}bg-info
+                            {% else %}bg-secondary{% endif %}"
+                            role="progressbar" 
+                            style="width: {{ prediction.popularity_score }}%"
+                            aria-valuenow="{{ prediction.popularity_score }}" 
+                            aria-valuemin="0" 
+                            aria-valuemax="100">
+                            {{ prediction.popularity_score }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommandations -->
+            {% if prediction.recommendations %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning">
+                    <h4 class="mb-0"><i class="bi bi-lightbulb"></i> Recommandations IA</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        {% for rec in prediction.recommendations %}
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success"></i> {{ rec }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="text-center">
+                <a href="{% url 'forum:topic_detail' topic.category.slug topic.slug %}" class="btn btn-primary">
+                    <i class="bi bi-arrow-left"></i> Retour au topic
+                </a>
+                <a href="{% url 'forum:my_topics' %}" class="btn btn-secondary">
+                    <i class="bi bi-list"></i> Mes topics
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
