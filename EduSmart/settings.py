@@ -94,6 +94,20 @@ DATABASES = {
 }
 
 
+# Cache configuration for performance optimization
+# https://docs.djangoproject.com/en/4.2/topics/cache/
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'edusmart-cache',
+        'TIMEOUT': 300,  # 5 minutes par défaut
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -171,3 +185,10 @@ AI_MODERATION_ENABLED = False  # ⬅️ Activez après avoir mis votre clé API
 
 # Bloquer automatiquement le contenu inapproprié
 AI_AUTO_BLOCK = True  # False = avertir seulement, True = bloquer
+
+# ============================================
+# CONFIGURATION FORUM - PERFORMANCE
+# ============================================
+
+# Activer la prédiction de popularité (coûteux en ressources)
+ENABLE_POPULARITY_PREDICTION = False  # ⬅️ Désactivé par défaut pour performance

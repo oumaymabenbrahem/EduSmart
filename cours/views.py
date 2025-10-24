@@ -12,15 +12,16 @@ from .forms import CourseForm, SimpleCourseForm, CourseModuleForm, CourseResourc
 @login_required
 def admin_course_list(request):
     """Vue administrative de la liste des cours"""
-    if not request.user.is_staff and request.user.user_type != 'teacher':
+    # Permettre l'accès aux administrateurs et enseignants
+    if not (request.user.is_staff or request.user.user_type == 'teacher' or request.user.user_type == 'admin'):
         messages.error(request, "Vous n'avez pas accès à cette page.")
-        return redirect('template_back:dashboard')
+        return redirect('accounts:dashboard')
 
     # Get all courses with related data and annotations
     courses = Course.objects.select_related('instructor', 'subject')\
         .annotate(
-            total_enrollments=Count('enrolled_students'),
-            average_rating=Avg('ratings__rating')
+            enrollments_count=Count('enrollments', distinct=True),
+            avg_rating=Avg('reviews__rating')
         ).prefetch_related('modules', 'resources')
 
     # Filtres
@@ -47,18 +48,13 @@ def admin_course_list(request):
     # Trier par date de création par défaut
     courses = courses.order_by('-created_at')
 
-    # Pagination avec 9 cours par page (3x3 grid)
-    paginator = Paginator(courses, 9)
+    # Pagination avec 10 cours par page
+    paginator = Paginator(courses, 10)
     page = request.GET.get('page')
     courses = paginator.get_page(page)
 
     # Liste des matières pour le filtre
     subjects = Subject.objects.filter(is_active=True)
-
-    # Calculate additional stats for display
-    for course in courses:
-        course.duration_hours = sum(module.duration for module in course.modules.all() if module.duration)
-        course.resource_count = course.resources.count()
 
     context = {
         'courses': courses,

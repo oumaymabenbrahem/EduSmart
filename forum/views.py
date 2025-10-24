@@ -10,45 +10,42 @@ from django.conf import settings
 from .models import Category, Topic, Post, Comment, Report
 from .forms import TopicForm, PostForm, CommentForm, ReportForm, SearchForm
 from .ai_moderation import verifier_contenu, get_message_refus
+from .utils import get_forum_statistics, get_categories_with_counts, get_recent_topics, invalidate_forum_cache
 
 
 def forum_index(request):
     """Page d'accueil du forum avec liste des catégories"""
-    categories = Category.objects.filter(is_active=True).annotate(
-        topics_count=Count('topics', filter=Q(topics__is_active=True)),
-        posts_count=Count('topics__posts', filter=Q(topics__is_active=True, topics__posts__is_active=True))
-    )
-    
-    # Derniers sujets actifs
-    recent_topics = Topic.objects.filter(is_active=True).select_related('author', 'category').annotate(
-        posts_count=Count('posts', filter=Q(posts__is_active=True))
-    ).order_by('-updated_at')[:5]
-    
-    # Statistiques
-    total_topics = Topic.objects.filter(is_active=True).count()
-    total_posts = Post.objects.filter(is_active=True).count()
+    # Utiliser le cache pour les données fréquemment accédées
+    categories = get_categories_with_counts()
+    recent_topics = get_recent_topics(limit=5)
+    stats = get_forum_statistics()
     
     context = {
         'categories': categories,
         'recent_topics': recent_topics,
-        'total_topics': total_topics,
-        'total_posts': total_posts,
+        'total_topics': stats['total_topics'],
+        'total_posts': stats['total_posts'],
     }
     return render(request, 'forum/index.html', context)
 
 
 def category_detail(request, slug):
     """Liste des sujets dans une catégorie"""
-    category = get_object_or_404(Category, slug=slug, is_active=True)
+    category = get_object_or_404(Category.objects.only('id', 'name', 'slug', 'description'), slug=slug, is_active=True)
+    
+    # Optimisation : seulement les champs nécessaires
     topics_list = Topic.objects.filter(
         category=category,
         is_active=True
-    ).select_related('author').annotate(
-        posts_count=Count('posts', filter=Q(posts__is_active=True))
+    ).select_related('author').only(
+        'id', 'title', 'slug', 'status', 'created_at', 'updated_at', 'views',
+        'author__username'
+    ).annotate(
+        posts_count=Count('posts', filter=Q(posts__is_active=True), distinct=True)
     ).order_by('-status', '-updated_at')
     
     # Pagination
-    paginator = Paginator(topics_list, 15)
+    paginator = Paginator(topics_list, 20)  # Augmenté de 15 à 20 pour moins de pages
     page_number = request.GET.get('page')
     topics = paginator.get_page(page_number)
     
@@ -61,19 +58,27 @@ def category_detail(request, slug):
 
 def topic_detail(request, category_slug, topic_slug):
     """Détail d'un sujet avec ses réponses"""
-    category = get_object_or_404(Category, slug=category_slug, is_active=True)
-    topic = get_object_or_404(Topic, slug=topic_slug, category=category, is_active=True)
+    category = get_object_or_404(
+        Category.objects.only('id', 'name', 'slug'), 
+        slug=category_slug, is_active=True
+    )
+    topic = get_object_or_404(
+        Topic.objects.select_related('author').only(
+            'id', 'title', 'slug', 'status', 'created_at', 'views', 'category_id',
+            'author__username'
+        ), 
+        slug=topic_slug, category=category, is_active=True
+    )
     
     # Incrémenter les vues
     topic.increment_views()
     
-    # Récupérer tous les posts avec leurs commentaires
-    posts_list = topic.posts.filter(is_active=True).select_related('author').prefetch_related(
-        'comments__author',
-        'likes'
-    ).order_by('created_at')
+    # Optimisation : récupérer seulement posts de la page actuelle avec prefetch limité
+    posts_list = topic.posts.filter(is_active=True).select_related('author').only(
+        'id', 'content', 'created_at', 'updated_at', 'author__username', 'topic_id'
+    )
     
-    # Pagination des posts
+    # Pagination d'abord pour limiter les données
     paginator = Paginator(posts_list, 10)
     page_number = request.GET.get('page')
     posts = paginator.get_page(page_number)
@@ -81,37 +86,29 @@ def topic_detail(request, category_slug, topic_slug):
     # Formulaire de réponse
     post_form = PostForm()
     
-    # === PRÉDICTION DE POPULARITÉ ===
-    try:
-        from .ai_popularity_predictor import get_predictor
-        predictor = get_predictor()
-        
-        # Analyser la performance du topic
-        analysis = predictor.analyze_topic_performance(topic.id)
-        
-        if 'error' not in analysis:
-            # Calculer le score de popularité
-            actual_views = analysis['actual_views']
-            predicted_views = max(1, analysis['predicted_views'])
+    # Popularité uniquement si nécessaire (peut être désactivé pour plus de performance)
+    topic.popularity_data = None
+    if getattr(settings, 'ENABLE_POPULARITY_PREDICTION', False):
+        try:
+            from .ai_popularity_predictor import get_predictor
+            predictor = get_predictor()
+            analysis = predictor.analyze_topic_performance(topic.id)
             
-            # Score basé sur les vues réelles
-            score = min(100, (actual_views / 10) + (topic.get_posts_count() * 5))
-            
-            # Déterminer si c'est trending (surperformance)
-            is_trending = actual_views > predicted_views * 1.5
-            
-            topic.popularity_data = {
-                'score': round(score, 1),
-                'is_trending': is_trending,
-                'predicted_views': predicted_views,
-                'actual_views': actual_views,
-                'performance': analysis.get('performance', '')
-            }
-        else:
-            topic.popularity_data = None
-    except Exception as e:
-        print(f"Erreur lors du calcul de popularité: {e}")
-        topic.popularity_data = None
+            if 'error' not in analysis:
+                actual_views = analysis['actual_views']
+                predicted_views = max(1, analysis['predicted_views'])
+                score = min(100, (actual_views / 10) + (topic.get_posts_count() * 5))
+                is_trending = actual_views > predicted_views * 1.5
+                
+                topic.popularity_data = {
+                    'score': round(score, 1),
+                    'is_trending': is_trending,
+                    'predicted_views': predicted_views,
+                    'actual_views': actual_views,
+                    'performance': analysis.get('performance', '')
+                }
+        except Exception as e:
+            print(f"Erreur lors du calcul de popularité: {e}")
     
     # Traiter la soumission d'une réponse
     if request.method == 'POST' and request.user.is_authenticated:
@@ -140,6 +137,10 @@ def topic_detail(request, category_slug, topic_slug):
                 post.topic = topic
                 post.author = request.user
                 post.save()
+                
+                # Invalider le cache du forum
+                invalidate_forum_cache()
+                
                 messages.success(request, '✅ Votre réponse a été publiée avec succès!')
                 return redirect('forum:topic_detail', category_slug=category.slug, topic_slug=topic.slug)
     
@@ -192,6 +193,9 @@ def topic_create(request, category_slug):
                 author=request.user,
                 content=form.cleaned_data['content']
             )
+            
+            # Invalider le cache du forum
+            invalidate_forum_cache()
             
             messages.success(request, '✅ Votre sujet a été créé avec succès!')
             return redirect('forum:topic_detail', category_slug=category.slug, topic_slug=topic.slug)

@@ -59,68 +59,8 @@
         </div>
     </div>
 
-    <!-- Top 3 Catégories les Plus Populaires (IA) -->
-    <div class="alert alert-warning border-warning mb-4" style="border-left: 5px solid #ffc107;">
-        <h4 class="alert-heading">
-            <i class="bi bi-star-fill text-warning me-2"></i>
-            🔥 Top 3 des Catégories les Plus Populaires (selon l'IA)
-        </h4>
-        <div class="row mt-3">
-            {% top_categories 3 as top_cats %}
-            {% for cat in top_cats %}
-            <div class="col-md-4">
-                <div class="card bg-light h-100">
-                    <div class="card-body text-center">
-                        <div class="display-1 mb-2">
-                            {% if forloop.counter == 1 %}🥇
-                            {% elif forloop.counter == 2 %}🥈
-                            {% elif forloop.counter == 3 %}🥉
-                            {% endif %}
-                        </div>
-                        <h5 class="card-title">{{ cat.category_name }}</h5>
-                        <div class="mb-2">
-                            <span class="badge badge-{{ cat.prediction_color }} fs-6">
-                                {{ cat.prediction_emoji }} {{ cat.prediction_label }}
-                            </span>
-                        </div>
-                        <p class="mb-1">
-                            <strong>Score:</strong> {{ cat.popularity_score|floatformat:0 }}/100
-                        </p>
-                        <p class="mb-0">
-                            <strong>Confiance:</strong> {{ cat.confidence|floatformat:0 }}%
-                        </p>
-                        <hr>
-                        <div class="d-flex justify-content-around small">
-                            <div>
-                                <i class="bi bi-chat-square-text"></i>
-                                {{ cat.features.total_topics }}
-                            </div>
-                            <div>
-                                <i class="bi bi-eye"></i>
-                                {{ cat.features.total_views }}
-                            </div>
-                            <div class="
-                                {% if cat.features.momentum > 0 %}text-success
-                                {% elif cat.features.momentum < 0 %}text-danger
-                                {% endif %}
-                            ">
-                                <i class="bi bi-graph-up-arrow"></i>
-                                {% if cat.features.momentum > 0 %}+{% endif %}{{ cat.features.momentum|floatformat:0 }}%
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div class="col-12">
-                <p class="mb-0 text-center">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Entraînez le modèle IA avec: <code>python manage.py train_category_popularity</code>
-                </p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
+    <!-- Top 3 Catégories les Plus Populaires (IA) - Section désactivée pour performance -->
+    <!-- Pour réactiver: décommentez la section dans le fichier template -->
 
     <!-- Catégories -->
     <h2 class="mb-4">Catégories</h2>
@@ -138,25 +78,12 @@
                                 <a href="{% url 'forum:category_detail' category.slug %}" class="text-decoration-none">
                                     {{ category.name }}
                                 </a>
-                                {% category_popularity_badge category %}
-                                {% category_trending_badge category %}
                             </h4>
                             <p class="text-muted small mb-2">{{ category.description }}</p>
-                            
-                            <div class="mb-3">
-                                <small class="text-muted">
-                                    <strong>Rang:</strong> {% category_rank category %} |
-                                    <strong>Score:</strong> {% category_popularity_score category %}/100 |
-                                    <strong>Momentum:</strong> {% category_momentum category %}
-                                </small>
-                            </div>
                             
                             <div class="d-flex gap-2 flex-wrap">
                                 <span class="badge bg-primary">
                                     <i class="bi bi-chat-square-text me-1"></i>{{ category.topics_count }} sujets
-                                </span>
-                                <span class="badge bg-success">
-                                    <i class="bi bi-chat-left-dots me-1"></i>{{ category.posts_count }} réponses
                                 </span>
                             </div>
                         </div>

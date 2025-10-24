@@ -1,0 +1,75 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+
+{% block title %}Supprimer une Catégorie - Admin{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="row">
+        <div class="col-lg-6 offset-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="mdi mdi-alert-circle text-danger" style="font-size: 4rem;"></i>
+                        <h4 class="card-title mt-3">Confirmer la suppression</h4>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="mdi mdi-alert"></i>
+                        <strong>Attention !</strong> Vous êtes sur le point de supprimer la catégorie suivante :
+                    </div>
+
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi {{ category.icon }} text-primary me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h5 class="mb-1">{{ category.name }}</h5>
+                                    <small class="text-muted">{{ category.description }}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="border-end">
+                                        <h6 class="text-muted small mb-1">Sujets</h6>
+                                        <span class="badge badge-primary badge-pill">
+                                            {{ category.topics.count }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <h6 class="text-muted small mb-1">Posts</h6>
+                                    <span class="badge badge-success badge-pill">
+                                        {{ category.topics.all.0.posts.count|default:0 }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if category.topics.count > 0 %}
+                    <div class="alert alert-danger">
+                        <i class="mdi mdi-alert-octagon"></i>
+                        <strong>Impact :</strong> Cette catégorie contient <strong>{{ category.topics.count }} sujet{{ category.topics.count|pluralize }}</strong>.
+                        La suppression entraînera également la suppression de tous les sujets et posts associés.
+                    </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'template_back:forum_categories_list' %}" class="btn btn-light btn-lg">
+                                <i class="mdi mdi-arrow-left"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="mdi mdi-delete"></i> Confirmer la suppression
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

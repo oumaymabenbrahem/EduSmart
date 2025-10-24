@@ -97,16 +97,16 @@
           </li>
           <li class="nav-item nav-profile dropdown">
             <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
-              {% if current_user.profile_picture %}
-                <img src="{{ current_user.profile_picture.url }}" alt="profile"/>
+              {% if request.user.profile_picture %}
+                <img src="{{ request.user.profile_picture.url }}" alt="profile"/>
               {% else %}
                 <img src="{% static 'images/faces/face28.jpg' %}" alt="profile"/>
               {% endif %}
             </a>
             <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
               <div class="dropdown-header text-center">
-                <strong>{{ current_user.full_name|default:current_user.username }}</strong>
-                <div class="small text-muted">{{ current_user.get_user_type_display }}</div>
+                <strong>{{ request.user.full_name|default:request.user.username }}</strong>
+                <div class="small text-muted">{{ request.user.get_user_type_display }}</div>
               </div>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{% url 'accounts:profile' %}">
@@ -370,6 +370,20 @@
               </ul>
             </div>
           </li>
+
+          <li class="nav-item">
+            <a class="nav-link {% if 'forum' in request.path and 'template_back' in request.resolver_match.namespace %}active{% endif %}" data-toggle="collapse" href="#forum-management" aria-expanded="{% if 'forum' in request.path and 'template_back' in request.resolver_match.namespace %}true{% else %}false{% endif %}" aria-controls="forum-management">
+              <i class="mdi mdi-forum menu-icon"></i>
+              <span class="menu-title">Gestion Forum</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse {% if 'forum' in request.path and 'template_back' in request.resolver_match.namespace %}show{% endif %}" id="forum-management">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link" href="{% url 'template_back:forum_categories_list' %}">Catégories du Forum</a></li>
+              </ul>
+            </div>
+          </li>
+
           <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
               <i class="icon-layout menu-icon"></i>
@@ -469,11 +483,12 @@
       <!-- partial -->
       <div class="main-panel">
         <div class="content-wrapper">
+          {% block content %}
           <div class="row">
             <div class="col-md-12 grid-margin">
               <div class="row">
                 <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                  <h3 class="font-weight-bold">Bienvenue {{ current_user.first_name|default:current_user.username }}</h3>
+                  <h3 class="font-weight-bold">Bienvenue {{ request.user.first_name|default:request.user.username }}</h3>
                   <h6 class="font-weight-normal mb-0">Tableau de bord administrateur EduSmart - <span class="text-primary">{{ total_users }} utilisateur{{ total_users|pluralize }} enregistré{{ total_users|pluralize }}</span></h6>
                 </div>
                 <div class="col-12 col-xl-4">
@@ -1283,6 +1298,7 @@
                 
               </div>
             </div>
+          {% endblock %}
         </div>
         <!-- content-wrapper ends -->
         <!-- partial:partials/_footer.html -->
@@ -1324,6 +1340,7 @@
   <script src="{% static 'js/dashboard.js' %}"></script>
   <script src="{% static 'js/Chart.roundedBarCharts.js' %}"></script>
   <!-- End custom js for this page-->
+  {% block extra_js %}{% endblock %}
 </body>
 
 </html>

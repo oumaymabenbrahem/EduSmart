@@ -57,9 +57,11 @@
                             <span class="badge bg-warning text-dark">Épinglé</span>
                             {% endif %}
                             
-                            {# Badge de popularité #}
+                            {% comment %}
+                            {# Badge de popularité - désactivé pour performance #}
                             {% popularity_badge topic %}
                             {% trending_badge topic %}
+                            {% endcomment %}
                         </div>
                         <p class="mb-2 text-muted small">{{ topic.content|truncatewords:20|striptags }}</p>
                         <div class="d-flex align-items-center text-muted small">

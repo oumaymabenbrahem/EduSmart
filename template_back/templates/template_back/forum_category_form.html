@@ -1,0 +1,162 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ action }} une Catégorie - Admin{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="card-title mb-0">
+                            <i class="mdi mdi-folder-{% if action == 'Créer' %}plus{% else %}edit{% endif %}"></i>
+                            {{ action }} une Catégorie
+                        </h4>
+                        <a href="{% url 'template_back:forum_categories_list' %}" class="btn btn-light btn-sm">
+                            <i class="mdi mdi-arrow-left"></i> Retour
+                        </a>
+                    </div>
+
+                    <form method="post" class="forms-sample">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }} <span class="text-danger">*</span></label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.order.id_for_label }}">{{ form.order.label }}</label>
+                                    {{ form.order }}
+                                    <small class="form-text text-muted">{{ form.order.help_text }}</small>
+                                    {% if form.order.errors %}
+                                    <div class="text-danger small mt-1">{{ form.order.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.slug.id_for_label }}">{{ form.slug.label }} <span class="text-danger">*</span></label>
+                            {{ form.slug }}
+                            <small class="form-text text-muted">{{ form.slug.help_text }}</small>
+                            {% if form.slug.errors %}
+                            <div class="text-danger small mt-1">{{ form.slug.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.icon.id_for_label }}">{{ form.icon.label }}</label>
+                            <div class="input-group">
+                                {{ form.icon }}
+                                <div class="input-group-append">
+                                    <span class="input-group-text">
+                                        <i class="bi {{ form.icon.value|default:'bi-chat-dots' }}"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">
+                                {{ form.icon.help_text }} - 
+                                <a href="https://icons.getbootstrap.com/" target="_blank">Voir les icônes Bootstrap</a>
+                            </small>
+                            {% if form.icon.errors %}
+                            <div class="text-danger small mt-1">{{ form.icon.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    {{ form.is_active.label }}
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">Les catégories inactives ne sont pas visibles sur le forum.</small>
+                            {% if form.is_active.errors %}
+                            <div class="text-danger small mt-1">{{ form.is_active.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'template_back:forum_categories_list' %}" class="btn btn-light">
+                                <i class="mdi mdi-close"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="mdi mdi-content-save"></i> {{ action }} la catégorie
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Aide -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="mdi mdi-help-circle text-info"></i> Aide
+                    </h5>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <strong>Nom :</strong> Le nom affiché de la catégorie (ex: "Python & Django")
+                        </li>
+                        <li class="mb-2">
+                            <strong>Slug :</strong> Identifiant unique pour l'URL (ex: "python-django")
+                        </li>
+                        <li class="mb-2">
+                            <strong>Ordre :</strong> Détermine l'ordre d'affichage (0 = premier)
+                        </li>
+                        <li class="mb-2">
+                            <strong>Icône :</strong> Classes Bootstrap Icons (ex: bi-code-slash, bi-chat-dots)
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Générer automatiquement le slug à partir du nom
+document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+    const slugInput = document.getElementById('{{ form.slug.id_for_label }}');
+    
+    if (nameInput && slugInput && !slugInput.value) {
+        nameInput.addEventListener('input', function() {
+            const slug = this.value
+                .toLowerCase()
+                .replace(/[àáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[ýÿ]/g, 'y')
+                .replace(/[ñ]/g, 'n')
+                .replace(/[ç]/g, 'c')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            slugInput.value = slug;
+        });
+    }
+});
+</script>
+{% endblock %}

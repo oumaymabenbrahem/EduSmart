@@ -1,0 +1,140 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestion des Catégories du Forum - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .action-buttons a {
+        margin: 0 2px;
+        white-space: nowrap;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="card-title mb-0">
+                            <i class="mdi mdi-folder-multiple"></i> Catégories du Forum
+                        </h4>
+                        <a href="{% url 'template_back:forum_category_create' %}" class="btn btn-primary btn-sm">
+                            <i class="mdi mdi-plus"></i> Nouvelle Catégorie
+                        </a>
+                    </div>
+
+                    {% if messages %}
+                    <div class="messages mb-3">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th width="50">Ordre</th>
+                                    <th width="60">Icône</th>
+                                    <th>Nom</th>
+                                    <th>Slug</th>
+                                    <th>Description</th>
+                                    <th width="100" class="text-center">Sujets</th>
+                                    <th width="100" class="text-center">Posts</th>
+                                    <th width="80" class="text-center">Statut</th>
+                                    <th width="350" class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories %}
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge badge-info">{{ category.order }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <i class="bi {{ category.icon }} text-primary" style="font-size: 1.5rem;"></i>
+                                    </td>
+                                    <td>
+                                        <strong>{{ category.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <code>{{ category.slug }}</code>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ category.description|truncatewords:10 }}</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-primary">{{ category.topics_count }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-success">{{ category.posts_count }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if category.is_active %}
+                                        <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center action-buttons">
+                                        <a href="{% url 'template_back:forum_category_edit' category.pk %}" 
+                                           class="btn btn-warning btn-sm btn-icon-text" 
+                                           title="Modifier">
+                                            <i class="mdi mdi-pencil btn-icon-prepend"></i> Modifier
+                                        </a>
+                                        <a href="{% url 'template_back:forum_category_toggle_active' category.pk %}" 
+                                           class="btn btn-{% if category.is_active %}inverse-info{% else %}success{% endif %} btn-sm btn-icon-text" 
+                                           title="{% if category.is_active %}Désactiver{% else %}Activer{% endif %}"
+                                           onclick="return confirm('Confirmer le changement de statut ?')">
+                                            <i class="mdi mdi-{% if category.is_active %}eye-off{% else %}eye{% endif %} btn-icon-prepend"></i>
+                                            {% if category.is_active %}Désactiver{% else %}Activer{% endif %}
+                                        </a>
+                                        <a href="{% url 'template_back:forum_category_delete' category.pk %}" 
+                                           class="btn btn-danger btn-sm btn-icon-text" 
+                                           title="Supprimer">
+                                            <i class="mdi mdi-delete btn-icon-prepend"></i> Supprimer
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center py-4">
+                                        <i class="mdi mdi-folder-open text-muted" style="font-size: 3rem;"></i>
+                                        <p class="text-muted mt-2">Aucune catégorie pour le moment.</p>
+                                        <a href="{% url 'template_back:forum_category_create' %}" class="btn btn-primary btn-sm">
+                                            <i class="mdi mdi-plus"></i> Créer la première catégorie
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if categories %}
+                    <div class="mt-3">
+                        <p class="text-muted small mb-0">
+                            <i class="mdi mdi-information"></i> 
+                            Total: {{ categories.count }} catégorie{{ categories.count|pluralize }}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

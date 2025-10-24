@@ -1,5 +1,54 @@
 from django import forms
-from .models import Topic, Post, Comment, Report
+from .models import Topic, Post, Comment, Report, Category
+
+
+class CategoryForm(forms.ModelForm):
+    """Formulaire de création/édition de catégorie du forum"""
+    
+    class Meta:
+        model = Category
+        fields = ['name', 'slug', 'description', 'icon', 'order', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nom de la catégorie',
+                'required': True
+            }),
+            'slug': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'slug-de-la-categorie',
+                'required': True
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Description de la catégorie...',
+            }),
+            'icon': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'bi-chat-dots (Bootstrap Icons)',
+            }),
+            'order': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+        }
+        labels = {
+            'name': 'Nom de la catégorie',
+            'slug': 'Slug (URL)',
+            'description': 'Description',
+            'icon': 'Icône Bootstrap',
+            'order': 'Ordre d\'affichage',
+            'is_active': 'Active',
+        }
+        help_texts = {
+            'slug': 'Utilisé dans l\'URL (ex: python-django)',
+            'icon': 'Classes d\'icônes Bootstrap Icons (ex: bi-chat-dots)',
+            'order': 'Ordre d\'affichage (0 = premier)',
+        }
 
 
 class TopicForm(forms.ModelForm):
