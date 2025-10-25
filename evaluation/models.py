@@ -126,3 +126,18 @@ class EvaluationAttempt(models.Model):
         self.total_score = sum(response.points_earned for response in responses)
         self.max_score = self.evaluation.total_points
         self.save()
+
+
+class AIFeedback(models.Model):
+    """Modèle pour stocker le feedback généré par IA pour les étudiants"""
+
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    evaluation = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
+    feedback_text = models.TextField()  # Texte du feedback généré par IA
+    generated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['student', 'evaluation']
+
+    def __str__(self):
+        return f"AI Feedback - {self.student.username} - {self.evaluation.title}"
