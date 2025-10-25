@@ -1,3 +1,4 @@
+from urllib import request
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -7,7 +8,85 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from .models import Subject, Course, CourseEnrollment, CourseReview, CourseModule, CourseResource
 from .forms import CourseForm, SimpleCourseForm, CourseModuleForm, CourseResourceForm
+from cours.ai.recommender import recommend_for_student
+import logging
+from django.views.decorators.clickjacking import xframe_options_exempt
 
+
+logger = logging.getLogger(__name__)
+
+def course_list(request):
+    courses = Course.objects.filter(status='published', is_active=True)
+
+    # 🔹 Filtres
+    subject_slug = request.GET.get('subject')
+    level = request.GET.get('level')
+    search = request.GET.get('search')
+
+    if subject_slug:
+        courses = courses.filter(subject__slug=subject_slug)
+    if level:
+        courses = courses.filter(level=level)
+    if search:
+        courses = courses.filter(
+            Q(title__icontains=search) |
+            Q(description__icontains=search) |
+            Q(subject__name__icontains=search)
+        )
+
+    # 🔹 Tri
+    sort_by = request.GET.get('sort', 'created_at')
+    if sort_by == 'views':
+        courses = courses.order_by('-total_views')
+    elif sort_by == 'enrollments':
+        courses = courses.order_by('-total_enrollments')
+    elif sort_by == 'rating':
+        courses = courses.order_by('-average_rating')
+    else:
+        courses = courses.order_by('-created_at')
+
+    # 🔹 Pagination
+    paginator = Paginator(courses, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # 🔹 Statistiques
+    subjects = Subject.objects.filter(is_active=True).annotate(
+        course_count=Count('courses', filter=Q(courses__status='published', courses__is_active=True))
+    )
+
+# 🔹 Recommandations
+    if request.user.is_authenticated:
+        student = request.user
+        all_recs = recommend_for_student(student, top_n=10)  # top_n plus grand pour compenser le filtrage
+
+        # 🔹 Filtrer uniquement les cours publiés
+        published_courses = Course.objects.filter(status='published', is_active=True)
+        published_courses_dict = {c.title: c for c in published_courses}
+
+        recommendations = []
+        for title, rating in all_recs:
+            course_obj = published_courses_dict.get(title)
+            if course_obj:
+                recommendations.append(course_obj)  # juste l'objet Course
+            if len(recommendations) >= 5:  # Limiter à top 5
+                break
+
+        # Debug
+        print("🔹 Recommandations générées :", [c.title for c in recommendations])
+        logger.info(f"Recommandations pour {student.username}: {[c.title for c in recommendations]}")
+
+        context = {
+            'page_obj': page_obj,
+            'subjects': subjects,
+            'current_subject': subject_slug,
+            'current_level': level,
+            'search_query': search,
+            'sort_by': sort_by,
+            'recommendations': recommendations,  # maintenant seulement des objets Course
+        }
+
+        return render(request, 'cours/course_list.html', context)
 
 @login_required
 def admin_course_list(request):
@@ -66,61 +145,6 @@ def admin_course_list(request):
     }
 
     return render(request, 'cours/admin_course_list.html', context)
-
-def course_list(request):
-    """Liste des cours avec filtres"""
-    courses = Course.objects.filter(status='published', is_active=True)
-
-    # Filtres
-    subject_slug = request.GET.get('subject')
-    level = request.GET.get('level')
-    search = request.GET.get('search')
-
-    if subject_slug:
-        courses = courses.filter(subject__slug=subject_slug)
-
-    if level:
-        courses = courses.filter(level=level)
-
-    if search:
-        courses = courses.filter(
-            Q(title__icontains=search) |
-            Q(description__icontains=search) |
-            Q(subject__name__icontains=search)
-        )
-
-    # Tri
-    sort_by = request.GET.get('sort', 'created_at')
-    if sort_by == 'views':
-        courses = courses.order_by('-total_views')
-    elif sort_by == 'enrollments':
-        courses = courses.order_by('-total_enrollments')
-    elif sort_by == 'rating':
-        courses = courses.order_by('-average_rating')
-    else:
-        courses = courses.order_by('-created_at')
-
-    # Pagination
-    paginator = Paginator(courses, 12)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    # Statistiques
-    subjects = Subject.objects.filter(is_active=True).annotate(
-        course_count=Count('courses', filter=Q(courses__status='published', courses__is_active=True))
-    )
-
-    context = {
-        'page_obj': page_obj,
-        'subjects': subjects,
-        'current_subject': subject_slug,
-        'current_level': level,
-        'search_query': search,
-        'sort_by': sort_by,
-    }
-
-    return render(request, 'cours/course_list.html', context)
-
 
 def subject_list(request):
     """Liste des matières"""
@@ -587,3 +611,56 @@ def course_delete(request, slug):
         return redirect('cours:admin_course_list')
 
     return redirect('cours:admin_course_list')
+
+import fitz  # PyMuPDF
+import requests
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.clickjacking import xframe_options_exempt
+from .models import CourseResource
+
+API_KEY = "3d2a402f3263ffb5ea7060f40e4aad913be4482a"
+NLP_URL = "https://api.nlpcloud.io/v1/bart-large-cnn/summarization"
+
+@xframe_options_exempt
+def view_pdf_resource(request, resource_id):
+    """Afficher un PDF et générer un résumé uniquement sur demande"""
+    resource = get_object_or_404(CourseResource, id=resource_id, is_active=True)
+    summary = None  # par défaut aucun résumé
+
+    if request.GET.get("summarize") == "true":
+        try:
+            if resource.file and resource.file.name.lower().endswith('.pdf'):
+                doc = fitz.open(resource.file.path)
+                full_text = "".join([page.get_text("text") for page in doc])
+                doc.close()
+
+                # Découper en chunks et limiter à 5
+                chunks = [full_text[i:i+2000] for i in range(0, len(full_text), 2000)]
+                headers = {"Authorization": f"Token {API_KEY}", "Content-Type": "application/json"}
+
+                summaries = []
+                for chunk in chunks[:5]:
+                    payload = {"text": chunk, "min_length": 100, "max_length": 300}
+                    resp = requests.post(NLP_URL, headers=headers, json=payload)
+                    if resp.status_code == 200:
+                        partial = resp.json().get("summary_text", "").strip()
+                        if partial:
+                            summaries.append(partial)
+
+                if summaries:
+                    joined = " ".join(summaries)
+                    payload = {"text": joined, "min_length": 200, "max_length": 500}
+                    resp = requests.post(NLP_URL, headers=headers, json=payload)
+                    if resp.status_code == 200:
+                        summary = resp.json().get("summary_text", joined)
+                    else:
+                        summary = joined
+                else:
+                    summary = "Résumé indisponible."
+            else:
+                summary = "Ce fichier n'est pas un PDF."
+        except Exception:
+            summary = "Résumé indisponible pour le moment."
+
+    context = {"resource": resource, "summary": summary}
+    return render(request, "cours/view_pdf.html", context)
