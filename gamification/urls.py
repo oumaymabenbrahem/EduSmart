@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import admin_views
+from . import room_views
 
 app_name = 'gamification'
 
@@ -38,4 +39,23 @@ urlpatterns = [
     path('admin/leaderboard-management/', admin_views.admin_leaderboard_management, name='admin_leaderboard_management'),
     path('admin/badge-management/', admin_views.admin_badge_management, name='admin_badge_management'),
     path('admin/analytics/', admin_views.admin_analytics, name='admin_analytics'),
+
+    # Rooms - Enseignant
+    path('teacher/rooms/', room_views.teacher_room_dashboard, name='teacher_room_dashboard'),
+    path('teacher/room/create/', room_views.create_room, name='create_room'),
+    path('teacher/room/create-ai/', room_views.create_room_with_ai_quiz, name='create_room_ai'),
+    path('teacher/room/<str:room_code>/', room_views.room_detail_teacher, name='room_detail_teacher'),
+    path('teacher/room/<str:room_code>/start/', room_views.start_room, name='start_room'),
+    path('teacher/room/<str:room_code>/end/', room_views.end_room, name='end_room'),
+    path('teacher/room/<str:room_code>/delete/', room_views.delete_room, name='delete_room'),
+
+    # Rooms - Étudiant
+    path('student/rooms/', room_views.student_room_list, name='student_room_list'),
+    path('student/room/join/', room_views.join_room, name='join_room'),
+    path('room/<str:room_code>/', room_views.room_detail_student, name='room_detail_student'),
+    path('room/<str:room_code>/start/', room_views.start_room_quiz, name='start_room_quiz'),
+    path('room/<str:room_code>/quiz/', room_views.take_room_quiz, name='take_room_quiz'),
+    path('room/<str:room_code>/submit/', room_views.submit_room_quiz, name='submit_room_quiz'),
+    path('room/<str:room_code>/result/', room_views.room_result, name='room_result'),
+    path('room/<str:room_code>/leaderboard/', room_views.room_leaderboard, name='room_leaderboard'),
 ]

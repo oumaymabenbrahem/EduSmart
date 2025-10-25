@@ -43,6 +43,43 @@
     </div>
 </div>
 
+<!-- Boutons d'accès rapide pour Enseignant et Étudiant -->
+{% if user.is_authenticated %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-lightning-fill me-2 text-success"></i>
+                Accès Rapide
+            </h3>
+            <div class="row">
+                <!-- Bouton pour les Enseignants -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gamification:teacher_room_dashboard' %}" class="btn btn-lg btn-primary w-100 py-4" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);">
+                        <div class="mb-2">
+                            <i class="bi bi-person-badge display-5"></i>
+                        </div>
+                        <h5 class="mb-1">👨‍🏫 Espace Enseignant</h5>
+                        <p class="mb-0 small">Créer une room et partager un code</p>
+                    </a>
+                </div>
+
+                <!-- Bouton pour les Étudiants -->
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'gamification:join_room' %}" class="btn btn-lg btn-success w-100 py-4" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
+                        <div class="mb-2">
+                            <i class="bi bi-people-fill display-5"></i>
+                        </div>
+                        <h5 class="mb-1">👨‍🎓 Rejoindre une Room</h5>
+                        <p class="mb-0 small">Entrez le code pour participer</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Sélection de matière -->
 <div class="row mb-4">
     <div class="col-12">

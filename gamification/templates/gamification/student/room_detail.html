@@ -1,0 +1,145 @@
+{% extends 'gamification/base_gamification.html' %}
+{% load static %}
+
+{% block title %}{{ room.title }} - EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h2>{{ room.title }}</h2>
+                    <p class="text-muted">{{ room.description }}</p>
+                </div>
+                <div>
+                    {% if room.status == 'waiting' %}
+                        <span class="badge bg-warning fs-6">En attente</span>
+                    {% elif room.status == 'active' %}
+                        <span class="badge bg-success fs-6">Active</span>
+                    {% elif room.status == 'completed' %}
+                        <span class="badge bg-secondary fs-6">Terminée</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations du Quiz -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Informations du Quiz</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Titre:</strong> {{ room.quiz.title }}</p>
+                    <p><strong>Sujet:</strong> {{ room.quiz.subject.name }}</p>
+                    <p><strong>Difficulté:</strong> {{ room.quiz.difficulty.name }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Questions:</strong> {{ room.quiz.questions.count }}</p>
+                    <p><strong>Durée:</strong> {{ room.get_time_limit }} minutes</p>
+                    <p><strong>Score de passage:</strong> {{ room.quiz.passing_score }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statut du participant -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Votre Statut</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>
+                        <strong>Statut:</strong>
+                        {% if participant.status == 'joined' %}
+                            <span class="badge bg-info">Rejoint</span>
+                        {% elif participant.status == 'in_progress' %}
+                            <span class="badge bg-warning">En cours</span>
+                        {% elif participant.status == 'completed' %}
+                            <span class="badge bg-success">Terminé</span>
+                        {% elif participant.status == 'abandoned' %}
+                            <span class="badge bg-danger">Abandonné</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Rejoint le:</strong> {{ participant.joined_at|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="col-md-6">
+                    {% if participant.started_at %}
+                        <p><strong>Commencé le:</strong> {{ participant.started_at|date:"d/m/Y H:i" }}</p>
+                    {% endif %}
+                    {% if participant.completed_at %}
+                        <p><strong>Terminé le:</strong> {{ participant.completed_at|date:"d/m/Y H:i" }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            {% if participant.status == 'joined' and room.status == 'active' %}
+                <a href="{% url 'gamification:start_room_quiz' room.room_code %}" class="btn btn-success btn-lg">
+                    <i class="bi bi-play-circle"></i> Commencer le Quiz
+                </a>
+            {% elif participant.status == 'in_progress' %}
+                <a href="{% url 'gamification:take_room_quiz' room.room_code %}" class="btn btn-warning btn-lg">
+                    <i class="bi bi-arrow-right-circle"></i> Continuer le Quiz
+                </a>
+            {% elif participant.status == 'completed' and result %}
+                <a href="{% url 'gamification:room_result' room.room_code %}" class="btn btn-success btn-lg">
+                    <i class="bi bi-bar-chart"></i> Voir mes Résultats
+                </a>
+            {% elif room.status == 'waiting' %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> En attente du démarrage de la room par l'enseignant...
+                </div>
+            {% elif room.status == 'completed' %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-circle"></i> Cette room est terminée.
+                </div>
+            {% endif %}
+            
+            <a href="{% url 'gamification:student_room_list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Résultats si disponibles -->
+    {% if result %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Vos Résultats</h5>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <h3>{{ result.grade }}</h3>
+                    <p class="text-muted">Grade</p>
+                </div>
+                <div class="col-md-3">
+                    <h3>{{ result.percentage|floatformat:1 }}%</h3>
+                    <p class="text-muted">Pourcentage</p>
+                </div>
+                <div class="col-md-3">
+                    <h3>{{ result.correct_answers }}/{{ result.total_questions }}</h3>
+                    <p class="text-muted">Réponses Correctes</p>
+                </div>
+                <div class="col-md-3">
+                    <h3>{{ result.get_time_taken_display }}</h3>
+                    <p class="text-muted">Temps Pris</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

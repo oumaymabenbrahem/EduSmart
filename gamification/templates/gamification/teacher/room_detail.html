@@ -1,0 +1,184 @@
+{% extends 'gamification/base_gamification.html' %}
+{% load static %}
+
+{% block title %}{{ room.title }} - EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h2>{{ room.title }}</h2>
+                    <p class="text-muted">{{ room.description }}</p>
+                </div>
+                <div>
+                    <span class="badge bg-dark fs-6 me-2">Code: {{ room.room_code }}</span>
+                    {% if room.status == 'waiting' %}
+                        <span class="badge bg-warning">En attente</span>
+                    {% elif room.status == 'active' %}
+                        <span class="badge bg-success">Active</span>
+                    {% elif room.status == 'completed' %}
+                        <span class="badge bg-secondary">Terminée</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Participants</h5>
+                    <h2>{{ room.total_participants }}</h2>
+                    {% if room.max_participants > 0 %}
+                        <small class="text-muted">/ {{ room.max_participants }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Terminés</h5>
+                    <h2>{{ completed_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">En cours</h5>
+                    <h2>{{ in_progress_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Score Moyen</h5>
+                    <h2>{{ room.average_score|floatformat:1 }}%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contrôles -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="btn-group" role="group">
+                {% if room.status == 'waiting' %}
+                    <a href="{% url 'gamification:start_room' room.room_code %}" class="btn btn-success">
+                        <i class="bi bi-play-circle"></i> Démarrer la Room
+                    </a>
+                {% elif room.status == 'active' %}
+                    <a href="{% url 'gamification:end_room' room.room_code %}" class="btn btn-warning">
+                        <i class="bi bi-stop-circle"></i> Terminer la Room
+                    </a>
+                {% endif %}
+                <a href="{% url 'gamification:teacher_room_dashboard' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations du Quiz -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Informations du Quiz</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Titre:</strong> {{ room.quiz.title }}</p>
+                    <p><strong>Sujet:</strong> {{ room.quiz.subject.name }}</p>
+                    <p><strong>Difficulté:</strong> {{ room.quiz.difficulty.name }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Questions:</strong> {{ room.quiz.questions.count }}</p>
+                    <p><strong>Durée:</strong> {{ room.get_time_limit }} minutes</p>
+                    <p><strong>Score de passage:</strong> {{ room.quiz.passing_score }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Résultats -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Résultats des Participants</h5>
+        </div>
+        <div class="card-body">
+            {% if results %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Étudiant</th>
+                                <th>Score</th>
+                                <th>Pourcentage</th>
+                                <th>Grade</th>
+                                <th>Temps</th>
+                                <th>Badges</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                            <tr>
+                                <td>
+                                    {% if result.rank == 1 %}
+                                        <i class="bi bi-trophy-fill" style="color: gold;"></i> 1er
+                                    {% elif result.rank == 2 %}
+                                        <i class="bi bi-trophy-fill" style="color: silver;"></i> 2e
+                                    {% elif result.rank == 3 %}
+                                        <i class="bi bi-trophy-fill" style="color: #cd7f32;"></i> 3e
+                                    {% else %}
+                                        {{ result.rank }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ result.participant.student.get_full_name|default:result.participant.student.username }}</td>
+                                <td>{{ result.score|floatformat:1 }} / {{ result.participant.room.quiz.points_available }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ result.percentage }}%;" 
+                                             aria-valuenow="{{ result.percentage }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            {{ result.percentage|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ result.grade }}</span>
+                                </td>
+                                <td>{{ result.get_time_taken_display }}</td>
+                                <td>
+                                    {% for badge in result.badges_earned.all %}
+                                        <span title="{{ badge.name }}" style="cursor: pointer;">
+                                            {{ badge.icon }}
+                                        </span>
+                                    {% empty %}
+                                        <span class="text-muted">-</span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">Aucun résultat pour le moment.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

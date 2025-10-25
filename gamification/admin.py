@@ -5,7 +5,8 @@ from django.utils.safestring import mark_safe
 
 from .models import (
     Subject, DifficultyLevel, Quiz, Question, QuizAttempt,
-    Badge, UserBadge, UserProfile, Leaderboard, Achievement, UserAchievement
+    Badge, UserBadge, UserProfile, Leaderboard, Achievement, UserAchievement,
+    QuizRoom, RoomParticipant, RoomResult
 )
 
 
@@ -180,3 +181,105 @@ class UserAchievementAdmin(admin.ModelAdmin):
     list_filter = ['earned_at']
     search_fields = ['user__username', 'achievement__name']
     readonly_fields = ['earned_at']
+
+
+class RoomParticipantInline(admin.TabularInline):
+    model = RoomParticipant
+    extra = 0
+    readonly_fields = ['student', 'status', 'joined_at', 'started_at', 'completed_at']
+    can_delete = False
+
+
+@admin.register(QuizRoom)
+class QuizRoomAdmin(admin.ModelAdmin):
+    list_display = ['title', 'room_code', 'teacher', 'quiz', 'status', 'total_participants', 'average_score', 'created_at']
+    list_filter = ['status', 'created_at', 'show_leaderboard', 'enable_badges']
+    search_fields = ['title', 'room_code', 'teacher__username', 'quiz__title']
+    readonly_fields = ['room_code', 'created_at', 'updated_at', 'actual_start', 'actual_end']
+    inlines = [RoomParticipantInline]
+
+    fieldsets = (
+        ('Informations générales', {
+            'fields': ('title', 'description', 'teacher', 'quiz', 'room_code')
+        }),
+        ('Configuration', {
+            'fields': ('max_participants', 'time_limit_override')
+        }),
+        ('Planification', {
+            'fields': ('scheduled_start', 'scheduled_end', 'actual_start', 'actual_end')
+        }),
+        ('Options', {
+            'fields': ('show_results_immediately', 'allow_review', 'show_leaderboard', 'enable_badges')
+        }),
+        ('Statut et statistiques', {
+            'fields': ('status', 'total_participants', 'completed_participants', 'average_score')
+        }),
+        ('Métadonnées', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # Editing an existing object
+            return self.readonly_fields + ('teacher', 'quiz')
+        return self.readonly_fields
+
+
+@admin.register(RoomParticipant)
+class RoomParticipantAdmin(admin.ModelAdmin):
+    list_display = ['student', 'room', 'status', 'joined_at', 'completed_at']
+    list_filter = ['status', 'joined_at', 'room__status']
+    search_fields = ['student__username', 'room__title', 'room__room_code']
+    readonly_fields = ['joined_at', 'started_at', 'completed_at']
+
+    fieldsets = (
+        ('Informations générales', {
+            'fields': ('room', 'student', 'status')
+        }),
+        ('Timing', {
+            'fields': ('joined_at', 'started_at', 'completed_at')
+        }),
+        ('Quiz', {
+            'fields': ('quiz_attempt',)
+        })
+    )
+
+
+@admin.register(RoomResult)
+class RoomResultAdmin(admin.ModelAdmin):
+    list_display = ['participant', 'grade', 'percentage', 'rank', 'correct_answers', 'total_questions', 'points_earned']
+    list_filter = ['grade', 'participant__room__title']
+    search_fields = ['participant__student__username', 'participant__room__title']
+    readonly_fields = ['created_at', 'updated_at']
+    filter_horizontal = ['badges_earned']
+
+    fieldsets = (
+        ('Participant', {
+            'fields': ('participant',)
+        }),
+        ('Scores', {
+            'fields': ('score', 'percentage', 'grade', 'rank')
+        }),
+        ('Statistiques', {
+            'fields': ('correct_answers', 'wrong_answers', 'skipped_answers', 'total_questions')
+        }),
+        ('Temps', {
+            'fields': ('time_taken', 'average_time_per_question')
+        }),
+        ('Récompenses', {
+            'fields': ('points_earned', 'experience_earned', 'badges_earned')
+        }),
+        ('Analyse', {
+            'fields': ('easy_correct', 'medium_correct', 'hard_correct'),
+            'classes': ('collapse',)
+        }),
+        ('Feedback', {
+            'fields': ('strengths', 'weaknesses', 'recommendations'),
+            'classes': ('collapse',)
+        }),
+        ('Métadonnées', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
