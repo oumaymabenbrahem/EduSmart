@@ -14,6 +14,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 
 
 logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 def course_list(request):
     courses = Course.objects.filter(status='published', is_active=True)
