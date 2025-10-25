@@ -12,6 +12,7 @@ urlpatterns = [
     path('student/', views.student_evaluations, name='student_list'),
     path('take/<int:evaluation_id>/', views.take_evaluation, name='take_evaluation'),
     path('results/<int:evaluation_id>/', views.evaluation_results, name='results'),
+    path('ai-feedback/<int:evaluation_id>/', views.generate_ai_feedback, name='ai_feedback'),
     
     # URLs pour l'administration
     path('admin/list/', views.admin_evaluations_list, name='admin_list'),

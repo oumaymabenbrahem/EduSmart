@@ -4,7 +4,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
 from .forms import EvaluationForm, QuestionFormSet
-from .models import Evaluation, StudentResponse, EvaluationAttempt
+from .ai_feedback_generator import generate_student_feedback
+from .models import Evaluation, StudentResponse, EvaluationAttempt, AIFeedback
 
 
 
@@ -348,4 +349,53 @@ def evaluation_results(request, evaluation_id):
         'attempt': attempt,
         'responses': responses,
         'title': f'Résultats : {evaluation.title}'
+    })
+
+
+@login_required
+def generate_ai_feedback(request, evaluation_id):
+    """Vue pour générer et afficher le feedback IA pour une évaluation"""
+    evaluation = get_object_or_404(Evaluation, id=evaluation_id)
+
+    try:
+        attempt = EvaluationAttempt.objects.get(
+            student=request.user,
+            evaluation=evaluation,
+            status='completed'
+        )
+    except EvaluationAttempt.DoesNotExist:
+        messages.error(request, "Vous n'avez pas encore terminé cette évaluation.")
+        return redirect('evaluation:student_list')
+
+    # Vérifier si le feedback IA existe déjà
+    ai_feedback, created = AIFeedback.objects.get_or_create(
+        student=request.user,
+        evaluation=evaluation,
+        defaults={'feedback_text': '', 'generated_at': timezone.now()}
+    )
+
+    if created or not ai_feedback.feedback_text:
+        # Générer le feedback si nouveau ou vide
+        try:
+            feedback_text = generate_student_feedback(attempt)
+            ai_feedback.feedback_text = feedback_text
+            ai_feedback.generated_at = timezone.now()
+            ai_feedback.save()
+            messages.success(request, "Feedback IA généré avec succès.")
+        except Exception as e:
+            messages.error(request, f"Erreur lors de la génération du feedback : {str(e)}")
+            return redirect('evaluation:results', evaluation_id=evaluation_id)
+
+    # Récupérer toutes les réponses de l'étudiant
+    responses = StudentResponse.objects.filter(
+        student=request.user,
+        evaluation=evaluation
+    ).select_related('question')
+
+    return render(request, 'evaluation/ai_feedback.html', {
+        'evaluation': evaluation,
+        'attempt': attempt,
+        'responses': responses,
+        'ai_feedback': ai_feedback,
+        'title': f'Feedback IA : {evaluation.title}'
     })
