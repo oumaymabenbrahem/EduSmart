@@ -1,0 +1,134 @@
+{% extends 'gamification/base_gamification.html' %}
+{% load static %}
+
+{% block title %}Créer une Room avec Quiz IA - EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bi-stars"></i> Créer une Room avec Quiz IA</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation">
+                        {% csrf_token %}
+
+                        <!-- Informations de la Room -->
+                        <h5 class="mb-3">Informations de la Room</h5>
+
+                        <div class="mb-3">
+                            <label for="room_title" class="form-label">Titre de la Room *</label>
+                            <input type="text" class="form-control" id="room_title" name="room_title" 
+                                   placeholder="Ex: Quiz Mathématiques - Chapitre 5" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="room_description" class="form-label">Description</label>
+                            <textarea class="form-control" id="room_description" name="room_description" 
+                                      rows="2" placeholder="Décrivez le contenu et les objectifs..."></textarea>
+                        </div>
+
+                        <hr>
+
+                        <!-- Paramètres du Quiz IA -->
+                        <h5 class="mb-3">Paramètres du Quiz IA</h5>
+
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Sujet *</label>
+                            <select class="form-select" id="subject" name="subject" required>
+                                <option value="">-- Sélectionnez un sujet --</option>
+                                {% for subject in subjects %}
+                                    <option value="{{ subject.name }}">{{ subject.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="difficulty" class="form-label">Niveau de difficulté *</label>
+                                <select class="form-select" id="difficulty" name="difficulty" required>
+                                    {% for level in difficulty_levels %}
+                                        <option value="{{ level.level }}" {% if level.level == 3 %}selected{% endif %}>
+                                            {{ level.name }} (Niveau {{ level.level }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="num_questions" class="form-label">Nombre de questions *</label>
+                                <input type="number" class="form-control" id="num_questions" name="num_questions" 
+                                       value="15" min="5" max="50" required>
+                                <small class="text-muted">Entre 5 et 50 questions</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="quiz_title" class="form-label">Titre du Quiz (optionnel)</label>
+                            <input type="text" class="form-control" id="quiz_title" name="quiz_title" 
+                                   placeholder="Laissez vide pour un titre auto-généré">
+                        </div>
+
+                        <hr>
+
+                        <!-- Configuration de la Room -->
+                        <h5 class="mb-3">Configuration de la Room</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="max_participants" class="form-label">Nombre max de participants</label>
+                                <input type="number" class="form-control" id="max_participants" 
+                                       name="max_participants" value="50" min="1">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="time_limit" class="form-label">Durée limite (minutes) *</label>
+                                <input type="number" class="form-control" id="time_limit" 
+                                       name="time_limit" value="30" min="5" required>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Boutons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-stars"></i> Générer et Créer la Room
+                            </button>
+                            <a href="{% url 'gamification:teacher_room_dashboard' %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info box -->
+            <div class="alert alert-success mt-4">
+                <h5><i class="bi bi-lightbulb"></i> Avantages du Quiz IA</h5>
+                <ul class="mb-0">
+                    <li><strong>Génération automatique :</strong> Créez des quiz en quelques secondes</li>
+                    <li><strong>Contenu riche :</strong> Questions variées et bien structurées</li>
+                    <li><strong>Adaptabilité :</strong> Choisissez le sujet, la difficulté et le nombre de questions</li>
+                    <li><strong>Gain de temps :</strong> Plus besoin de créer manuellement chaque question</li>
+                    <li><strong>Qualité garantie :</strong> Contenu généré par IA de haute qualité</li>
+                </ul>
+            </div>
+
+            <!-- Exemple -->
+            <div class="alert alert-info mt-3">
+                <h5><i class="bi bi-info-circle"></i> Exemple</h5>
+                <p class="mb-0">
+                    Sujet: <strong>Mathématiques</strong> | 
+                    Difficulté: <strong>Moyen</strong> | 
+                    Questions: <strong>20</strong> | 
+                    Durée: <strong>45 minutes</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -10,8 +10,9 @@ from django.core.paginator import Paginator
 import json
 
 from .models import (
-    Subject, DifficultyLevel, Quiz, Question, QuizAttempt, 
-    Badge, UserBadge, UserProfile, Leaderboard, Achievement, UserAchievement
+    Subject, DifficultyLevel, Quiz, Question, QuizAttempt,
+    Badge, UserBadge, UserProfile, Leaderboard, Achievement, UserAchievement,
+    QuizRoom, RoomParticipant, RoomResult
 )
 from .ai_quiz_generator import AIQuizGenerator, BadgeAwarder, LeaderboardManager
 

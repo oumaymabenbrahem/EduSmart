@@ -1,0 +1,208 @@
+{% extends 'gamification/base_gamification.html' %}
+{% load static %}
+
+{% block title %}Résultats - {{ room.title }} - EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="bi bi-bar-chart"></i> Résultats du Quiz</h2>
+            <p class="text-muted">{{ room.title }}</p>
+        </div>
+    </div>
+
+    <!-- Résultats principaux -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h1 style="color: #007bff;">{{ result.grade }}</h1>
+                    <p class="text-muted">Grade</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h1 style="color: #28a745;">{{ result.percentage|floatformat:1 }}%</h1>
+                    <p class="text-muted">Pourcentage</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h1 style="color: #ffc107;">{{ result.points_earned }}</h1>
+                    <p class="text-muted">Points Gagnés</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h1 style="color: #17a2b8;">{{ result.experience_earned }}</h1>
+                    <p class="text-muted">Expérience</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques détaillées -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Statistiques</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Réponses correctes:</strong> {{ result.correct_answers }} / {{ result.total_questions }}</p>
+                    <p><strong>Réponses incorrectes:</strong> {{ result.wrong_answers }}</p>
+                    <p><strong>Réponses sautées:</strong> {{ result.skipped_answers }}</p>
+                    <p><strong>Temps pris:</strong> {{ result.get_time_taken_display }}</p>
+                    <p><strong>Temps moyen par question:</strong> {{ result.average_time_per_question|floatformat:1 }}s</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Analyse par Difficulté</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Questions faciles correctes:</strong> {{ result.easy_correct }}</p>
+                    <p><strong>Questions moyennes correctes:</strong> {{ result.medium_correct }}</p>
+                    <p><strong>Questions difficiles correctes:</strong> {{ result.hard_correct }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Badges gagnés -->
+    {% if result.badges_earned.all %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-star"></i> Badges Gagnés</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for badge in result.badges_earned.all %}
+                <div class="col-md-3 mb-3 text-center">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">{{ badge.icon }}</div>
+                    <p><strong>{{ badge.name }}</strong></p>
+                    <small class="text-muted">{{ badge.description }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Classement -->
+    {% if leaderboard %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-trophy"></i> Classement</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Rang</th>
+                            <th>Étudiant</th>
+                            <th>Pourcentage</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lb_result in leaderboard %}
+                        <tr {% if lb_result.participant.student == participant.student %}class="table-primary"{% endif %}>
+                            <td>
+                                {% if lb_result.rank == 1 %}
+                                    <i class="bi bi-trophy-fill" style="color: gold;"></i> 1er
+                                {% elif lb_result.rank == 2 %}
+                                    <i class="bi bi-trophy-fill" style="color: silver;"></i> 2e
+                                {% elif lb_result.rank == 3 %}
+                                    <i class="bi bi-trophy-fill" style="color: #cd7f32;"></i> 3e
+                                {% else %}
+                                    {{ lb_result.rank }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if lb_result.participant.student == participant.student %}
+                                    <strong>{{ lb_result.participant.student.get_full_name|default:lb_result.participant.student.username }} (Vous)</strong>
+                                {% else %}
+                                    {{ lb_result.participant.student.get_full_name|default:lb_result.participant.student.username }}
+                                {% endif %}
+                            </td>
+                            <td>{{ lb_result.percentage|floatformat:1 }}%</td>
+                            <td><span class="badge bg-primary">{{ lb_result.grade }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <a href="{% url 'gamification:room_leaderboard' room.room_code %}" class="btn btn-sm btn-info">
+                <i class="bi bi-eye"></i> Voir le classement complet
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Détails des réponses -->
+    {% if quiz_details %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-question-circle"></i> Détails des Réponses</h5>
+        </div>
+        <div class="card-body">
+            {% for detail in quiz_details %}
+            <div class="mb-3 p-3 border rounded {% if detail.is_correct %}border-success bg-light-success{% else %}border-danger bg-light-danger{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6>{{ detail.question.question_text }}</h6>
+                        <p class="mb-0">
+                            <strong>Votre réponse:</strong> 
+                            {% if detail.user_answer %}
+                                {{ detail.user_answer }}
+                            {% else %}
+                                <span class="text-muted">Sautée</span>
+                            {% endif %}
+                        </p>
+                        {% if not detail.is_correct %}
+                        <p class="mb-0">
+                            <strong>Bonne réponse:</strong> {{ detail.question.correct_answer }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if detail.is_correct %}
+                            <i class="bi bi-check-circle-fill" style="color: green; font-size: 1.5rem;"></i>
+                        {% else %}
+                            <i class="bi bi-x-circle-fill" style="color: red; font-size: 1.5rem;"></i>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Boutons d'action -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <a href="{% url 'gamification:student_room_list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à mes Rooms
+            </a>
+            <a href="{% url 'gamification:select_quiz' %}" class="btn btn-primary">
+                <i class="bi bi-play-circle"></i> Faire un autre Quiz
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
