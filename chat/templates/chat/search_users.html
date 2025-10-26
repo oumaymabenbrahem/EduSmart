@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Rechercher des utilisateurs - Chat - EduSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+    }
+    
+    .search-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px 15px 0 0;
+        text-align: center;
+    }
+    
+    .search-box {
+        padding: 30px;
+        background: white;
+        border-radius: 0 0 15px 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .search-input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .search-input {
+        flex: 1;
+        padding: 15px 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 16px;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .search-btn {
+        padding: 15px 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .user-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .user-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border: 2px solid #f0f0f0;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    
+    .user-item:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+        transform: translateX(5px);
+    }
+    
+    .user-avatar {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 20px;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .user-info {
+        flex: 1;
+    }
+    
+    .user-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .user-username {
+        color: #666;
+        font-size: 14px;
+    }
+    
+    .user-role {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .user-role.teacher {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+    
+    .chat-btn {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: transform 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .chat-btn:hover {
+        transform: scale(1.05);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+    }
+    
+    .empty-state i {
+        font-size: 60px;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
+    
+    .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .back-link:hover {
+        color: #764ba2;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <a href="{% url 'chat:chat_home' %}" class="back-link">
+        <i class="fas fa-arrow-left me-2"></i>Retour à la messagerie
+    </a>
+    
+    <div class="search-header">
+        <h2><i class="fas fa-user-plus me-2"></i>Démarrer une conversation</h2>
+        <p class="mb-0">Trouvez un formateur ou un étudiant pour échanger</p>
+    </div>
+    
+    <div class="search-box">
+        <form method="get" action="{% url 'chat:search_users' %}">
+            <div class="search-input-group">
+                <input 
+                    type="text" 
+                    name="q" 
+                    class="search-input" 
+                    placeholder="🔍 Rechercher par nom, prénom ou nom d'utilisateur..."
+                    value="{{ query }}"
+                    id="search-input"
+                    autocomplete="off"
+                />
+                <button type="submit" class="search-btn">
+                    <i class="fas fa-search me-2"></i>Rechercher
+                </button>
+            </div>
+        </form>
+        
+        {% if users %}
+            <ul class="user-list" id="user-list">
+                {% for user in users %}
+                <li class="user-item">
+                    <div class="user-avatar">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">
+                            <span>{{ user.get_full_name|default:user.username }}</span>
+                            {% if user.is_staff %}
+                                <span class="user-role teacher">
+                                    <i class="fas fa-chalkboard-teacher me-1"></i>Formateur
+                                </span>
+                            {% else %}
+                                <span class="user-role">
+                                    <i class="fas fa-user-graduate me-1"></i>Étudiant
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="user-username">@{{ user.username }}</div>
+                    </div>
+                    <a href="{% url 'chat:start_conversation' user.id %}" class="chat-btn">
+                        <i class="fas fa-comments me-2"></i>Discuter
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users-slash"></i>
+                {% if query %}
+                    <p>Aucun utilisateur trouvé pour "{{ query }}"</p>
+                    <small>Essayez avec d'autres termes de recherche</small>
+                {% else %}
+                    <p>Commencez par rechercher un utilisateur</p>
+                    <small>Utilisez la barre de recherche ci-dessus</small>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Focus automatique sur la recherche
+    document.getElementById('search-input').focus();
+    
+    // Recherche en temps réel (optionnel)
+    let searchTimeout;
+    document.getElementById('search-input').addEventListener('input', function(e) {
+        clearTimeout(searchTimeout);
+        
+        const query = e.target.value.trim();
+        if (query.length < 2) return;
+        
+        searchTimeout = setTimeout(() => {
+            // On pourrait ajouter une recherche AJAX ici
+        }, 500);
+    });
+</script>
+{% endblock %}

@@ -20,11 +20,28 @@ def forum_index(request):
     recent_topics = get_recent_topics(limit=5)
     stats = get_forum_statistics()
     
+    # Récupérer les sujets populaires (basés sur le score de popularité et l'activité récente)
+    from datetime import timedelta
+    two_days_ago = timezone.now() - timedelta(days=2)
+    
+    popular_topics = Topic.objects.filter(
+        is_active=True,
+        created_at__gte=two_days_ago  # Sujets des 48 dernières heures
+    ).select_related('author', 'category').only(
+        'id', 'title', 'slug', 'views', 'popularity_score',
+        'category__slug', 'author__username'
+    ).annotate(
+        get_posts_count=Count('posts', filter=Q(posts__is_active=True), distinct=True)
+    ).filter(
+        Q(popularity_score__gt=0) | Q(views__gt=5)  # Au moins un score de popularité ou 5 vues
+    ).order_by('-popularity_score', '-views')[:3]  # Top 3 sujets
+    
     context = {
         'categories': categories,
         'recent_topics': recent_topics,
         'total_topics': stats['total_topics'],
         'total_posts': stats['total_posts'],
+        'popular_topics': popular_topics,
     }
     return render(request, 'forum/index.html', context)
 
@@ -49,9 +66,26 @@ def category_detail(request, slug):
     page_number = request.GET.get('page')
     topics = paginator.get_page(page_number)
     
+    # Récupérer les sujets populaires (basés sur le score de popularité et l'activité récente)
+    from datetime import timedelta
+    two_days_ago = timezone.now() - timedelta(days=2)
+    
+    popular_topics = Topic.objects.filter(
+        is_active=True,
+        created_at__gte=two_days_ago  # Sujets des 48 dernières heures
+    ).select_related('author', 'category').only(
+        'id', 'title', 'slug', 'views', 'popularity_score',
+        'category__slug', 'author__username'
+    ).annotate(
+        get_posts_count=Count('posts', filter=Q(posts__is_active=True), distinct=True)
+    ).filter(
+        Q(popularity_score__gt=0) | Q(views__gt=5)  # Au moins un score de popularité ou 5 vues
+    ).order_by('-popularity_score', '-views')[:3]  # Top 3 sujets
+    
     context = {
         'category': category,
         'topics': topics,
+        'popular_topics': popular_topics,
     }
     return render(request, 'forum/category_detail.html', context)
 
@@ -363,6 +397,53 @@ def comment_create(request, post_pk):
                     'author_picture': comment.author.profile_picture.url if comment.author.profile_picture else None,
                     'content': comment.content,
                     'created_at': comment.created_at.strftime('%d/%m/%Y %H:%M'),
+                }
+            })
+        
+        return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+@login_required
+def comment_edit(request, pk):
+    """Modifier un commentaire (AJAX)"""
+    if request.method == 'POST':
+        comment = get_object_or_404(Comment, pk=pk)
+        
+        # Vérifier les permissions
+        if request.user != comment.author and not request.user.is_staff:
+            return JsonResponse({
+                'success': False,
+                'error': 'Vous n\'avez pas la permission de modifier ce commentaire.'
+            }, status=403)
+        
+        form = CommentForm(request.POST, instance=comment)
+        
+        if form.is_valid():
+            # === MODÉRATION (IA ou fallback local) ===
+            contenu = form.cleaned_data['content']
+            moderation_result = verifier_contenu(contenu)
+
+            if not moderation_result['accepte'] and getattr(settings, 'AI_AUTO_BLOCK', True):
+                message_erreur = get_message_refus(moderation_result.get('categories', []))
+                return JsonResponse({
+                    'success': False,
+                    'error': 'ai_blocked',
+                    'message': message_erreur
+                }, status=400)
+            
+            # === MISE À JOUR DU COMMENTAIRE ===
+            comment = form.save(commit=False)
+            comment.updated_at = timezone.now()
+            comment.save()
+            
+            return JsonResponse({
+                'success': True,
+                'comment': {
+                    'id': comment.id,
+                    'content': comment.content,
+                    'updated_at': comment.updated_at.strftime('%d/%m/%Y %H:%M'),
                 }
             })
         

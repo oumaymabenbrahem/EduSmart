@@ -1,0 +1,53 @@
+{% load static %}
+
+<!-- Widget: Topics Populaires -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h5 class="mb-0">
+            <i class="bi bi-fire"></i> 🔥 Populaires maintenant
+        </h5>
+    </div>
+    <div class="list-group list-group-flush">
+        {% if popular_topics %}
+            {% for topic in popular_topics %}
+            <a href="{% url 'forum:topic_detail' topic.category.slug topic.slug %}" 
+               class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="badge bg-danger me-2">#{{ forloop.counter }}</span>
+                            <h6 class="mb-0 small fw-bold">{{ topic.title|truncatewords:10 }}</h6>
+                        </div>
+                        <div class="d-flex align-items-center text-muted" style="font-size: 0.8rem;">
+                            <span class="me-2">
+                                <i class="bi bi-eye"></i> {{ topic.views }}
+                            </span>
+                            <span class="me-2">
+                                <i class="bi bi-chat"></i> {{ topic.get_posts_count }}
+                            </span>
+                            {% if topic.popularity_score > 0 %}
+                            <span class="me-2">
+                                <i class="bi bi-graph-up"></i> {{ topic.popularity_score|floatformat:1 }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <i class="bi bi-chevron-right text-muted"></i>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="list-group-item text-center text-muted py-4">
+                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                <p class="mb-0 mt-2">Aucun sujet populaire pour le moment</p>
+            </div>
+        {% endif %}
+    </div>
+    {% if popular_topics %}
+    <div class="card-footer bg-light text-center">
+        <small class="text-muted">
+            <i class="bi bi-info-circle"></i> Basé sur l'activité des dernières 48h
+        </small>
+    </div>
+    {% endif %}
+</div>

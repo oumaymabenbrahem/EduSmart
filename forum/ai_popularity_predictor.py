@@ -609,3 +609,156 @@ def get_trending_topics(limit: int = 10) -> list:
     trending.sort(key=lambda x: x['score'], reverse=True)
     
     return trending[:limit]
+
+
+# ========================================
+# SYSTÈME DE POPULARITÉ TEMPS RÉEL
+# ========================================
+
+class TopicPopularityPredictor:
+    """
+    Système de scoring de popularité en temps réel
+    Combine algorithme heuristique + ML
+    """
+    
+    MODEL_PATH = os.path.join(settings.BASE_DIR, 'ml_models', 'topic_popularity_model.pkl')
+    
+    def __init__(self):
+        self.model = None
+        self.load_model()
+    
+    def load_model(self):
+        """Charge le modèle ML s'il existe"""
+        if os.path.exists(self.MODEL_PATH):
+            try:
+                import joblib
+                self.model = joblib.load(self.MODEL_PATH)
+                print(f"✓ Modèle chargé: {self.MODEL_PATH}")
+            except Exception as e:
+                print(f"⚠ Erreur chargement modèle: {e}")
+                self.model = None
+    
+    def calculate_realtime_score(self, topic):
+        """Score basé sur l'activité actuelle"""
+        from .models import Post
+        
+        now = timezone.now()
+        age_hours = (now - topic.created_at).total_seconds() / 3600
+        age_factor = 1.0 / (age_hours + 1.0)
+        
+        # Métriques
+        posts_count = topic.posts.filter(is_active=True).count()
+        likes_count = sum([p.likes.count() for p in topic.posts.filter(is_active=True)])
+        
+        # Activité récente (24h)
+        last_24h = now - timedelta(hours=24)
+        recent_posts = topic.posts.filter(created_at__gte=last_24h, is_active=True).count()
+        
+        # Calcul du score
+        score = (
+            min(topic.views / 100.0, 5.0) +
+            min(posts_count / 10.0, 5.0) * 2.0 +
+            min(likes_count / 5.0, 5.0) * 1.5 +
+            min(recent_posts * 2.0, 10.0) * 3.0 +
+            (10.0 if topic.status == 'pinned' else 0.0)
+        )
+        
+        return score * age_factor * 2.0
+    
+    def extract_features(self, topic):
+        """Features pour ML"""
+        from .models import Post
+        
+        now = timezone.now()
+        age_hours = (now - topic.created_at).total_seconds() / 3600
+        
+        posts_count = topic.posts.filter(is_active=True).count()
+        likes_count = sum([p.likes.count() for p in topic.posts.filter(is_active=True)])
+        
+        # Activité temporelle
+        h6 = now - timedelta(hours=6)
+        h24 = now - timedelta(hours=24)
+        h48 = now - timedelta(hours=48)
+        
+        return {
+            'topic_age_hours': age_hours,
+            'hours_since_update': (now - topic.updated_at).total_seconds() / 3600,
+            'views': topic.views,
+            'posts_count': posts_count,
+            'likes_count': likes_count,
+            'posts_last_6h': topic.posts.filter(created_at__gte=h6, is_active=True).count(),
+            'posts_last_24h': topic.posts.filter(created_at__gte=h24, is_active=True).count(),
+            'posts_last_48h': topic.posts.filter(created_at__gte=h48, is_active=True).count(),
+            'posts_per_hour': posts_count / max(age_hours, 1.0),
+            'author_reputation': topic.author.topics.count() + topic.author.posts.count(),
+            'category_size': topic.category.topics.filter(is_active=True).count(),
+            'is_pinned': 1 if topic.status == 'pinned' else 0,
+            'has_solution': 1 if topic.posts.filter(is_solution=True).exists() else 0,
+        }
+    
+    def predict_ml_score(self, topic):
+        """Prédiction ML si modèle disponible"""
+        if not self.model:
+            return 0.0
+        
+        try:
+            import pandas as pd
+            features = self.extract_features(topic)
+            df = pd.DataFrame([features])
+            
+            if hasattr(self.model, 'feature_names_in_'):
+                df = df[self.model.feature_names_in_]
+            
+            return max(0.0, float(self.model.predict(df)[0]))
+        except:
+            return 0.0
+    
+    def calculate_popularity_score(self, topic):
+        """Score final combiné"""
+        realtime = self.calculate_realtime_score(topic)
+        ml = self.predict_ml_score(topic)
+        
+        if self.model:
+            return 0.3 * realtime + 0.7 * ml
+        return realtime
+    
+    def update_topic_popularity(self, topic):
+        """Met à jour le score du topic"""
+        score = self.calculate_popularity_score(topic)
+        topic.popularity_score = score
+        topic.popularity_refreshed_at = timezone.now()
+        topic.save(update_fields=['popularity_score', 'popularity_refreshed_at'])
+        return score
+
+
+def get_popular_topics(category=None, limit=5, hours=48):
+    """Retourne les topics populaires"""
+    from .models import Topic
+    
+    cutoff = timezone.now() - timedelta(hours=hours)
+    qs = Topic.objects.filter(
+        is_active=True,
+        created_at__gte=cutoff
+    ).select_related('author', 'category')
+    
+    if category:
+        qs = qs.filter(category=category)
+    
+    return qs.order_by('-popularity_score', '-views')[:limit]
+
+
+def get_trending_topics_simple(category=None, limit=5):
+    """Topics en tendance (activité récente)"""
+    from .models import Topic
+    
+    last_24h = timezone.now() - timedelta(hours=24)
+    qs = Topic.objects.filter(
+        is_active=True,
+        updated_at__gte=last_24h
+    ).select_related('author', 'category')
+    
+    if category:
+        qs = qs.filter(category=category)
+    
+    return qs.order_by('-popularity_score', '-updated_at')[:limit]
+

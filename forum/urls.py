@@ -31,6 +31,7 @@ urlpatterns = [
     
     # Commentaires
     path('post/<int:post_pk>/comment/', views.comment_create, name='comment_create'),
+    path('comment/<int:pk>/edit/', views.comment_edit, name='comment_edit'),
     path('comment/<int:pk>/delete/', views.comment_delete, name='comment_delete'),
     
     # Signalements

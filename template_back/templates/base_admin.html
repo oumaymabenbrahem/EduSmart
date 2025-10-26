@@ -143,6 +143,12 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link {% if 'chat' in request.path %}active{% endif %}" href="{% url 'chat:chat_home' %}">
+              <i class="icon-bubble menu-icon"></i>
+              <span class="menu-title">Messagerie</span>
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#user-management" aria-expanded="false" aria-controls="user-management">
               <i class="icon-head menu-icon"></i>
               <span class="menu-title">Gestion Utilisateurs</span>

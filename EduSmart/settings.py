@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'gamification',
     'evaluation',
     'cours',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -56,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'cours.middlewares.FrameAllowMiddleware',
+    'forum.middleware.PopularityRefreshMiddleware',  # Rafraîchissement auto des scores
 ]
 
 ROOT_URLCONF = 'EduSmart.urls'

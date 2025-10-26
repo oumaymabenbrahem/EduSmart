@@ -61,34 +61,44 @@
                 <div class="d-flex gap-2">
                     {% if user.is_authenticated and user != topic.author %}
                     <button class="btn btn-outline-danger btn-sm report-topic-btn" data-topic-id="{{ topic.id }}" title="Signaler ce sujet">
-                        <i class="bi bi-flag"></i>
+                        <i class="bi bi-flag"></i> Signaler
                     </button>
                     {% endif %}
-                    {% if user == topic.author or user.is_staff %}
-                    <div class="dropdown">
-                        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-three-dots-vertical"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            {% if user == topic.author %}
-                            <li><a class="dropdown-item" href="{% url 'forum:topic_update' topic.category.slug topic.slug %}">
-                                <i class="bi bi-pencil"></i> Modifier
-                            </a></li>
-                            <li><a class="dropdown-item text-danger" href="{% url 'forum:topic_delete' topic.category.slug topic.slug %}">
-                                <i class="bi bi-trash"></i> Supprimer
-                            </a></li>
-                            {% endif %}
-                            {% if user.is_staff %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">
-                                <i class="bi bi-pin-angle"></i> Épingler
-                            </a></li>
-                            <li><a class="dropdown-item" href="#">
-                                <i class="bi bi-lock"></i> Fermer
-                            </a></li>
-                            {% endif %}
-                        </ul>
-                    </div>
+                    
+                    {% if user.is_authenticated %}
+                        {% if user == topic.author or user.is_staff %}
+                        <!-- Boutons Modifier/Supprimer pour l'auteur -->
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'forum:topic_update' topic.category.slug topic.slug %}" 
+                               class="btn btn-outline-primary btn-sm" 
+                               title="Modifier ce sujet">
+                                <i class="bi bi-pencil-fill"></i> Modifier
+                            </a>
+                            <a href="{% url 'forum:topic_delete' topic.category.slug topic.slug %}" 
+                               class="btn btn-outline-danger btn-sm" 
+                               title="Supprimer ce sujet"
+                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce sujet ?')">
+                                <i class="bi bi-trash-fill"></i> Supprimer
+                            </a>
+                        </div>
+                        
+                        {% if user.is_staff %}
+                        <!-- Menu supplémentaire pour admin -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-gear-fill"></i> Admin
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="bi bi-pin-angle"></i> Épingler
+                                </a></li>
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="bi bi-lock"></i> Fermer
+                                </a></li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
@@ -199,7 +209,7 @@
                     <div class="comments-list">
                         {% for comment in post.comments.all %}
                         {% if comment.is_active %}
-                        <div class="d-flex align-items-start mb-2 ps-3 border-start border-primary">
+                        <div class="d-flex align-items-start mb-2 ps-3 border-start border-primary comment-item" data-comment-id="{{ comment.id }}">
                             <img src="{% if comment.author.profile_picture %}{{ comment.author.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
                                  alt="{{ comment.author.get_full_name }}" 
                                  class="rounded-circle me-2" 
@@ -211,13 +221,29 @@
                                         <small class="fw-bold">{{ comment.author.get_full_name|default:comment.author.username }}</small>
                                         {% if user.is_authenticated %}
                                             {% if user == comment.author or user.is_staff %}
-                                            <a href="{% url 'forum:comment_delete' comment.id %}" class="text-danger" title="Supprimer">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </a>
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-link btn-sm p-0 text-primary edit-comment-btn" 
+                                                        data-comment-id="{{ comment.id }}" 
+                                                        title="Modifier">
+                                                    <i class="bi bi-pencil-fill"></i>
+                                                </button>
+                                                <a href="{% url 'forum:comment_delete' comment.id %}" 
+                                                   class="btn btn-link btn-sm p-0 text-danger" 
+                                                   title="Supprimer"
+                                                   onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </a>
+                                            </div>
                                             {% endif %}
                                         {% endif %}
                                     </div>
-                                    <p class="mb-0 small">{{ comment.content }}</p>
+                                    <p class="mb-0 small comment-content">{{ comment.content }}</p>
+                                    <!-- Formulaire d'édition (caché par défaut) -->
+                                    <div class="comment-edit-form d-none mt-2">
+                                        <textarea class="form-control form-control-sm mb-2" rows="2">{{ comment.content }}</textarea>
+                                        <button class="btn btn-sm btn-primary save-comment-btn" data-comment-id="{{ comment.id }}">Enregistrer</button>
+                                        <button class="btn btn-sm btn-secondary cancel-edit-btn">Annuler</button>
+                                    </div>
                                 </div>
                                 <small class="text-muted">{{ comment.created_at|timesince }}</small>
                             </div>
@@ -378,6 +404,18 @@ document.querySelectorAll('.comment-form').forEach(form => {
         e.preventDefault();
         const postId = this.dataset.postId;
         const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const textarea = this.querySelector('textarea[name="content"]');
+        
+        // Vérifier que le commentaire n'est pas vide
+        if (!textarea.value.trim()) {
+            alert('Veuillez saisir un commentaire');
+            return;
+        }
+        
+        // Désactiver le bouton pendant l'envoi
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Envoi...';
         
         fetch(`/forum/post/${postId}/comment/`, {
             method: 'POST',
@@ -386,11 +424,26 @@ document.querySelectorAll('.comment-form').forEach(form => {
             },
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || data.error || 'Erreur lors de l\'envoi du commentaire');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
+                // Recharger la page pour afficher le nouveau commentaire
                 location.reload();
+            } else {
+                throw new Error(data.message || 'Erreur inconnue');
             }
+        })
+        .catch(error => {
+            alert(error.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Envoyer';
         });
     });
 });
@@ -418,6 +471,104 @@ document.querySelectorAll('.report-topic-btn').forEach(btn => {
         // Ouvrir le modal Bootstrap
         const modal = new bootstrap.Modal(document.getElementById('reportModal'));
         modal.show();
+    });
+});
+
+// Edit comment button
+document.querySelectorAll('.edit-comment-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const commentId = this.dataset.commentId;
+        const commentItem = document.querySelector(`.comment-item[data-comment-id="${commentId}"]`);
+        const contentDiv = commentItem.querySelector('.comment-content');
+        const editForm = commentItem.querySelector('.comment-edit-form');
+        
+        // Afficher le formulaire d'édition
+        contentDiv.classList.add('d-none');
+        editForm.classList.remove('d-none');
+        
+        // Focus sur le textarea
+        editForm.querySelector('textarea').focus();
+    });
+});
+
+// Cancel edit button
+document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const commentItem = this.closest('.comment-item');
+        const contentDiv = commentItem.querySelector('.comment-content');
+        const editForm = commentItem.querySelector('.comment-edit-form');
+        
+        // Masquer le formulaire d'édition
+        editForm.classList.add('d-none');
+        contentDiv.classList.remove('d-none');
+    });
+});
+
+// Save comment button
+document.querySelectorAll('.save-comment-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const commentId = this.dataset.commentId;
+        const commentItem = document.querySelector(`.comment-item[data-comment-id="${commentId}"]`);
+        const textarea = commentItem.querySelector('.comment-edit-form textarea');
+        const newContent = textarea.value.trim();
+        
+        if (!newContent) {
+            alert('Le commentaire ne peut pas être vide');
+            return;
+        }
+        
+        // Désactiver le bouton pendant l'envoi
+        btn.disabled = true;
+        btn.textContent = 'Enregistrement...';
+        
+        // Préparer les données
+        const formData = new FormData();
+        formData.append('content', newContent);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        fetch(`/forum/comment/${commentId}/edit/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || data.error || 'Erreur lors de la modification');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Mettre à jour le contenu affiché
+                const contentDiv = commentItem.querySelector('.comment-content');
+                contentDiv.textContent = data.comment.content;
+                
+                // Masquer le formulaire d'édition
+                const editForm = commentItem.querySelector('.comment-edit-form');
+                editForm.classList.add('d-none');
+                contentDiv.classList.remove('d-none');
+                
+                // Afficher un message de succès temporaire
+                const successMsg = document.createElement('small');
+                successMsg.className = 'text-success ms-2';
+                successMsg.textContent = '✓ Modifié';
+                contentDiv.parentElement.appendChild(successMsg);
+                setTimeout(() => successMsg.remove(), 3000);
+            } else {
+                throw new Error(data.error || 'Erreur inconnue');
+            }
+        })
+        .catch(error => {
+            alert(error.message);
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.textContent = 'Enregistrer';
+        });
     });
 });
 </script>

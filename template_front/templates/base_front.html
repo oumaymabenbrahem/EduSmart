@@ -47,6 +47,9 @@
           <li><a href="#about">À propos</a></li>
           <li><a href="{% url 'cours:course_list' %}" class="{% if 'cours' in request.path %}active{% endif %}"><i class="bi bi-book me-1"></i>Cours</a></li>
           <li><a href="{% url 'forum:index' %}" class="{% if 'forum' in request.path %}active{% endif %}"><i class="bi bi-chat-dots me-1"></i>Forum</a></li>
+          {% if user.is_authenticated %}
+          <li><a href="{% url 'chat:chat_home' %}" class="{% if 'chat' in request.path %}active{% endif %}"><i class="bi bi-chat-heart me-1"></i>Messagerie</a></li>
+          {% endif %}
           <li><a href="{% url 'gamification:home' %}" class="{% if 'gamification' in request.path %}active{% endif %}"><i class="bi bi-trophy me-1"></i>Gamification</a></li>
           <li><a href="{% url 'evaluation:list' %}" class="{% if 'evaluation' in request.path %}active{% endif %}">Évaluations</a></li>
           <li><a href="#contact">Contact</a></li>
@@ -55,6 +58,7 @@
             <ul>
               <li><a href="{% url 'accounts:dashboard' %}"><i class="bi bi-speedometer2 me-1"></i>Tableau de bord</a></li>
               <li><a href="{% url 'accounts:profile' %}"><i class="bi bi-person me-1"></i>Mon Profil</a></li>
+              <li><a href="{% url 'chat:chat_home' %}"><i class="bi bi-chat-heart me-1"></i>Messagerie</a></li>
               <li><a href="{% url 'gamification:my_profile' %}"><i class="bi bi-trophy me-1"></i>Gamification</a></li>
               <li><a href="{% url 'gamification:select_quiz' %}"><i class="bi bi-play-circle me-1"></i>Nouveau Quiz</a></li>
               <li><a href="{% url 'accounts:users_list' %}"><i class="bi bi-people me-1"></i>Utilisateurs</a></li>

@@ -28,6 +28,7 @@ urlpatterns = [
     path('gamification/', include('gamification.urls')),
     path('evaluation/', include('evaluation.urls')),
     path('cours/', include('cours.urls', namespace='cours')),
+    path('chat/', include('chat.urls')),
 ]
 
 # Servir les fichiers média en développement

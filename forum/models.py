@@ -53,6 +53,10 @@ class Topic(models.Model):
     # Tags pour faciliter la recherche
     tags = models.CharField(max_length=200, blank=True, help_text='Séparez les tags par des virgules')
     
+    # IA - Scores de popularité
+    popularity_score = models.FloatField(default=0.0, verbose_name='Score de popularité')
+    popularity_refreshed_at = models.DateTimeField(null=True, blank=True, verbose_name='Score actualisé le')
+    
     class Meta:
         verbose_name = 'Sujet'
         verbose_name_plural = 'Sujets'
