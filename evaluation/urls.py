@@ -7,13 +7,14 @@ urlpatterns = [
     path('', views.evaluations_list, name='list'),  # Page par défaut est maintenant la liste unifiée
     path('dashboard/', views.dashboard, name='dashboard'),
     path('create/', views.create_evaluation, name='create'),  # Création d'évaluation
+    path('delete/<int:evaluation_id>/', views.delete_evaluation, name='delete_evaluation'),  # Suppression d'évaluation
 
     # URLs pour les étudiants
     path('student/', views.student_evaluations, name='student_list'),
     path('take/<int:evaluation_id>/', views.take_evaluation, name='take_evaluation'),
     path('results/<int:evaluation_id>/', views.evaluation_results, name='results'),
     path('ai-feedback/<int:evaluation_id>/', views.generate_ai_feedback, name='ai_feedback'),
-    
+
     # URLs pour l'administration
     path('admin/list/', views.admin_evaluations_list, name='admin_list'),
     path('admin/details/<int:evaluation_id>/', views.admin_evaluation_details, name='admin_details'),

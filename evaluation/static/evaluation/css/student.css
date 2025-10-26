@@ -309,9 +309,16 @@ body {
     padding: 0 1.5rem 1.5rem;
 }
 
+.teacher-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-edit,
+.btn-delete,
 .btn-take-evaluation,
 .btn-results {
-    width: 100%;
+    flex: 1;
     padding: 0.875rem 1.5rem;
     border-radius: var(--border-radius);
     font-weight: 500;
@@ -324,6 +331,28 @@ body {
     transition: var(--transition);
     cursor: pointer;
     border: 2px solid transparent;
+}
+
+.btn-edit {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-edit:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border-color: #dc3545;
+}
+
+.btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, #c82333 0%, #a02622 100%);
 }
 
 .btn-take-evaluation {

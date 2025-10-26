@@ -129,10 +129,16 @@
 
                     <div class="card-actions">
                         {% if is_teacher %}
-                            <a href="{% url 'evaluation:create' %}?edit={{ data.evaluation.id }}" class="btn-edit">
-                                <i class="bi bi-pencil"></i>
-                                Modifier
-                            </a>
+                            <div class="teacher-actions">
+                                <a href="{% url 'evaluation:create' %}?edit={{ data.evaluation.id }}" class="btn-edit">
+                                    <i class="bi bi-pencil"></i>
+                                    Modifier
+                                </a>
+                                <button type="button" class="btn-delete" onclick="confirmDelete({{ data.evaluation.id }}, '{{ data.evaluation.title|escapejs }}')">
+                                    <i class="bi bi-trash"></i>
+                                    Supprimer
+                                </button>
+                            </div>
                         {% else %}
                             {% if data.is_completed %}
                                 <a href="{% url 'evaluation:results' data.evaluation.id %}" class="btn-results">
@@ -220,5 +226,58 @@ document.addEventListener('DOMContentLoaded', function() {
         circle.style.setProperty('--percentage', percentage);
     });
 });
+
+// Fonction de confirmation de suppression
+function confirmDelete(evaluationId, evaluationTitle) {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer l'évaluation "${evaluationTitle}" ? Cette action est irréversible.`)) {
+        // Créer un formulaire POST pour la suppression
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/evaluation/delete/${evaluationId}/`;
+
+        // Ajouter le token CSRF
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+
+        // Récupérer la valeur du token CSRF depuis les cookies ou le meta tag
+        const csrfToken = getCsrfToken();
+        if (csrfToken) {
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+
+        // Ajouter le formulaire au body et le soumettre
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Fonction pour récupérer le token CSRF
+function getCsrfToken() {
+    // Essayer de récupérer depuis les cookies
+    const cookieValue = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+
+    if (cookieValue) {
+        return cookieValue;
+    }
+
+    // Essayer de récupérer depuis un input caché dans le DOM
+    const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (csrfInput) {
+        return csrfInput.value;
+    }
+
+    // Essayer de récupérer depuis un meta tag
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    if (csrfMeta) {
+        return csrfMeta.getAttribute('content');
+    }
+
+    return null;
+}
 </script>
 {% endblock %}

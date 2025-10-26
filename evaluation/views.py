@@ -188,8 +188,8 @@ def take_evaluation(request, evaluation_id):
 def evaluations_list(request):
     """Vue unifiée pour afficher la liste des évaluations selon le rôle de l'utilisateur"""
     if request.user.user_type == 'teacher':
-        # Enseignants voient toutes les évaluations
-        evaluations = Evaluation.objects.all().order_by('-created_at')
+        # Enseignants voient seulement leurs propres évaluations
+        evaluations = Evaluation.objects.filter(created_by=request.user).order_by('-created_at')
         is_teacher = True
     else:
         # Étudiants voient seulement les évaluations disponibles
@@ -231,6 +231,22 @@ def evaluations_list(request):
         'is_teacher': is_teacher,
         'title': 'Évaluations'
     })
+
+
+@login_required
+@user_passes_test(_is_teacher)
+def delete_evaluation(request, evaluation_id):
+    """Vue pour supprimer une évaluation (enseignants uniquement)"""
+    evaluation = get_object_or_404(Evaluation, id=evaluation_id, created_by=request.user)
+
+    if request.method == 'POST':
+        evaluation_title = evaluation.title
+        evaluation.delete()
+        messages.success(request, f"L'évaluation '{evaluation_title}' a été supprimée avec succès.")
+        return redirect('evaluation:list')
+
+    # Si ce n'est pas une requête POST, rediriger vers la liste
+    return redirect('evaluation:list')
     
 @login_required
 @user_passes_test(lambda u: u.is_superuser or getattr(u, 'user_type', None) == 'admin')
