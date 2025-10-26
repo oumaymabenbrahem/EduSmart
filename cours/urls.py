@@ -40,4 +40,6 @@ urlpatterns = [
     # API pour AJAX (optionnel)
     path('api/enroll/<int:course_id>/', views.api_enroll_course, name='api_enroll_course'),
     path('api/progress/<int:enrollment_id>/', views.api_update_progress, name='api_update_progress'),
+    path('resource/view/<int:resource_id>/', views.view_pdf_resource, name='view_pdf_resource'),
+
 ]

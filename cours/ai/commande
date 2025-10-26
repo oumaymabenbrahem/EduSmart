@@ -1,0 +1,10 @@
+
+#pip install pandas
+#pip install scikit-learn
+#pip install kagglehub
+#pip install pandas scikit-learn kagglehub
+#pip install requests
+#pip install PyMuPDF
+
+#cd cours/ai/recommender.py
+#py recommender.py

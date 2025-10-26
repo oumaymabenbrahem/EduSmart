@@ -226,16 +226,22 @@
                 {% endif %}
               </div>
               <div class="resource-actions">
-                {% if resource.file %}
-                <a href="{{ resource.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                  <i class="bi bi-download me-1"></i>Télécharger
-                </a>
-                {% elif resource.url %}
-                <a href="{{ resource.url }}" target="_blank" class="btn btn-sm btn-outline-info">
-                  <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir le lien
-                </a>
-                {% endif %}
-              </div>
+              {% if resource.file %}
+              <a href="{{ resource.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-download me-1"></i>Télécharger
+              </a>
+            
+        <a href="{% url 'cours:view_pdf_resource' resource.id %}" class="btn btn-sm btn-outline-info">
+            <i class="bi bi-eye me-1"></i>Voir PDF
+        </a>
+         
+
+              {% elif resource.url %}
+              <a href="{{ resource.url }}" target="_blank" class="btn btn-sm btn-outline-info">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir le lien
+              </a>
+              {% endif %}
+            </div>
             </div>
             {% endfor %}
           </div>
