@@ -2,21 +2,40 @@ from django.urls import path
 from . import views
 from . import admin_views
 from . import room_views
+from . import innovative_views
 
 app_name = 'gamification'
 
 urlpatterns = [
     # Pages principales
     path('', views.gamification_home, name='home'),
+    path('dashboard/', innovative_views.gamification_dashboard, name='dashboard'),
     path('select-quiz/', views.select_quiz, name='select_quiz'),
     path('generate-quiz/', views.generate_quiz, name='generate_quiz'),
     
+    # Fonctionnalités innovantes
+    path('ai-generator/', innovative_views.ai_quiz_generator_view, name='ai_generator'),
+    path('learning-path/', innovative_views.personalized_learning_path, name='learning_path'),
+    path('achievements/', innovative_views.achievement_center, name='achievements'),
+    path('live-leaderboard/', innovative_views.live_leaderboard, name='live_leaderboard'),
+    path('progress/', innovative_views.progress_tracking, name='progress_tracking'),
+    path('social/', innovative_views.social_features, name='social_features'),
+    
+    # APIs AJAX
+    path('api/submit-answer/', innovative_views.submit_quiz_answer, name='api_submit_answer'),
+    path('api/user-stats/', innovative_views.get_user_stats_api, name='api_user_stats'),
+    path('api/create-room/', innovative_views.create_quiz_room, name='api_create_room'),
+    
     # Quiz
     path('quiz/<slug:slug>/', views.quiz_detail, name='quiz_detail'),
+    path('quiz/<slug:slug>/analytics/', innovative_views.quiz_analytics, name='quiz_analytics'),
     path('quiz/<slug:slug>/start/', views.start_quiz, name='start_quiz'),
     path('quiz/attempt/<int:attempt_id>/', views.take_quiz, name='take_quiz'),
     path('quiz/attempt/<int:attempt_id>/submit/', views.submit_quiz, name='submit_quiz'),
     path('quiz/results/<int:attempt_id>/', views.quiz_results, name='quiz_results'),
+    
+    # Rooms interactives
+    path('interactive-room/<str:room_code>/', innovative_views.interactive_quiz_room, name='interactive_room'),
     
     # Profil et statistiques
     path('my-profile/', views.my_profile, name='my_profile'),

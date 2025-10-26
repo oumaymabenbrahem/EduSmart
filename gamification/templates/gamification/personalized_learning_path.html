@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Parcours d'Apprentissage - EduSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .path-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    
+    .goal-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .weak-area-card {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: conic-gradient(#667eea 0deg, #667eea var(--progress), #e9ecef var(--progress), #e9ecef 360deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .progress-circle::before {
+        content: '';
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: white;
+        position: absolute;
+    }
+    
+    .progress-text {
+        position: relative;
+        z-index: 1;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .recommendation-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        transition: transform 0.2s ease;
+    }
+    
+    .recommendation-card:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="path-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="bi bi-map"></i>
+                    Votre Parcours d'Apprentissage
+                </h2>
+                <p class="mb-0">Plan personnalisé basé sur vos performances et objectifs</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="progress-circle" style="--progress: {{ user_profile.get_level_progress }}deg;">
+                    <div class="progress-text">{{ user_profile.get_level_progress|floatformat:0 }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Objectifs -->
+        <div class="col-lg-6">
+            <h4 class="mb-3">
+                <i class="bi bi-target text-primary"></i>
+                Objectifs
+            </h4>
+
+            <!-- Objectifs quotidiens -->
+            {% if daily_goals %}
+            <div class="goal-card">
+                <h6 class="text-primary mb-3">
+                    <i class="bi bi-calendar-day"></i>
+                    Objectifs du Jour
+                </h6>
+                <div class="row">
+                    <div class="col-4 text-center">
+                        <div class="h4 text-success">{{ daily_goals.quizzes }}</div>
+                        <small class="text-muted">Quiz</small>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="h4 text-warning">{{ daily_goals.points }}</div>
+                        <small class="text-muted">Points</small>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="h4 text-info">{{ daily_goals.time_minutes }}</div>
+                        <small class="text-muted">Minutes</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Objectifs hebdomadaires -->
+            {% if weekly_goals %}
+            <div class="goal-card">
+                <h6 class="text-primary mb-3">
+                    <i class="bi bi-calendar-week"></i>
+                    Objectifs de la Semaine
+                </h6>
+                <div class="row">
+                    <div class="col-4 text-center">
+                        <div class="h4 text-success">{{ weekly_goals.quizzes }}</div>
+                        <small class="text-muted">Quiz</small>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="h4 text-warning">{{ weekly_goals.new_subjects }}</div>
+                        <small class="text-muted">Nouvelles Matières</small>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="h4 text-info">{{ weekly_goals.perfect_scores }}</div>
+                        <small class="text-muted">Scores Parfaits</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quiz recommandés -->
+            <h5 class="mb-3 mt-4">
+                <i class="bi bi-lightbulb text-warning"></i>
+                Quiz Recommandés
+            </h5>
+            {% for quiz in recommended_quizzes %}
+                <div class="recommendation-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ quiz.title }}</h6>
+                            <small class="text-muted">
+                                <i class="bi bi-book"></i> {{ quiz.subject.name }} • 
+                                <i class="bi bi-speedometer"></i> {{ quiz.difficulty.name }}
+                            </small>
+                        </div>
+                        <a href="{% url 'gamification:quiz_detail' quiz.slug %}" class="btn btn-outline-primary btn-sm">
+                            Commencer
+                        </a>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">Aucun quiz recommandé pour le moment.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Zones d'amélioration -->
+        <div class="col-lg-6">
+            <h4 class="mb-3">
+                <i class="bi bi-exclamation-triangle text-warning"></i>
+                Zones d'Amélioration
+            </h4>
+
+            {% for area in weak_areas %}
+                <div class="weak-area-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ area.subject }}</h6>
+                            <small class="text-muted">Score moyen: {{ area.average_score|floatformat:1 }}%</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="badge bg-warning">
+                                +{{ area.improvement_needed|floatformat:0 }}% nécessaire
+                            </div>
+                        </div>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-warning" 
+                             style="width: {{ area.average_score }}%"></div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Excellent ! Aucune zone d'amélioration identifiée.
+                </div>
+            {% endfor %}
+
+            <!-- Nouvelles matières -->
+            <h5 class="mb-3 mt-4">
+                <i class="bi bi-compass text-info"></i>
+                Nouvelles Matières à Explorer
+            </h5>
+            {% for subject in recommended_subjects %}
+                <div class="recommendation-card">
+                    <div class="d-flex align-items-center">
+                        <i class="{{ subject.icon }} text-primary fs-4 me-3"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{{ subject.name }}</h6>
+                            <small class="text-muted">{{ subject.description }}</small>
+                        </div>
+                        <a href="{% url 'gamification:subject_detail' subject.slug %}" class="btn btn-outline-info btn-sm">
+                            Explorer
+                        </a>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">Vous avez exploré toutes les matières disponibles !</p>
+            {% endfor %}
+
+            <!-- Conseils personnalisés -->
+            <div class="mt-4 p-3 bg-light rounded">
+                <h6 class="mb-3">
+                    <i class="bi bi-chat-quote text-success"></i>
+                    Conseils Personnalisés
+                </h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-check text-success me-2"></i>
+                        Maintenez une régularité dans vos sessions d'apprentissage
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check text-success me-2"></i>
+                        Concentrez-vous sur vos matières les plus faibles
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check text-success me-2"></i>
+                        Variez les niveaux de difficulté pour progresser
+                    </li>
+                    <li class="mb-0">
+                        <i class="bi bi-check text-success me-2"></i>
+                        Prenez des pauses pour optimiser votre apprentissage
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="text-center">
+                <h5 class="mb-3">Actions Rapides</h5>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'gamification:ai_generator' %}" class="btn btn-primary">
+                        <i class="bi bi-robot me-2"></i>
+                        Générer Quiz IA
+                    </a>
+                    <a href="{% url 'gamification:dashboard' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-speedometer2 me-2"></i>
+                        Dashboard
+                    </a>
+                    <a href="{% url 'gamification:achievements' %}" class="btn btn-outline-success">
+                        <i class="bi bi-award me-2"></i>
+                        Mes Badges
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des cartes de recommandation
+    const cards = document.querySelectorAll('.recommendation-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

@@ -1,36 +1,48 @@
 try:
     import openai
+    from openai import OpenAI
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
 
 import json
 import random
+import os
 from django.conf import settings
 from django.utils import timezone
 from .models import Quiz, Question, Subject, DifficultyLevel, UserProfile, Badge, UserBadge
+from .settings import OPENAI_API_KEY
 
 
 class AIQuizGenerator:
     """Générateur de quiz intelligent utilisant l'IA"""
     
     def __init__(self):
-        # Configuration OpenAI (vous pouvez utiliser une clé API gratuite)
-        self.api_key = getattr(settings, 'OPENAI_API_KEY', 'your-openai-api-key-here')
-        self.model = "gpt-3.5-turbo"
+        # Configuration OpenAI avec gestion sécurisée de la clé API
+        self.api_key = OPENAI_API_KEY or os.getenv('OPENAI_API_KEY')
+        self.model = "gpt-4o-mini"
+        self.client = None
+        
+        if OPENAI_AVAILABLE and self.api_key:
+            try:
+                self.client = OpenAI(api_key=self.api_key)
+            except Exception as e:
+                print(f"Erreur d'initialisation OpenAI: {e}")
+                self.client = None
         
     def generate_quiz(self, subject_name, difficulty_level, num_questions=10, user_profile=None):
         """Génère un quiz complet avec des questions"""
         try:
-            # Récupérer ou créer la matière
-            subject, created = Subject.objects.get_or_create(
-                name=subject_name,
-                defaults={
-                    'description': f'Quiz sur {subject_name}',
-                    'icon': 'bi-book',
-                    'color': self._get_subject_color(subject_name)
-                }
-            )
+            # Récupérer ou créer la matière avec gestion du slug
+            try:
+                subject = Subject.objects.get(name=subject_name)
+            except Subject.DoesNotExist:
+                subject = Subject.objects.create(
+                    name=subject_name,
+                    description=f'Quiz sur {subject_name}',
+                    icon='bi-book',
+                    color=self._get_subject_color(subject_name)
+                )
             
             # Récupérer le niveau de difficulté
             difficulty = DifficultyLevel.objects.filter(level=difficulty_level).first()
@@ -61,8 +73,11 @@ class AIQuizGenerator:
                 status='published'
             )
             
-            # Générer les questions
-            questions_data = self._generate_questions(subject_name, difficulty_level, num_questions)
+            # Générer les questions avec IA si disponible, sinon utiliser les templates
+            if self.client and OPENAI_AVAILABLE:
+                questions_data = self._generate_ai_questions(subject_name, difficulty_level, num_questions)
+            else:
+                questions_data = self._generate_template_questions(subject_name, difficulty_level, num_questions)
             
             for i, question_data in enumerate(questions_data):
                 Question.objects.create(
@@ -121,7 +136,60 @@ class AIQuizGenerator:
         difficulty_multiplier = 1 + (difficulty * 0.2)
         return int(base_time * difficulty_multiplier)
     
-    def _generate_questions(self, subject, difficulty, num_questions):
+    def _generate_ai_questions(self, subject, difficulty, num_questions):
+        """Génère des questions en utilisant l'API OpenAI"""
+        try:
+            prompt = f"""
+Créez {num_questions} questions de quiz sur le sujet "{subject}" avec un niveau de difficulté {difficulty}/5.
+
+Format de réponse JSON :
+{{
+  "questions": [
+    {{
+      "question": "Texte de la question",
+      "type": "multiple_choice",
+      "option_a": "Option A",
+      "option_b": "Option B",
+      "option_c": "Option C",
+      "option_d": "Option D",
+      "correct_answer": "A",
+      "explanation": "Explication de la réponse",
+      "points": 10,
+      "difficulty_score": 0.5,
+      "confidence": 0.9
+    }}
+  ]
+}}
+
+Assurez-vous que :
+- Les questions sont pertinentes au sujet
+- Le niveau de difficulté correspond à {difficulty}/5
+- Les explications sont claires et éducatives
+- Une seule réponse est correcte par question
+"""
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "Vous êtes un expert en création de quiz éducatifs. Créez des questions de qualité avec des explications claires."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=2000
+            )
+            
+            # Parser la réponse JSON
+            ai_response = response.choices[0].message.content
+            questions_json = json.loads(ai_response)
+            
+            return questions_json.get('questions', [])
+            
+        except Exception as e:
+            print(f"Erreur lors de la génération IA: {e}")
+            # Fallback vers les templates
+            return self._generate_template_questions(subject, difficulty, num_questions)
+    
+    def _generate_template_questions(self, subject, difficulty, num_questions):
         """Génère les questions du quiz avec beaucoup plus de contenu réel"""
 
         questions_templates = {

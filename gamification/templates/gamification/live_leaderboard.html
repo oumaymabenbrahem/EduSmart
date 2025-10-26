@@ -1,0 +1,473 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Classement Live - EduSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .leaderboard-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .leaderboard-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .leaderboard-item {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f8f9fa;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .leaderboard-item:hover {
+        background-color: #f8f9ff;
+        transform: translateX(5px);
+    }
+    
+    .leaderboard-item:last-child {
+        border-bottom: none;
+    }
+    
+    .leaderboard-item.current-user {
+        background: linear-gradient(90deg, #fff3cd, #ffffff);
+        border-left: 4px solid #ffc107;
+    }
+    
+    .rank-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .rank-1 { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #333; }
+    .rank-2 { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #333; }
+    .rank-3 { background: linear-gradient(135deg, #cd7f32, #daa520); }
+    .rank-other { background: linear-gradient(135deg, #6c757d, #495057); }
+    
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .level-badge {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .stats-mini {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .crown-icon {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        color: #ffd700;
+        font-size: 1.5rem;
+        animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+    }
+    
+    .user-position-card {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .filter-btn {
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        margin: 0.2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+    }
+    
+    .filter-btn:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+    }
+    
+    .pagination-custom {
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .pagination-custom .page-link {
+        border-radius: 8px;
+        margin: 0 0.2rem;
+        border: 2px solid #e9ecef;
+    }
+    
+    .pagination-custom .page-link:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+    }
+    
+    .pagination-custom .page-item.active .page-link {
+        background: #667eea;
+        border-color: #667eea;
+    }
+    
+    .refresh-btn {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .refresh-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    
+    .refresh-btn.spinning {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="leaderboard-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="bi bi-trophy"></i>
+                    Classement Live
+                </h2>
+                <p class="mb-0">Compétition en temps réel - {{ total_users }} participants</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="h1 mb-0">#{{ user_rank }}</div>
+                <small>Votre Position</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Position de l'utilisateur -->
+    <div class="user-position-card">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+                <div class="user-avatar">
+                    {{ user.first_name.0|default:user.username.0|upper }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5 class="mb-1">{{ user.first_name|default:user.username }}</h5>
+                <div class="d-flex align-items-center justify-content-center">
+                    <span class="level-badge me-2">Niveau {{ user_profile.level }}</span>
+                    <span>{{ user_profile.experience_points }} XP</span>
+                </div>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="h2 mb-0">#{{ user_rank }}</div>
+                <small>Position Actuelle</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filter-card">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h6 class="mb-2">Filtrer par période :</h6>
+                <div class="btn-group" role="group">
+                    <a href="?timeframe=all&subject={{ current_subject }}" 
+                       class="filter-btn {% if current_timeframe == 'all' %}active{% endif %}">
+                        Tout temps
+                    </a>
+                    <a href="?timeframe=week&subject={{ current_subject }}" 
+                       class="filter-btn {% if current_timeframe == 'week' %}active{% endif %}">
+                        Cette semaine
+                    </a>
+                    <a href="?timeframe=month&subject={{ current_subject }}" 
+                       class="filter-btn {% if current_timeframe == 'month' %}active{% endif %}">
+                        Ce mois
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="mb-2">Filtrer par matière :</h6>
+                <select class="form-select" id="subjectFilter">
+                    <option value="">Toutes les matières</option>
+                    {% for subject in subjects %}
+                        <option value="{{ subject.id }}" {% if current_subject == subject.id|stringformat:"s" %}selected{% endif %}>
+                            {{ subject.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Classement -->
+    <div class="leaderboard-card">
+        <div class="p-3 bg-light border-bottom">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ol text-primary"></i>
+                Top {{ page_obj.paginator.count }} Joueurs
+                <small class="text-muted">
+                    ({{ current_timeframe|capfirst }}{% if current_subject %} - Matière sélectionnée{% endif %})
+                </small>
+            </h5>
+        </div>
+
+        {% for profile in page_obj %}
+            <div class="leaderboard-item {% if profile.user == user %}current-user{% endif %}">
+                <div class="row align-items-center">
+                    <!-- Rang -->
+                    <div class="col-2 col-md-1">
+                        <div class="rank-badge rank-{% if forloop.counter <= 3 %}{{ forloop.counter }}{% else %}other{% endif %}">
+                            {{ forloop.counter|add:page_obj.start_index|add:"-1" }}
+                            {% if forloop.counter == 1 %}
+                                <i class="crown-icon bi bi-crown-fill"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Avatar et nom -->
+                    <div class="col-6 col-md-4">
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar me-3">
+                                {{ profile.user.first_name.0|default:profile.user.username.0|upper }}
+                            </div>
+                            <div>
+                                <h6 class="mb-0">
+                                    {{ profile.user.first_name|default:profile.user.username }}
+                                    {% if profile.user == user %}
+                                        <small class="text-warning">(Vous)</small>
+                                    {% endif %}
+                                </h6>
+                                <div class="stats-mini">
+                                    <span class="level-badge">Niv. {{ profile.level }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistiques -->
+                    <div class="col-4 col-md-3 text-center">
+                        <div class="h5 text-primary mb-0">{{ profile.experience_points }}</div>
+                        <small class="text-muted">XP</small>
+                    </div>
+
+                    <!-- Détails supplémentaires -->
+                    <div class="d-none d-md-block col-md-2 text-center">
+                        <div class="fw-bold text-success">{{ profile.quizzes_completed }}</div>
+                        <small class="text-muted">Quiz</small>
+                    </div>
+
+                    <div class="d-none d-md-block col-md-2 text-center">
+                        <div class="fw-bold text-info">{{ profile.current_streak }}</div>
+                        <small class="text-muted">Série</small>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center py-5">
+                <i class="bi bi-trophy text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">Aucun participant trouvé</h5>
+                <p class="text-muted">Soyez le premier à jouer et apparaître dans le classement !</p>
+                <a href="{% url 'gamification:ai_generator' %}" class="btn btn-primary">
+                    <i class="bi bi-play-fill me-2"></i>
+                    Commencer un Quiz
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+        <nav aria-label="Navigation du classement">
+            <ul class="pagination pagination-custom">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&timeframe={{ current_timeframe }}&subject={{ current_subject }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}&timeframe={{ current_timeframe }}&subject={{ current_subject }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&timeframe={{ current_timeframe }}&subject={{ current_subject }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+    <!-- Statistiques générales -->
+    <div class="row mt-4">
+        <div class="col-md-3 text-center">
+            <div class="h4 text-primary">{{ total_users }}</div>
+            <small class="text-muted">Participants</small>
+        </div>
+        <div class="col-md-3 text-center">
+            <div class="h4 text-success">{{ page_obj.0.experience_points|default:0 }}</div>
+            <small class="text-muted">Meilleur Score</small>
+        </div>
+        <div class="col-md-3 text-center">
+            <div class="h4 text-warning">{{ user_profile.experience_points }}</div>
+            <small class="text-muted">Votre Score</small>
+        </div>
+        <div class="col-md-3 text-center">
+            <div class="h4 text-info">{{ user_profile.current_streak }}</div>
+            <small class="text-muted">Votre Série</small>
+        </div>
+    </div>
+</div>
+
+<!-- Bouton de rafraîchissement -->
+<button class="refresh-btn" id="refreshBtn" title="Actualiser le classement">
+    <i class="bi bi-arrow-clockwise"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du filtre de matière
+    const subjectFilter = document.getElementById('subjectFilter');
+    if (subjectFilter) {
+        subjectFilter.addEventListener('change', function() {
+            const currentUrl = new URL(window.location);
+            if (this.value) {
+                currentUrl.searchParams.set('subject', this.value);
+            } else {
+                currentUrl.searchParams.delete('subject');
+            }
+            currentUrl.searchParams.delete('page'); // Reset pagination
+            window.location.href = currentUrl.toString();
+        });
+    }
+
+    // Bouton de rafraîchissement
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            this.classList.add('spinning');
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        });
+    }
+
+    // Auto-refresh toutes les 30 secondes
+    setInterval(function() {
+        const refreshIcon = refreshBtn.querySelector('i');
+        refreshIcon.classList.add('spinning');
+        
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                // Mettre à jour seulement le contenu du classement
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(html, 'text/html');
+                const newLeaderboard = newDoc.querySelector('.leaderboard-card');
+                const currentLeaderboard = document.querySelector('.leaderboard-card');
+                
+                if (newLeaderboard && currentLeaderboard) {
+                    currentLeaderboard.innerHTML = newLeaderboard.innerHTML;
+                }
+                
+                refreshIcon.classList.remove('spinning');
+            })
+            .catch(error => {
+                console.log('Erreur de rafraîchissement:', error);
+                refreshIcon.classList.remove('spinning');
+            });
+    }, 30000); // 30 secondes
+
+    // Animation d'entrée des éléments du classement
+    const leaderboardItems = document.querySelectorAll('.leaderboard-item');
+    leaderboardItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(-20px)';
+        setTimeout(() => {
+            item.style.transition = 'all 0.5s ease';
+            item.style.opacity = '1';
+            item.style.transform = 'translateX(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

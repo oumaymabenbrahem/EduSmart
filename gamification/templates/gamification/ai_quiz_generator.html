@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Générateur de Quiz IA - EduSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .generator-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .subject-card {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .subject-card:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .subject-card.selected {
+        border-color: #667eea;
+        background-color: #f8f9ff;
+    }
+    
+    .difficulty-slider {
+        width: 100%;
+        height: 8px;
+        border-radius: 5px;
+        background: #ddd;
+        outline: none;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+    
+    .difficulty-slider:hover {
+        opacity: 1;
+    }
+    
+    .difficulty-slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+    }
+    
+    .difficulty-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .ai-status {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    
+    .ai-available {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+    
+    .ai-unavailable {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+    
+    .generate-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 1rem 2rem;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    .generate-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    
+    .feature-card {
+        text-align: center;
+        padding: 1.5rem;
+        border-radius: 10px;
+        background: white;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #667eea;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        color: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="generator-card">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="bi bi-robot"></i>
+                    Générateur de Quiz IA
+                </h2>
+                <p class="mb-0">Créez des quiz personnalisés grâce à l'intelligence artificielle</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="bi bi-stars" style="font-size: 4rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statut IA -->
+    <div class="{% if ai_available %}ai-available{% else %}ai-unavailable{% endif %} ai-status">
+        {% if ai_available %}
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>IA Disponible</strong> - Génération intelligente activée
+        {% else %}
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>IA Indisponible</strong> - Utilisation des templates prédéfinis
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <!-- Formulaire de génération -->
+        <div class="col-lg-8">
+            <div class="form-card">
+                <h4 class="mb-4">
+                    <i class="bi bi-gear-fill text-primary"></i>
+                    Configuration du Quiz
+                </h4>
+
+                <form method="post" id="quizGeneratorForm">
+                    {% csrf_token %}
+                    
+                    <!-- Sélection de matière -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Matière</label>
+                        <div class="row">
+                            {% for subject in subjects %}
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="subject-card" data-subject="{{ subject.name }}">
+                                        <div class="text-center">
+                                            <i class="{{ subject.icon }} text-primary fs-2 mb-2"></i>
+                                            <h6 class="mb-0">{{ subject.name }}</h6>
+                                        </div>
+                                        <input type="radio" name="subject" value="{{ subject.name }}" class="d-none subject-radio">
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Niveau de difficulté -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Niveau de Difficulté</label>
+                        <div class="px-3">
+                            <input type="range" class="difficulty-slider" name="difficulty" 
+                                   min="1" max="5" value="2" id="difficultySlider">
+                            <div class="difficulty-labels">
+                                <span>Très Facile</span>
+                                <span>Facile</span>
+                                <span>Moyen</span>
+                                <span>Difficile</span>
+                                <span>Expert</span>
+                            </div>
+                            <div class="text-center mt-2">
+                                <span class="badge bg-primary" id="difficultyDisplay">Facile</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nombre de questions -->
+                    <div class="mb-4">
+                        <label for="numQuestions" class="form-label fw-bold">Nombre de Questions</label>
+                        <select class="form-select" name="num_questions" id="numQuestions">
+                            <option value="5">5 questions (5 min)</option>
+                            <option value="10" selected>10 questions (10 min)</option>
+                            <option value="15">15 questions (15 min)</option>
+                            <option value="20">20 questions (20 min)</option>
+                        </select>
+                    </div>
+
+                    <!-- Options avancées -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="personalized" value="true" id="personalizedCheck">
+                            <label class="form-check-label" for="personalizedCheck">
+                                <strong>Quiz Personnalisé</strong>
+                                <br><small class="text-muted">Adapté à votre niveau et vos faiblesses</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Bouton de génération -->
+                    <div class="text-center">
+                        <button type="submit" class="btn generate-btn btn-lg">
+                            <i class="bi bi-magic me-2"></i>
+                            Générer le Quiz
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Loading spinner -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Génération en cours...</span>
+                    </div>
+                    <p class="mt-3">Génération du quiz en cours...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fonctionnalités -->
+        <div class="col-lg-4">
+            <h5 class="mb-3">
+                <i class="bi bi-star-fill text-warning"></i>
+                Fonctionnalités
+            </h5>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-brain"></i>
+                </div>
+                <h6>IA Avancée</h6>
+                <p class="small text-muted mb-0">Questions générées par GPT-4 adaptées à votre niveau</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-target"></i>
+                </div>
+                <h6>Personnalisation</h6>
+                <p class="small text-muted mb-0">Quiz adaptés à vos forces et faiblesses</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-lightning-fill"></i>
+                </div>
+                <h6>Génération Rapide</h6>
+                <p class="small text-muted mb-0">Quiz créés en quelques secondes</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h6>Qualité Garantie</h6>
+                <p class="small text-muted mb-0">Questions vérifiées et explications détaillées</p>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="mt-4 p-3 bg-light rounded">
+                <h6 class="mb-3">
+                    <i class="bi bi-graph-up text-success"></i>
+                    Statistiques
+                </h6>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="fw-bold text-primary">1,247</div>
+                        <small class="text-muted">Quiz Générés</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="fw-bold text-success">98%</div>
+                        <small class="text-muted">Satisfaction</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de la sélection de matière
+    const subjectCards = document.querySelectorAll('.subject-card');
+    const subjectRadios = document.querySelectorAll('.subject-radio');
+    
+    subjectCards.forEach((card, index) => {
+        card.addEventListener('click', function() {
+            // Désélectionner toutes les cartes
+            subjectCards.forEach(c => c.classList.remove('selected'));
+            subjectRadios.forEach(r => r.checked = false);
+            
+            // Sélectionner la carte cliquée
+            this.classList.add('selected');
+            subjectRadios[index].checked = true;
+        });
+    });
+
+    // Gestion du slider de difficulté
+    const difficultySlider = document.getElementById('difficultySlider');
+    const difficultyDisplay = document.getElementById('difficultyDisplay');
+    
+    const difficultyNames = {
+        1: 'Très Facile',
+        2: 'Facile',
+        3: 'Moyen',
+        4: 'Difficile',
+        5: 'Expert'
+    };
+    
+    const difficultyColors = {
+        1: 'bg-success',
+        2: 'bg-primary',
+        3: 'bg-warning',
+        4: 'bg-danger',
+        5: 'bg-dark'
+    };
+    
+    difficultySlider.addEventListener('input', function() {
+        const value = this.value;
+        difficultyDisplay.textContent = difficultyNames[value];
+        difficultyDisplay.className = `badge ${difficultyColors[value]}`;
+    });
+
+    // Gestion du formulaire
+    const form = document.getElementById('quizGeneratorForm');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    
+    form.addEventListener('submit', function(e) {
+        // Vérifier qu'une matière est sélectionnée
+        const selectedSubject = document.querySelector('.subject-radio:checked');
+        if (!selectedSubject) {
+            e.preventDefault();
+            alert('Veuillez sélectionner une matière');
+            return;
+        }
+        
+        // Afficher le spinner
+        form.style.display = 'none';
+        loadingSpinner.style.display = 'block';
+    });
+
+    // Sélectionner la première matière par défaut
+    if (subjectCards.length > 0) {
+        subjectCards[0].click();
+    }
+});
+</script>
+{% endblock %}

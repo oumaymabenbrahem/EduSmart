@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Fonctionnalités Sociales - EduSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .social-header {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    
+    .activity-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        transition: transform 0.2s ease;
+    }
+    
+    .activity-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .activity-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 1rem;
+    }
+    
+    .top-performer-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .top-performer-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #ffd700, #ffed4e);
+    }
+    
+    .performer-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.5rem;
+        margin: 0 auto 1rem;
+        border: 3px solid #ffd700;
+    }
+    
+    .challenge-card {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-comparison {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .comparison-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .comparison-item:last-child {
+        border-bottom: none;
+    }
+    
+    .badge-mini {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        margin: 0.1rem;
+    }
+    
+    .activity-time {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .social-action-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    .social-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .coming-soon {
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="social-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="bi bi-people"></i>
+                    Fonctionnalités Sociales
+                </h2>
+                <p class="mb-0">Connectez-vous avec d'autres apprenants et participez à des défis</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="h1 mb-0">{{ user_profile.get_rank }}</div>
+                <small>Votre Rang Global</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Activités récentes -->
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>
+                    <i class="bi bi-activity text-primary"></i>
+                    Activités Récentes
+                </h4>
+                <button class="btn btn-outline-primary btn-sm" onclick="refreshActivities()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Actualiser
+                </button>
+            </div>
+
+            <div id="activitiesList">
+                {% for activity in recent_activities %}
+                    <div class="activity-card">
+                        <div class="d-flex align-items-center">
+                            <div class="activity-avatar">
+                                {{ activity.user.0|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ activity.user }}</h6>
+                                        <p class="mb-0 text-muted">{{ activity.action }}</p>
+                                        <small class="text-success fw-bold">{{ activity.score }}</small>
+                                    </div>
+                                    <small class="activity-time">{{ activity.time|timesince }} ago</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-chat-square-dots text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted mt-3">Aucune activité récente</h5>
+                        <p class="text-muted">Soyez le premier à jouer et apparaître dans le flux !</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Défis disponibles -->
+            <div class="mt-4">
+                <h4 class="mb-3">
+                    <i class="bi bi-trophy text-warning"></i>
+                    Défis Communautaires
+                </h4>
+
+                <div class="challenge-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-2">
+                                <i class="bi bi-lightning-fill me-2"></i>
+                                Défi de la Semaine
+                            </h5>
+                            <p class="mb-2">Complétez 10 quiz cette semaine et gagnez des points bonus !</p>
+                            <div class="d-flex align-items-center">
+                                <div class="progress me-3" style="width: 200px; height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: {{ user_profile.quizzes_completed|floatformat:0 }}0%"></div>
+                                </div>
+                                <small>{{ user_profile.quizzes_completed }}/10</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="h4 mb-1">+500 XP</div>
+                            <small>Récompense</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fonctionnalités à venir -->
+                <div class="coming-soon">
+                    <i class="bi bi-tools" style="font-size: 2rem;"></i>
+                    <h5 class="mt-3 mb-2">Bientôt Disponible</h5>
+                    <p class="mb-3">Défis personnalisés, tournois et compétitions entre amis</p>
+                    <button class="social-action-btn" disabled>
+                        <i class="bi bi-bell me-2"></i>
+                        M'avertir
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top performers et statistiques -->
+        <div class="col-lg-4">
+            <h4 class="mb-3">
+                <i class="bi bi-star text-warning"></i>
+                Top Performers
+            </h4>
+
+            {% for performer in top_performers %}
+                <div class="top-performer-card">
+                    <div class="performer-avatar">
+                        {{ performer.user.first_name.0|default:performer.user.username.0|upper }}
+                    </div>
+                    <h6 class="mb-1">{{ performer.user.first_name|default:performer.user.username }}</h6>
+                    <div class="text-primary fw-bold mb-2">{{ performer.experience_points }} XP</div>
+                    <div class="d-flex justify-content-center align-items-center">
+                        <span class="badge bg-warning me-2">Niv. {{ performer.level }}</span>
+                        <span class="badge bg-success">{{ performer.quizzes_completed }} quiz</span>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">Aucun top performer cette semaine</p>
+            {% endfor %}
+
+            <!-- Comparaison avec la moyenne -->
+            <div class="stats-comparison mt-4">
+                <h5 class="mb-3">
+                    <i class="bi bi-graph-up text-info"></i>
+                    Vos Stats vs Moyenne
+                </h5>
+                
+                <div class="comparison-item">
+                    <span>Points d'Expérience</span>
+                    <div>
+                        <span class="fw-bold text-primary">{{ user_profile.experience_points }}</span>
+                        <small class="text-muted ms-2">(Moy: 1,250)</small>
+                    </div>
+                </div>
+                
+                <div class="comparison-item">
+                    <span>Quiz Complétés</span>
+                    <div>
+                        <span class="fw-bold text-success">{{ user_profile.quizzes_completed }}</span>
+                        <small class="text-muted ms-2">(Moy: 15)</small>
+                    </div>
+                </div>
+                
+                <div class="comparison-item">
+                    <span>Série Actuelle</span>
+                    <div>
+                        <span class="fw-bold text-warning">{{ user_profile.current_streak }}</span>
+                        <small class="text-muted ms-2">(Moy: 3)</small>
+                    </div>
+                </div>
+                
+                <div class="comparison-item">
+                    <span>Niveau</span>
+                    <div>
+                        <span class="fw-bold text-info">{{ user_profile.level }}</span>
+                        <small class="text-muted ms-2">(Moy: 4)</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions sociales -->
+            <div class="mt-4">
+                <h5 class="mb-3">Actions Rapides</h5>
+                <div class="d-grid gap-2">
+                    <button class="social-action-btn" onclick="shareProgress()">
+                        <i class="bi bi-share me-2"></i>
+                        Partager mes Progrès
+                    </button>
+                    <button class="social-action-btn" onclick="inviteFriends()">
+                        <i class="bi bi-person-plus me-2"></i>
+                        Inviter des Amis
+                    </button>
+                    <a href="{% url 'gamification:live_leaderboard' %}" class="social-action-btn text-center text-decoration-none">
+                        <i class="bi bi-trophy me-2"></i>
+                        Voir le Classement
+                    </a>
+                </div>
+            </div>
+
+            <!-- Badges récents -->
+            <div class="mt-4 p-3 bg-light rounded">
+                <h6 class="mb-3">
+                    <i class="bi bi-award text-success"></i>
+                    Derniers Badges
+                </h6>
+                <div class="text-center">
+                    {% for badge in user.badges.all|slice:":6" %}
+                        <div class="badge-mini" style="background-color: {{ badge.badge.color }};" title="{{ badge.badge.name }}">
+                            <i class="{{ badge.badge.icon }}"></i>
+                        </div>
+                    {% empty %}
+                        <small class="text-muted">Aucun badge encore</small>
+                    {% endfor %}
+                </div>
+                {% if user.badges.count > 0 %}
+                    <div class="text-center mt-2">
+                        <a href="{% url 'gamification:achievements' %}" class="btn btn-outline-success btn-sm">
+                            Voir Tous ({{ user.badges.count }})
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to action -->
+    <div class="text-center mt-5 py-4 bg-light rounded">
+        <h4 class="mb-3">Rejoignez la Communauté EduSmart</h4>
+        <p class="text-muted mb-4">Apprenez ensemble, progressez plus vite et amusez-vous !</p>
+        <div class="btn-group" role="group">
+            <a href="{% url 'gamification:ai_generator' %}" class="btn btn-primary">
+                <i class="bi bi-play-fill me-2"></i>
+                Commencer un Quiz
+            </a>
+            <a href="{% url 'gamification:dashboard' %}" class="btn btn-outline-primary">
+                <i class="bi bi-speedometer2 me-2"></i>
+                Mon Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des cartes d'activité
+    const activityCards = document.querySelectorAll('.activity-card');
+    activityCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(-20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateX(0)';
+        }, index * 100);
+    });
+});
+
+function refreshActivities() {
+    const btn = event.target.closest('button');
+    const icon = btn.querySelector('i');
+    
+    icon.classList.add('spinning');
+    
+    // Simuler le rechargement
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
+
+function shareProgress() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Mes Progrès EduSmart',
+            text: `Je viens d'atteindre le niveau {{ user_profile.level }} avec {{ user_profile.experience_points }} XP sur EduSmart !`,
+            url: window.location.origin
+        });
+    } else {
+        // Fallback pour les navigateurs qui ne supportent pas l'API Web Share
+        const text = `Je viens d'atteindre le niveau {{ user_profile.level }} avec {{ user_profile.experience_points }} XP sur EduSmart !`;
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Lien copié dans le presse-papiers !');
+        });
+    }
+}
+
+function inviteFriends() {
+    const inviteText = `Rejoins-moi sur EduSmart pour apprendre en s'amusant ! ${window.location.origin}`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Invitation EduSmart',
+            text: inviteText,
+            url: window.location.origin
+        });
+    } else {
+        navigator.clipboard.writeText(inviteText).then(() => {
+            alert('Lien d\'invitation copié !');
+        });
+    }
+}
+
+// Style pour l'animation de rotation
+const style = document.createElement('style');
+style.textContent = `
+    .spinning {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
