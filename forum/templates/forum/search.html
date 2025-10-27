@@ -1,0 +1,116 @@
+{% extends 'base_front.html' %}
+{% load static %}
+
+{% block title %}Recherche - Forum EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Search Form -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-8">
+                    <input type="text" name="q" class="form-control" placeholder="Rechercher dans le forum..." value="{{ query }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="category" class="form-select">
+                        <option value="">Toutes les catégories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if category_filter == cat.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Rechercher
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results -->
+    {% if query %}
+    <div class="mb-3">
+        <h5>Résultats pour "{{ query }}" {% if category_filter %}dans {{ selected_category.name }}{% endif %}</h5>
+        <small class="text-muted">{{ results.paginator.count }} résultat{{ results.paginator.count|pluralize }} trouvé{{ results.paginator.count|pluralize }}</small>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="list-group list-group-flush">
+            {% for topic in results %}
+            <a href="{% url 'forum:topic_detail' topic.category.slug topic.slug %}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-2">
+                            <h6 class="mb-0 me-2">{{ topic.title }}</h6>
+                            {% if topic.has_solution %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Résolu
+                            </span>
+                            {% endif %}
+                        </div>
+                        <p class="mb-2 text-muted small">{{ topic.first_post.content|truncatewords:20|striptags }}</p>
+                        <div class="d-flex align-items-center text-muted small">
+                            <span class="me-3">
+                                <i class="bi bi-folder"></i> {{ topic.category.name }}
+                            </span>
+                            <span class="me-3">
+                                <i class="bi bi-person"></i> {{ topic.author.get_full_name|default:topic.author.username }}
+                            </span>
+                            <span class="me-3">
+                                <i class="bi bi-clock"></i> {{ topic.created_at|timesince }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="text-end ms-3">
+                        <div class="text-primary fw-bold" style="font-size: 1.2rem;">{{ topic.post_count }}</div>
+                        <small class="text-muted">réponses</small>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="list-group-item text-center py-5">
+                <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3 mb-0">Aucun résultat trouvé pour votre recherche.</p>
+                <p class="text-muted small">Essayez avec des mots-clés différents ou élargissez votre recherche.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if results.has_other_pages %}
+    <nav aria-label="Search results pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if results.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&category={{ category_filter }}&page={{ results.previous_page_number }}">Précédent</a>
+            </li>
+            {% endif %}
+
+            {% for num in results.paginator.page_range %}
+                {% if results.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > results.number|add:'-3' and num < results.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query }}&category={{ category_filter }}&page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if results.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&category={{ category_filter }}&page={{ results.next_page_number }}">Suivant</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

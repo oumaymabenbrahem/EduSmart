@@ -1,0 +1,294 @@
+{% extends 'template_back/base_admin.html' %}
+{% load static %}
+
+{% block title %}Administration des Réclamations - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.badge-priority-basse { background-color: #28a745; }
+.badge-priority-normale { background-color: #17a2b8; }
+.badge-priority-haute { background-color: #ffc107; color: #000; }
+.badge-priority-urgente { background-color: #dc3545; }
+
+.badge-status-ouverte { background-color: #007bff; }
+.badge-status-en_cours { background-color: #ffc107; color: #000; }
+.badge-status-en_attente { background-color: #fd7e14; }
+.badge-status-resolue { background-color: #28a745; }
+.badge-status-fermee { background-color: #6c757d; }
+.badge-status-rejetee { background-color: #dc3545; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-panel">
+  <div class="content-wrapper">
+    <div class="row">
+      <div class="col-md-12 grid-margin">
+        <div class="row">
+          <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+            <h3 class="font-weight-bold">Administration des Réclamations</h3>
+            <h6 class="font-weight-normal mb-0">Gestion et suivi de toutes les réclamations utilisateurs</h6>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row">
+      <div class="col-md-2 mb-4 stretch-card transparent">
+        <div class="card card-tale">
+          <div class="card-body">
+            <p class="mb-4">Total</p>
+            <p class="fs-30 mb-2">{{ stats.total }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 mb-4 stretch-card transparent">
+        <div class="card card-dark-blue">
+          <div class="card-body">
+            <p class="mb-4">Ouvertes</p>
+            <p class="fs-30 mb-2">{{ stats.ouvertes }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 mb-4 stretch-card transparent">
+        <div class="card card-light-blue">
+          <div class="card-body">
+            <p class="mb-4">En cours</p>
+            <p class="fs-30 mb-2">{{ stats.en_cours }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 mb-4 stretch-card transparent">
+        <div class="card card-light-danger">
+          <div class="card-body">
+            <p class="mb-4">En attente</p>
+            <p class="fs-30 mb-2">{{ stats.en_attente }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 mb-4 stretch-card transparent">
+        <div class="card card-tale">
+          <div class="card-body">
+            <p class="mb-4">Résolues</p>
+            <p class="fs-30 mb-2">{{ stats.resolues }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 mb-4 stretch-card transparent">
+        <div class="card card-dark-blue">
+          <div class="card-body">
+            <p class="mb-4">Urgentes</p>
+            <p class="fs-30 mb-2">{{ stats.urgentes }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row">
+      <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title">Filtres et Recherche</h4>
+            <form method="get" class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">Recherche</label>
+                {{ form.search }}
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Type</label>
+                {{ form.type_reclamation }}
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Statut</label>
+                {{ form.statut }}
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Priorité</label>
+                {{ form.priorite }}
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Assignation</label>
+                <select name="assigne" class="form-control">
+                  <option value="">Toutes</option>
+                  <option value="moi" {% if assigne_filter == 'moi' %}selected{% endif %}>Mes assignations</option>
+                  <option value="non_assigne" {% if assigne_filter == 'non_assigne' %}selected{% endif %}>Non assignées</option>
+                </select>
+              </div>
+              <div class="col-md-1">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary form-control">
+                  <i class="ti-search"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des réclamations -->
+    <div class="row">
+      <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 class="card-title">Liste des Réclamations</h4>
+              <a href="{% url 'reclamations:create' %}" class="btn btn-primary btn-sm">
+                <i class="ti-plus"></i> Nouvelle Réclamation
+              </a>
+            </div>
+            
+            {% if page_obj %}
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Titre</th>
+                    <th>Utilisateur</th>
+                    <th>Type</th>
+                    <th>Priorité</th>
+                    <th>Statut</th>
+                    <th>Assigné à</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for reclamation in page_obj %}
+                  <tr>
+                    <td>#{{ reclamation.id }}</td>
+                    <td>
+                      <a href="{% url 'reclamations:detail' reclamation.pk %}" class="text-decoration-none">
+                        {{ reclamation.titre|truncatechars:50 }}
+                      </a>
+                      {% if reclamation.is_overdue %}
+                        <span class="badge badge-danger badge-pill ml-1">En retard</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ reclamation.utilisateur.username }}</td>
+                    <td>
+                      <span class="badge badge-info">
+                        {{ reclamation.type_reclamation.name }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge badge-priority-{{ reclamation.priorite }}">
+                        {{ reclamation.get_priorite_display }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge badge-status-{{ reclamation.statut }}">
+                        {{ reclamation.get_statut_display }}
+                      </span>
+                    </td>
+                    <td>
+                      {% if reclamation.assigne_a %}
+                        {{ reclamation.assigne_a.username }}
+                      {% else %}
+                        <span class="text-muted">Non assigné</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ reclamation.created_at|date:"d/m/Y H:i" }}</td>
+                    <td>
+                      <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown">
+                          Actions
+                        </button>
+                        <div class="dropdown-menu">
+                          <a class="dropdown-item" href="{% url 'reclamations:detail' reclamation.pk %}">
+                            <i class="ti-eye"></i> Voir
+                          </a>
+                          <a class="dropdown-item" href="{% url 'reclamations:edit' reclamation.pk %}">
+                            <i class="ti-pencil"></i> Modifier
+                          </a>
+                          <div class="dropdown-divider"></div>
+                          <a class="dropdown-item" href="#" onclick="changeStatus({{ reclamation.pk }}, 'en_cours')">
+                            <i class="ti-control-play"></i> Marquer en cours
+                          </a>
+                          <a class="dropdown-item" href="#" onclick="changeStatus({{ reclamation.pk }}, 'resolue')">
+                            <i class="ti-check"></i> Marquer résolu
+                          </a>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Pagination des réclamations" class="mt-3">
+              <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page=1">Première</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédente</a>
+                  </li>
+                {% endif %}
+
+                <li class="page-item active">
+                  <span class="page-link">
+                    Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+                  </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivante</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Dernière</a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+              <i class="ti-inbox display-1 text-muted"></i>
+              <h3 class="mt-3">Aucune réclamation</h3>
+              <p class="text-muted">Aucune réclamation ne correspond à vos critères de recherche.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function changeStatus(reclamationId, newStatus) {
+    if (confirm('Êtes-vous sûr de vouloir changer le statut de cette réclamation ?')) {
+        fetch(`/reclamations/${reclamationId}/change-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'statut=' + newStatus
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue');
+        });
+    }
+}
+</script>
+{% endblock %}

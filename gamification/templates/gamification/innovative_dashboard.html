@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Gamification - EduSmart{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+<style>
+    .dashboard-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border-left: 4px solid #667eea;
+    }
+    
+    .level-progress {
+        background: #f8f9fa;
+        border-radius: 20px;
+        height: 20px;
+        overflow: hidden;
+    }
+    
+    .level-progress-bar {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        height: 100%;
+        border-radius: 20px;
+        transition: width 0.5s ease;
+    }
+    
+    .quest-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid #28a745;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .badge-mini {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0.2rem;
+        font-size: 1.2rem;
+    }
+    
+    .recommendation-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .recommendation-card:hover {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+    
+    .activity-item {
+        padding: 0.75rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        align-items: center;
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.1rem;
+    }
+    
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header avec salutation personnalisée -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-2">
+                            <i class="bi bi-stars"></i>
+                            Bonjour {{ user.first_name|default:user.username }} !
+                        </h2>
+                        <p class="mb-3">Niveau {{ user_profile.level }} • {{ user_profile.experience_points }} XP</p>
+                        
+                        <!-- Barre de progression du niveau -->
+                        <div class="level-progress mb-2">
+                            <div class="level-progress-bar" style="width: {{ level_progress|default:0 }}%"></div>
+                        </div>
+                        <small>{{ level_progress|default:0|floatformat:0 }}% vers le niveau {{ user_profile.level|add:1 }}</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="d-flex justify-content-center mb-3">
+                            {% for badge in badges|slice:":5" %}
+                                <div class="badge-mini" style="background-color: {{ badge.badge.color }}">
+                                    <i class="{{ badge.badge.icon }}"></i>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <p class="mb-0">Rang #{{ leaderboard_position }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stats-card text-center">
+                <i class="bi bi-trophy-fill text-warning fs-2 mb-2"></i>
+                <h4 class="gradient-text">{{ user_profile.total_points }}</h4>
+                <p class="text-muted mb-0">Points Totaux</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card text-center">
+                <i class="bi bi-check-circle-fill text-success fs-2 mb-2"></i>
+                <h4 class="gradient-text">{{ user_profile.quizzes_completed }}</h4>
+                <p class="text-muted mb-0">Quiz Complétés</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card text-center">
+                <i class="bi bi-fire text-danger fs-2 mb-2"></i>
+                <h4 class="gradient-text">{{ user_profile.current_streak }}</h4>
+                <p class="text-muted mb-0">Série Actuelle</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card text-center">
+                <i class="bi bi-award-fill text-info fs-2 mb-2"></i>
+                <h4 class="gradient-text">{{ badges.count }}</h4>
+                <p class="text-muted mb-0">Badges Obtenus</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonne principale -->
+        <div class="col-lg-8">
+            <!-- Quêtes actives -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-list-task"></i> Quêtes Actives</h5>
+                </div>
+                <div class="card-body">
+                    {% if active_quests %}
+                        {% for quest in active_quests %}
+                            <div class="quest-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ quest.name }}</h6>
+                                        <p class="text-muted mb-0 small">{{ quest.description }}</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-success">+{{ quest.reward_points }} pts</span>
+                                        <span class="badge bg-info">+{{ quest.reward_exp }} XP</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-3">
+                            <i class="bi bi-check-all fs-1 d-block mb-2"></i>
+                            Toutes les quêtes sont terminées ! Revenez demain pour de nouvelles missions.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recommandations personnalisées -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Recommandations Personnalisées</h5>
+                </div>
+                <div class="card-body">
+                    {% if recommendations.quizzes %}
+                        <h6 class="mb-3">Quiz Recommandés</h6>
+                        {% for quiz in recommendations.quizzes %}
+                            <div class="recommendation-card">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ quiz.title }}</h6>
+                                        <p class="text-muted mb-0 small">
+                                            <i class="bi bi-book"></i> {{ quiz.subject.name }} • 
+                                            <i class="bi bi-speedometer"></i> {{ quiz.difficulty.name }}
+                                        </p>
+                                    </div>
+                                    <a href="{% url 'gamification:quiz_detail' quiz.slug %}" class="btn btn-outline-primary btn-sm">
+                                        Commencer
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if recommendations.subjects %}
+                        <h6 class="mb-3 mt-4">Nouvelles Matières à Explorer</h6>
+                        <div class="row">
+                            {% for subject in recommendations.subjects %}
+                                <div class="col-md-4 mb-2">
+                                    <a href="{% url 'gamification:subject_detail' subject.slug %}" class="btn btn-outline-secondary btn-sm w-100">
+                                        <i class="{{ subject.icon }}"></i> {{ subject.name }}
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Graphique de performance -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Analyse de Performance</h5>
+                </div>
+                <div class="card-body">
+                    {% if analytics.performance_trends %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <canvas id="performanceChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Tendance Actuelle</h6>
+                                {% if analytics.performance_trends.trend == 'improving' %}
+                                    <div class="alert alert-success">
+                                        <i class="bi bi-trending-up"></i> En amélioration !
+                                        <br><small>+{{ analytics.performance_trends.improvement|floatformat:1 }}% de progression</small>
+                                    </div>
+                                {% elif analytics.performance_trends.trend == 'declining' %}
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-trending-down"></i> En baisse
+                                        <br><small>{{ analytics.performance_trends.improvement|floatformat:1 }}% de régression</small>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-dash"></i> Performance stable
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">Complétez plus de quiz pour voir vos analyses de performance.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne latérale -->
+        <div class="col-lg-4">
+            <!-- Actions rapides -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-lightning-fill"></i> Actions Rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'gamification:ai_generator' %}" class="btn btn-primary pulse">
+                            <i class="bi bi-robot"></i> Générer Quiz IA
+                        </a>
+                        <a href="{% url 'gamification:learning_path' %}" class="btn btn-success">
+                            <i class="bi bi-map"></i> Parcours Personnalisé
+                        </a>
+                        <a href="{% url 'gamification:live_leaderboard' %}" class="btn btn-info">
+                            <i class="bi bi-trophy"></i> Classement Live
+                        </a>
+                        <a href="{% url 'gamification:achievements' %}" class="btn btn-warning">
+                            <i class="bi bi-award"></i> Centre des Réalisations
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activité récente -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Activité Récente</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% for attempt in recent_attempts %}
+                        <div class="activity-item">
+                            <div class="activity-icon bg-primary text-white">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ attempt.quiz.title }}</h6>
+                                <small class="text-muted">
+                                    {{ attempt.percentage|floatformat:0 }}% • {{ attempt.completed_at|timesince }} ago
+                                </small>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted text-center py-3">Aucune activité récente</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Plan d'étude du jour -->
+            {% if recommendations.study_plan.daily_goals %}
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Objectifs du Jour</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Quiz à compléter</span>
+                            <span class="fw-bold">{{ recommendations.study_plan.daily_goals.quizzes }}</span>
+                        </div>
+                        <div class="progress mt-1">
+                            <div class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Points à gagner</span>
+                            <span class="fw-bold">{{ recommendations.study_plan.daily_goals.points }}</span>
+                        </div>
+                        <div class="progress mt-1">
+                            <div class="progress-bar bg-success" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between">
+                            <span>Temps d'étude</span>
+                            <span class="fw-bold">{{ recommendations.study_plan.daily_goals.time_minutes }} min</span>
+                        </div>
+                        <div class="progress mt-1">
+                            <div class="progress-bar bg-info" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Graphique de performance
+    const ctx = document.getElementById('performanceChart');
+    if (ctx) {
+        const recentAverage = {{ analytics.performance_trends.recent_average|default:75|floatformat:0 }};
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Il y a 30j', 'Il y a 25j', 'Il y a 20j', 'Il y a 15j', 'Il y a 10j', 'Il y a 5j', 'Aujourd\'hui'],
+                datasets: [{
+                    label: 'Score Moyen (%)',
+                    data: [65, 70, 68, 75, 78, 82, recentAverage],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+
+    // Mise à jour des stats en temps réel
+    function updateStats() {
+        fetch('{% url "gamification:api_user_stats" %}')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Stats mises à jour:', data);
+            })
+            .catch(error => console.error('Erreur:', error));
+    }
+
+    // Mettre à jour toutes les 30 secondes
+    setInterval(updateStats, 30000);
+});
+</script>
+{% endblock %}

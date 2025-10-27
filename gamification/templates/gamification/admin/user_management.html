@@ -1,0 +1,374 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Gestion des Utilisateurs{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--user-color, #007bff);
+    }
+    
+    .user-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    .user-stats {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #007bff;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .level-progress {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        height: 8px;
+        margin-top: 0.5rem;
+    }
+    
+    .level-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+        border-radius: 10px;
+        transition: width 0.8s ease;
+    }
+    
+    .user-type-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .type-student { background: #e3f2fd; color: #1976d2; }
+    .type-teacher { background: #f3e5f5; color: #7b1fa2; }
+    .type-admin { background: #ffebee; color: #d32f2f; }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-edit {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-view {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .btn-ban {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .stats-overview {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .overview-item {
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .overview-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .overview-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-panel">
+    <div class="content-wrapper">
+        <!-- En-tête -->
+        <div class="row">
+            <div class="col-12">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="icon-people menu-icon"></i>
+                        Gestion des Utilisateurs
+                    </h1>
+                    <p class="page-description">Gérer les utilisateurs et leurs statistiques de gamification</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="/admin/accounts/customuser/add/" class="btn btn-primary">
+                            <i class="icon-plus me-2"></i>Ajouter un Utilisateur
+                        </a>
+                        <a href="{% url 'gamification:admin_dashboard' %}" class="btn btn-outline-secondary ms-2">
+                            <i class="icon-arrow-left me-2"></i>Retour au Dashboard
+                        </a>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary fs-6">{{ users.count }} Utilisateurs au total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques par type -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="stats-overview">
+                    <h4 class="mb-3">Répartition par Type d'Utilisateur</h4>
+                    <div class="row">
+                        {% for stat in user_stats %}
+                        <div class="col-md-3">
+                            <div class="overview-item">
+                                <div class="overview-number">{{ stat.count }}</div>
+                                <div class="overview-label">{{ stat.user_type|title }}</div>
+                                <small class="text-muted">{{ stat.total_points|default:0 }} points total</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="row">
+            <div class="col-12">
+                <div class="filter-section">
+                    <h4 class="mb-3">Filtres</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Type d'Utilisateur</label>
+                            <select class="form-select" id="userTypeFilter">
+                                <option value="">Tous les types</option>
+                                <option value="student">Étudiants</option>
+                                <option value="teacher">Enseignants</option>
+                                <option value="admin">Administrateurs</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Niveau Minimum</label>
+                            <select class="form-select" id="levelFilter">
+                                <option value="">Tous les niveaux</option>
+                                <option value="1">Niveau 1+</option>
+                                <option value="5">Niveau 5+</option>
+                                <option value="10">Niveau 10+</option>
+                                <option value="20">Niveau 20+</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Statut</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">Tous les statuts</option>
+                                <option value="active">Actifs</option>
+                                <option value="inactive">Inactifs</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des utilisateurs -->
+        <div class="row">
+            <div class="col-12">
+                {% for user in users %}
+                <div class="user-card" data-type="{{ user.user_type }}" data-level="{{ user.gamification_profile.level|default:0 }}" data-status="{% if user.is_active %}active{% else %}inactive{% endif %}">
+                    <div class="d-flex align-items-start">
+                        <div class="user-avatar me-3">
+                            {{ user.first_name.0|default:user.username.0|upper }}
+                        </div>
+                        
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="mb-1">
+                                        {{ user.get_full_name|default:user.username }}
+                                        <span class="user-type-badge type-{{ user.user_type }}">
+                                            {{ user.user_type|title }}
+                                        </span>
+                                    </h5>
+                                    <p class="text-muted mb-2">{{ user.email }}</p>
+                                    
+                                    <div class="d-flex gap-2 mb-2">
+                                        <span class="badge bg-primary">
+                                            Niveau {{ user.gamification_profile.level|default:1 }}
+                                        </span>
+                                        <span class="badge bg-success">
+                                            {{ user.gamification_profile.total_points|default:0 }} points
+                                        </span>
+                                        <span class="badge bg-warning text-dark">
+                                            {{ user.gamification_profile.experience_points|default:0 }} XP
+                                        </span>
+                                        {% if user.is_active %}
+                                        <span class="badge bg-success">Actif</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Inactif</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="level-progress">
+                                        <div class="level-progress-fill" style="width: {% widthratio user.gamification_profile.level|default:1 20 100 %}%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="action-buttons">
+                                    <a href="{% url 'gamification:my_profile' %}?user_id={{ user.id }}" class="btn-action btn-view">
+                                        <i class="icon-eye me-1"></i>Profil
+                                    </a>
+                                    <a href="/admin/accounts/customuser/{{ user.id }}/change/" class="btn-action btn-edit">
+                                        <i class="icon-pencil me-1"></i>Modifier
+                                    </a>
+                                    {% if user.is_active %}
+                                    <a href="/admin/accounts/customuser/{{ user.id }}/delete/" class="btn-action btn-ban">
+                                        <i class="icon-ban me-1"></i>Désactiver
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="user-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ user.quizattempt_set.count|default:0 }}</div>
+                                    <div class="stat-label">Tentatives</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ user.userbadge_set.count|default:0 }}</div>
+                                    <div class="stat-label">Badges</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ user.userachievement_set.count|default:0 }}</div>
+                                    <div class="stat-label">Réalisations</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ user.date_joined|timesince }}</div>
+                                    <div class="stat-label">Membre depuis</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="icon-people display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted mb-3">Aucun utilisateur trouvé</h4>
+                    <p class="text-muted mb-4">Commencez par ajouter des utilisateurs !</p>
+                    <a href="/admin/accounts/customuser/add/" class="btn btn-primary">
+                        <i class="icon-plus me-2"></i>Ajouter un Utilisateur
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Filtrage des utilisateurs
+document.addEventListener('DOMContentLoaded', function() {
+    const userTypeFilter = document.getElementById('userTypeFilter');
+    const levelFilter = document.getElementById('levelFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    function filterUsers() {
+        const selectedType = userTypeFilter.value;
+        const selectedLevel = levelFilter.value;
+        const selectedStatus = statusFilter.value;
+        
+        const userCards = document.querySelectorAll('.user-card');
+        
+        userCards.forEach(card => {
+            const type = card.dataset.type;
+            const level = parseInt(card.dataset.level);
+            const status = card.dataset.status;
+            
+            let show = true;
+            
+            if (selectedType && type !== selectedType) show = false;
+            if (selectedLevel && level < parseInt(selectedLevel)) show = false;
+            if (selectedStatus && status !== selectedStatus) show = false;
+            
+            card.style.display = show ? 'block' : 'none';
+        });
+    }
+    
+    userTypeFilter.addEventListener('change', filterUsers);
+    levelFilter.addEventListener('change', filterUsers);
+    statusFilter.addEventListener('change', filterUsers);
+});
+</script>
+{% endblock %}

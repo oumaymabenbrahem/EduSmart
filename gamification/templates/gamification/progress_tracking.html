@@ -1,0 +1,429 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Suivi des Progrès - EduSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    
+    .analytics-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .metric-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        text-align: center;
+        margin-bottom: 1rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin: 1rem 0;
+    }
+    
+    .subject-progress {
+        margin-bottom: 1rem;
+    }
+    
+    .subject-bar {
+        background: #e9ecef;
+        border-radius: 10px;
+        height: 20px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .subject-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 1s ease;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+    
+    .improvement-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .improvement-up {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .improvement-down {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .improvement-stable {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .timeline-item {
+        border-left: 3px solid #667eea;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #667eea;
+    }
+    
+    .performance-trend {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    
+    .trend-improving {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+    }
+    
+    .trend-declining {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .trend-stable {
+        background: #e2e3e5;
+        border-left: 4px solid #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="progress-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="bi bi-graph-up"></i>
+                    Suivi des Progrès
+                </h2>
+                <p class="mb-0">Analyse détaillée de votre évolution et performances</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="h1 mb-0">{{ total_attempts }}</div>
+                <small>Quiz Complétés</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Métriques principales -->
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card">
+                <i class="bi bi-trophy-fill text-warning fs-2 mb-2"></i>
+                <div class="h4 text-primary">{{ user_profile.total_points }}</div>
+                <p class="text-muted mb-0">Points Totaux</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card">
+                <i class="bi bi-star-fill text-success fs-2 mb-2"></i>
+                <div class="h4 text-primary">{{ user_profile.experience_points }}</div>
+                <p class="text-muted mb-0">Expérience</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card">
+                <i class="bi bi-fire text-danger fs-2 mb-2"></i>
+                <div class="h4 text-primary">{{ user_profile.current_streak }}</div>
+                <p class="text-muted mb-0">Série Actuelle</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card">
+                <i class="bi bi-speedometer text-info fs-2 mb-2"></i>
+                <div class="h4 text-primary">Niv. {{ user_profile.level }}</div>
+                <p class="text-muted mb-0">Niveau Actuel</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Graphique de performance -->
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-graph-up text-primary"></i>
+                    Évolution des Performances
+                </h5>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tendance de performance -->
+            {% if analytics.performance_trends %}
+                <div class="performance-trend trend-{{ analytics.performance_trends.trend }}">
+                    <div class="d-flex align-items-center">
+                        {% if analytics.performance_trends.trend == 'improving' %}
+                            <i class="bi bi-trending-up fs-4 me-3 text-success"></i>
+                            <div>
+                                <h6 class="mb-1 text-success">Performance en Amélioration</h6>
+                                <p class="mb-0">Progression de {{ analytics.performance_trends.improvement|floatformat:1 }}% récemment</p>
+                            </div>
+                        {% elif analytics.performance_trends.trend == 'declining' %}
+                            <i class="bi bi-trending-down fs-4 me-3 text-danger"></i>
+                            <div>
+                                <h6 class="mb-1 text-danger">Performance en Baisse</h6>
+                                <p class="mb-0">Baisse de {{ analytics.performance_trends.improvement|floatformat:1 }}% récemment</p>
+                            </div>
+                        {% else %}
+                            <i class="bi bi-dash fs-4 me-3 text-secondary"></i>
+                            <div>
+                                <h6 class="mb-1 text-secondary">Performance Stable</h6>
+                                <p class="mb-0">Vos résultats sont constants</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Progrès par matière -->
+            <div class="analytics-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-book text-primary"></i>
+                    Progrès par Matière
+                </h5>
+                {% for subject, average in subject_averages.items %}
+                    <div class="subject-progress">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold">{{ subject }}</span>
+                            <div>
+                                <span class="me-2">{{ average|floatformat:1 }}%</span>
+                                {% if average >= 80 %}
+                                    <span class="improvement-badge improvement-up">Excellent</span>
+                                {% elif average >= 70 %}
+                                    <span class="improvement-badge improvement-stable">Bien</span>
+                                {% else %}
+                                    <span class="improvement-badge improvement-down">À améliorer</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="subject-bar">
+                            <div class="subject-fill" style="width: {{ average }}%"></div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">Aucune donnée de matière disponible</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Zones d'amélioration et conseils -->
+        <div class="col-lg-4">
+            <!-- Zones d'amélioration -->
+            <div class="analytics-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                    Zones d'Amélioration
+                </h5>
+                {% for area in improvement_areas %}
+                    <div class="timeline-item">
+                        <h6 class="mb-1">{{ area.subject }}</h6>
+                        <p class="small text-muted mb-0">
+                            Score moyen: {{ area.average_score|floatformat:1 }}%
+                        </p>
+                        <small class="text-primary">
+                            +{{ area.improvement_needed|floatformat:0 }}% nécessaire
+                        </small>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-3">
+                        <i class="bi bi-check-circle-fill text-success fs-2"></i>
+                        <p class="text-success mt-2 mb-0">Aucune zone d'amélioration identifiée !</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Conseils personnalisés -->
+            <div class="analytics-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-lightbulb text-warning"></i>
+                    Conseils Personnalisés
+                </h5>
+                {% if analytics.predictions.recommendation %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {{ analytics.predictions.recommendation }}
+                    </div>
+                {% endif %}
+                
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="bi bi-check text-success me-2"></i>
+                        Maintenez une régularité dans vos sessions
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check text-success me-2"></i>
+                        Variez les niveaux de difficulté
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check text-success me-2"></i>
+                        Prenez des pauses pour optimiser l'apprentissage
+                    </li>
+                    <li class="mb-0">
+                        <i class="bi bi-check text-success me-2"></i>
+                        Révisez vos erreurs pour progresser
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Prédictions -->
+            {% if analytics.predictions.predicted_score %}
+            <div class="analytics-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-crystal-ball text-info"></i>
+                    Prédictions
+                </h5>
+                <div class="text-center">
+                    <div class="h3 text-primary">{{ analytics.predictions.predicted_score|floatformat:0 }}%</div>
+                    <p class="text-muted">Score prédit pour votre prochain quiz</p>
+                    <small class="text-info">
+                        Confiance: {{ analytics.predictions.confidence|capfirst }}
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="text-center mt-4">
+        <h5 class="mb-3">Actions pour Améliorer vos Performances</h5>
+        <div class="btn-group" role="group">
+            <a href="{% url 'gamification:ai_generator' %}" class="btn btn-primary">
+                <i class="bi bi-robot me-2"></i>
+                Nouveau Quiz IA
+            </a>
+            <a href="{% url 'gamification:learning_path' %}" class="btn btn-outline-primary">
+                <i class="bi bi-map me-2"></i>
+                Mon Parcours
+            </a>
+            <a href="{% url 'gamification:achievements' %}" class="btn btn-outline-success">
+                <i class="bi bi-award me-2"></i>
+                Mes Badges
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Graphique de performance
+    const ctx = document.getElementById('performanceChart');
+    if (ctx && {{ performance_data|safe }}) {
+        const performanceData = {{ performance_data|safe }};
+        
+        // Préparer les données pour le graphique
+        const labels = performanceData.map(item => item.date);
+        const scores = performanceData.map(item => item.score);
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Score (%)',
+                    data: scores,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxTicksLimit: 10
+                        }
+                    }
+                },
+                elements: {
+                    point: {
+                        hoverRadius: 8
+                    }
+                }
+            }
+        });
+    }
+
+    // Animation des barres de progression
+    const subjectFills = document.querySelectorAll('.subject-fill');
+    subjectFills.forEach((fill, index) => {
+        const width = fill.style.width;
+        fill.style.width = '0%';
+        setTimeout(() => {
+            fill.style.width = width;
+        }, index * 200 + 500);
+    });
+
+    // Animation des métriques
+    const metricCards = document.querySelectorAll('.metric-card');
+    metricCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

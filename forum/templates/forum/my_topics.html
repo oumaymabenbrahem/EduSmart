@@ -1,0 +1,148 @@
+{% extends 'base_front.html' %}
+{% load static %}
+
+{% block title %}Mes Sujets - Forum EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-person-lines-fill"></i> Mes Sujets</h2>
+        <a href="{% url 'forum:index' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Retour au forum
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-chat-dots text-primary" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ topics.paginator.count }}</h3>
+                    <p class="text-muted mb-0">Sujet{{ topics.paginator.count|pluralize }} créé{{ topics.paginator.count|pluralize }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ resolved_count }}</h3>
+                    <p class="text-muted mb-0">Sujet{{ resolved_count|pluralize }} résolu{{ resolved_count|pluralize }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-eye text-info" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ total_views }}</h3>
+                    <p class="text-muted mb-0">Vues totales</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Topics List -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Tous mes sujets</h5>
+        </div>
+        <div class="list-group list-group-flush">
+            {% for topic in topics %}
+            <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-2">
+                            <a href="{% url 'forum:topic_detail' topic.category.slug topic.slug %}" class="text-decoration-none">
+                                <h6 class="mb-0 me-2">{{ topic.title }}</h6>
+                            </a>
+                            {% if topic.status == 'closed' %}
+                            <span class="badge bg-secondary">Fermé</span>
+                            {% elif topic.status == 'pinned' %}
+                            <span class="badge bg-warning text-dark">Épinglé</span>
+                            {% endif %}
+                            {% if topic.has_solution %}
+                            <span class="badge bg-success ms-1">
+                                <i class="bi bi-check-circle"></i> Résolu
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex align-items-center text-muted small">
+                            <span class="me-3">
+                                <i class="bi bi-folder"></i> {{ topic.category.name }}
+                            </span>
+                            <span class="me-3">
+                                <i class="bi bi-clock"></i> {{ topic.created_at|date:"d M Y" }}
+                            </span>
+                            <span class="me-3">
+                                <i class="bi bi-eye"></i> {{ topic.views }} vue{{ topic.views|pluralize }}
+                            </span>
+                            <span class="me-3">
+                                <i class="bi bi-chat"></i> {{ topic.post_count }} réponse{{ topic.post_count|pluralize }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'forum:topic_detail' topic.category.slug topic.slug %}">
+                                <i class="bi bi-eye"></i> Voir
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'forum:topic_update' topic.category.slug topic.slug %}">
+                                <i class="bi bi-pencil"></i> Modifier
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'forum:topic_delete' topic.category.slug topic.slug %}">
+                                <i class="bi bi-trash"></i> Supprimer
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="list-group-item text-center py-5">
+                <i class="bi bi-chat-dots text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3 mb-3">Vous n'avez pas encore créé de sujet.</p>
+                <a href="{% url 'forum:index' %}" class="btn btn-primary">
+                    Créer mon premier sujet
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if topics.has_other_pages %}
+    <nav aria-label="Topics pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if topics.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ topics.previous_page_number }}">Précédent</a>
+            </li>
+            {% endif %}
+
+            {% for num in topics.paginator.page_range %}
+                {% if topics.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > topics.number|add:'-3' and num < topics.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if topics.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ topics.next_page_number }}">Suivant</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

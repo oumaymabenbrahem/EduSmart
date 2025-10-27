@@ -1,0 +1,184 @@
+{% extends 'template_front/base_front.html' %}
+{% load static %}
+
+{% block title %}{{ subject.name }} - Matière{% endblock %}
+
+{% block content %}
+<section class="subject-detail section">
+  <div class="container">
+    <!-- Header de la matière -->
+    <div class="row mb-5">
+      <div class="col-lg-12">
+        <div class="subject-header text-center">
+          <div class="subject-icon mb-3">
+            <i class="bi {{ subject.icon }} fs-1 text-primary"></i>
+          </div>
+          <h1>{{ subject.name }}</h1>
+          {% if subject.description %}
+          <p class="lead">{{ subject.description }}</p>
+          {% endif %}
+          <div class="subject-stats">
+            <span class="badge bg-primary fs-6">{{ courses|length }} cours disponibles</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des cours -->
+    {% if courses %}
+    <div class="row">
+      {% for course in courses %}
+      <div class="col-lg-4 col-md-6 mb-4">
+        <div class="course-card card h-100">
+          {% if course.thumbnail %}
+          <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
+          {% else %}
+          <div class="card-img-top bg-primary d-flex align-items-center justify-content-center text-white"
+               style="height: 180px;">
+            <i class="bi {{ subject.icon }} fs-1"></i>
+          </div>
+          {% endif %}
+
+          <div class="card-body d-flex flex-column">
+            <div class="course-meta mb-2">
+              <span class="badge bg-{{ course.level|lower }}">{{ course.get_level_display }}</span>
+            </div>
+
+            <h5 class="card-title">
+              <a href="{{ course.get_absolute_url }}" class="text-decoration-none">
+                {{ course.title }}
+              </a>
+            </h5>
+
+            <p class="card-text flex-grow-1">{{ course.description|truncatechars:100 }}</p>
+
+            <div class="course-stats mb-3">
+              <small class="text-muted">
+                <i class="bi bi-eye me-1"></i>{{ course.total_views }} vues
+                <i class="bi bi-person-check ms-2 me-1"></i>{{ course.total_enrollments }} inscrits
+              </small>
+            </div>
+
+            {% if course.average_rating > 0 %}
+            <div class="course-rating mb-3">
+              <div class="rating">
+                {% for i in "12345"|make_list %}
+                <i class="bi bi-star{% if forloop.counter <= course.average_rating|floatformat:0 %}-fill{% endif %} text-warning"></i>
+                {% endfor %}
+                <span class="ms-1">{{ course.average_rating }}</span>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="course-footer mt-auto">
+              <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                  <i class="bi bi-clock me-1"></i>{{ course.duration_hours }}h
+                </small>
+                <a href="{{ course.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
+                  Voir le cours
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+      <div class="col-12">
+        <div class="text-center py-5">
+          <i class="bi bi-book fs-1 text-muted mb-3"></i>
+          <h4>Aucun cours disponible</h4>
+          <p class="text-muted">Les cours pour cette matière seront bientôt ajoutés.</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Navigation -->
+    <div class="row mt-5">
+      <div class="col-12 text-center">
+        <a href="{% url 'cours:subject_list' %}" class="btn btn-outline-primary me-2">
+          <i class="bi bi-arrow-left me-1"></i>Voir toutes les matières
+        </a>
+        <a href="{% url 'cours:course_list' %}" class="btn btn-primary">
+          Voir tous les cours <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.subject-detail {
+  padding: 60px 0;
+}
+
+.subject-header {
+  background: white;
+  padding: 3rem 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.subject-icon {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subject-header h1 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.subject-header .lead {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.subject-stats {
+  margin-top: 1rem;
+}
+
+.course-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+}
+
+.course-meta .badge {
+  margin-right: 0.5rem;
+}
+
+.course-rating .rating {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .subject-header {
+    padding: 2rem 1.5rem;
+  }
+
+  .subject-icon {
+    height: 80px;
+  }
+
+  .subject-icon .fs-1 {
+    font-size: 2.5rem !important;
+  }
+}
+</style>
+{% endblock %}

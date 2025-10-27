@@ -1,0 +1,15 @@
+# Ignorer l'environnement virtuel
+venv/
+.venv/
+env/
+ENV/
+
+# Ignorer tous les fichiers Markdown
+*.md
+
+# (Optionnel) Ignorer les fichiers compilés Python
+__pycache__/
+*.py[cod]
+
+# (Optionnel) Ignorer la base de données locale
+db.sqlite3

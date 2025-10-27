@@ -1,0 +1,166 @@
+<!-- Statistiques de Gamification -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="icon-trophy text-warning me-2"></i>
+                    Statistiques Gamification
+                </h4>
+                <a href="{% url 'gamification:admin_dashboard' %}" class="btn btn-primary btn-sm">
+                    <i class="icon-settings me-1"></i>Gérer
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="h3 text-primary mb-1">{{ total_quizzes }}</div>
+                            <div class="text-muted">Quiz Créés</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="h3 text-success mb-1">{{ total_attempts }}</div>
+                            <div class="text-muted">Tentatives</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="h3 text-warning mb-1">{{ total_badges }}</div>
+                            <div class="text-muted">Badges</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="h3 text-info mb-1">{{ active_gamification_users }}</div>
+                            <div class="text-muted">Utilisateurs Actifs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Utilisateurs Gamification -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="icon-star text-warning me-2"></i>
+                    Top 5 Utilisateurs
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for profile in top_gamification_users %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            {{ profile.user.first_name.0|default:profile.user.username.0|upper }}
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">{{ profile.user.get_full_name|default:profile.user.username }}</div>
+                        <small class="text-muted">{{ profile.user.user_type|title }}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold text-primary">{{ profile.total_points }} pts</div>
+                        <small class="text-muted">Niveau {{ profile.level }}</small>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">Aucun utilisateur trouvé.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Activité Récente -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="icon-clock text-info me-2"></i>
+                    Activité Récente
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for attempt in recent_quiz_attempts %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <i class="icon-target text-success"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">{{ attempt.user.get_full_name|default:attempt.user.username }}</div>
+                        <small class="text-muted">{{ attempt.quiz.title }}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold {% if attempt.is_passed %}text-success{% else %}text-danger{% endif %}">
+                            {{ attempt.percentage|floatformat:0 }}%
+                        </div>
+                        <small class="text-muted">{{ attempt.started_at|timesince }}</small>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">Aucune activité récente.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions Rapides Gamification -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="icon-lightning text-warning me-2"></i>
+                    Actions Rapides Gamification
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-2 mb-3">
+                        <a href="{% url 'gamification:admin_dashboard' %}" class="btn btn-outline-primary w-100">
+                            <i class="icon-trophy d-block mb-2"></i>
+                            Dashboard
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <a href="{% url 'gamification:admin_quiz_management' %}" class="btn btn-outline-success w-100">
+                            <i class="icon-book-open d-block mb-2"></i>
+                            Gérer Quiz
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <a href="{% url 'gamification:admin_user_management' %}" class="btn btn-outline-info w-100">
+                            <i class="icon-people d-block mb-2"></i>
+                            Gérer Users
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <a href="{% url 'gamification:admin_badge_management' %}" class="btn btn-outline-warning w-100">
+                            <i class="icon-award d-block mb-2"></i>
+                            Gérer Badges
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <a href="{% url 'gamification:admin_analytics' %}" class="btn btn-outline-danger w-100">
+                            <i class="icon-chart d-block mb-2"></i>
+                            Analyses
+                        </a>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <a href="{% url 'gamification:home' %}" class="btn btn-outline-secondary w-100">
+                            <i class="icon-eye d-block mb-2"></i>
+                            Interface User
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

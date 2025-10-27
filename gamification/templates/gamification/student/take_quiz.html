@@ -1,0 +1,285 @@
+{% extends 'gamification/base_gamification.html' %}
+{% load static %}
+
+{% block title %}Quiz - {{ room.title }} - EduSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quiz-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .timer {
+        font-size: 1.5rem;
+        font-weight: bold;
+        padding: 10px 20px;
+        border-radius: 5px;
+    }
+    
+    .timer.warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .timer.danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .question-card {
+        margin-bottom: 30px;
+    }
+    
+    .question-number {
+        background-color: #007bff;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 50%;
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        text-align: center;
+        line-height: 30px;
+    }
+    
+    .answer-option {
+        padding: 15px;
+        margin: 10px 0;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .answer-option:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    
+    .answer-option.selected {
+        border-color: #007bff;
+        background-color: #e7f3ff;
+    }
+    
+    .progress-bar-container {
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="quiz-container">
+        <!-- En-tête -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>{{ room.title }}</h2>
+                <p class="text-muted">{{ quiz.title }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="timer" id="timer">
+                    <i class="bi bi-clock"></i> <span id="time-display">00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barre de progression -->
+        <div class="progress-bar-container">
+            <div class="d-flex justify-content-between mb-2">
+                <span>Progression</span>
+                <span><span id="current-question">1</span> / {{ questions.count }}</span>
+            </div>
+            <div class="progress" style="height: 25px;">
+                <div class="progress-bar" id="progress-bar" role="progressbar" 
+                     style="width: 0%;" aria-valuenow="0" aria-valuemin="0" 
+                     aria-valuemax="{{ questions.count }}"></div>
+            </div>
+        </div>
+
+        <!-- Formulaire du quiz -->
+        <form id="quiz-form" method="post">
+            {% csrf_token %}
+
+            <!-- Questions -->
+            {% for question in questions %}
+            <div class="question-card card" id="question-{{ question.id }}">
+                <div class="card-header">
+                    <span class="question-number">{{ forloop.counter }}</span>
+                    <strong class="ms-3">{{ question.question_text }}</strong>
+                </div>
+                <div class="card-body">
+                    {% if question.question_type == 'multiple_choice' %}
+                        <!-- Choix multiples -->
+                        <div class="answer-option" onclick="selectAnswer({{ question.id }}, 'A')">
+                            <input type="radio" name="answer_{{ question.id }}"
+                                   value="A" id="option_{{ question.id }}_A">
+                            <label for="option_{{ question.id }}_A" class="ms-2 mb-0">
+                                <strong>A)</strong> {{ question.option_a }}
+                            </label>
+                        </div>
+                        <div class="answer-option" onclick="selectAnswer({{ question.id }}, 'B')">
+                            <input type="radio" name="answer_{{ question.id }}"
+                                   value="B" id="option_{{ question.id }}_B">
+                            <label for="option_{{ question.id }}_B" class="ms-2 mb-0">
+                                <strong>B)</strong> {{ question.option_b }}
+                            </label>
+                        </div>
+                        <div class="answer-option" onclick="selectAnswer({{ question.id }}, 'C')">
+                            <input type="radio" name="answer_{{ question.id }}"
+                                   value="C" id="option_{{ question.id }}_C">
+                            <label for="option_{{ question.id }}_C" class="ms-2 mb-0">
+                                <strong>C)</strong> {{ question.option_c }}
+                            </label>
+                        </div>
+                        <div class="answer-option" onclick="selectAnswer({{ question.id }}, 'D')">
+                            <input type="radio" name="answer_{{ question.id }}"
+                                   value="D" id="option_{{ question.id }}_D">
+                            <label for="option_{{ question.id }}_D" class="ms-2 mb-0">
+                                <strong>D)</strong> {{ question.option_d }}
+                            </label>
+                        </div>
+                    
+                    {% elif question.question_type == 'true_false' %}
+                        <!-- Vrai/Faux -->
+                        <div class="answer-option" onclick="selectAnswer({{ question.id }}, 'true')">
+                            <input type="radio" name="answer_{{ question.id }}" 
+                                   value="true" id="option_{{ question.id }}_true">
+                            <label for="option_{{ question.id }}_true" class="ms-2 mb-0">
+                                Vrai
+                            </label>
+                        </div>
+                        <div class="answer-option" onclick="selectAnswer({{ question.id }}, 'false')">
+                            <input type="radio" name="answer_{{ question.id }}" 
+                                   value="false" id="option_{{ question.id }}_false">
+                            <label for="option_{{ question.id }}_false" class="ms-2 mb-0">
+                                Faux
+                            </label>
+                        </div>
+                    
+                    {% elif question.question_type == 'short_answer' %}
+                        <!-- Réponse courte -->
+                        <input type="text" class="form-control" name="answer_{{ question.id }}" 
+                               placeholder="Entrez votre réponse...">
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Boutons d'action -->
+            <div class="row mt-4 mb-4">
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check-circle"></i> Soumettre le Quiz
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-lg" onclick="if(confirm('Êtes-vous sûr de vouloir quitter ?')) window.history.back();">
+                        <i class="bi bi-x-circle"></i> Quitter
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Configuration du timer
+    const timeRemaining = {{ time_remaining }};
+    const timeLimit = {{ room.get_time_limit }} * 60;
+    let secondsRemaining = timeRemaining;
+    
+    function updateTimer() {
+        const minutes = Math.floor(secondsRemaining / 60);
+        const seconds = secondsRemaining % 60;
+        const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        document.getElementById('time-display').textContent = display;
+        
+        const timerElement = document.getElementById('timer');
+        if (secondsRemaining <= 60) {
+            timerElement.classList.add('danger');
+            timerElement.classList.remove('warning');
+        } else if (secondsRemaining <= 300) {
+            timerElement.classList.add('warning');
+            timerElement.classList.remove('danger');
+        }
+        
+        if (secondsRemaining <= 0) {
+            clearInterval(timerInterval);
+            document.getElementById('quiz-form').submit();
+        }
+        
+        secondsRemaining--;
+    }
+    
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer();
+    
+    // Sélection des réponses
+    function selectAnswer(questionId, answer) {
+        const radio = document.querySelector(`input[name="answer_${questionId}"][value="${answer}"]`);
+        if (radio) {
+            radio.checked = true;
+            
+            // Mettre à jour l'affichage
+            document.querySelectorAll(`#question-${questionId} .answer-option`).forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelector(`#question-${questionId} .answer-option input[value="${answer}"]`).closest('.answer-option').classList.add('selected');
+        }
+    }
+    
+    // Mise à jour de la progression
+    function updateProgress() {
+        const totalQuestions = {{ questions.count }};
+        const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked, input[type="text"]:not(:empty)').length;
+        const percentage = (answeredQuestions / totalQuestions) * 100;
+        
+        document.getElementById('progress-bar').style.width = percentage + '%';
+        document.getElementById('progress-bar').setAttribute('aria-valuenow', answeredQuestions);
+        document.getElementById('current-question').textContent = answeredQuestions;
+    }
+    
+    // Écouter les changements
+    document.querySelectorAll('input[type="radio"], input[type="text"]').forEach(input => {
+        input.addEventListener('change', updateProgress);
+        input.addEventListener('input', updateProgress);
+    });
+    
+    // Soumettre le formulaire
+    document.getElementById('quiz-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Collecter les réponses
+        const answers = {};
+        document.querySelectorAll('input[type="radio"]:checked, input[type="text"]:not(:empty)').forEach(input => {
+            const questionId = input.name.replace('answer_', '');
+            answers[questionId] = input.value;
+        });
+        
+        // Envoyer les réponses
+        fetch('{% url "gamification:submit_room_quiz" room.room_code %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value
+            },
+            body: JSON.stringify({ answers: answers })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Une erreur est survenue.');
+        });
+    });
+</script>
+{% endblock %}
+

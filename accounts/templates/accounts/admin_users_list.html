@@ -1,0 +1,240 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Gestion des Utilisateurs - Dashboard Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12 grid-margin">
+    <div class="row">
+      <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+        <h3 class="font-weight-bold">Gestion des Utilisateurs</h3>
+        <h6 class="font-weight-normal mb-0">{{ users.count }} utilisateur{{ users.count|pluralize }} au total</h6>
+      </div>
+      <div class="col-12 col-xl-4">
+        <div class="justify-content-end d-flex">
+          <a href="{% url 'accounts:register' %}" class="btn btn-success">
+            <i class="ti-plus"></i> Ajouter un utilisateur
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row">
+  <div class="col-md-3 grid-margin stretch-card">
+    <div class="card card-tale">
+      <div class="card-body">
+        <p class="mb-4">Total Utilisateurs</p>
+        <p class="fs-30 mb-2">{{ total_users }}</p>
+        <p><i class="ti-user"></i> Tous types</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 grid-margin stretch-card">
+    <div class="card card-dark-blue">
+      <div class="card-body">
+        <p class="mb-4">Étudiants</p>
+        <p class="fs-30 mb-2">{{ students_count }}</p>
+        <p><i class="ti-book"></i> Apprenants</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 grid-margin stretch-card">
+    <div class="card card-light-blue">
+      <div class="card-body">
+        <p class="mb-4">Enseignants</p>
+        <p class="fs-30 mb-2">{{ teachers_count }}</p>
+        <p><i class="ti-blackboard"></i> Formateurs</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 grid-margin stretch-card">
+    <div class="card card-light-danger">
+      <div class="card-body">
+        <p class="mb-4">Administrateurs</p>
+        <p class="fs-30 mb-2">{{ admins_count }}</p>
+        <p><i class="ti-crown"></i> Admins</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres -->
+<div class="row">
+  <div class="col-md-12 grid-margin">
+    <div class="card">
+      <div class="card-body">
+        <form method="get" class="row">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Rechercher</label>
+              <input type="text" name="search" class="form-control" placeholder="Nom, email, username..." value="{{ request.GET.search }}">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Type d'utilisateur</label>
+              <select name="user_type" class="form-control">
+                <option value="">Tous les types</option>
+                <option value="student" {% if request.GET.user_type == 'student' %}selected{% endif %}>Étudiant</option>
+                <option value="teacher" {% if request.GET.user_type == 'teacher' %}selected{% endif %}>Enseignant</option>
+                <option value="admin" {% if request.GET.user_type == 'admin' %}selected{% endif %}>Administrateur</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Statut</label>
+              <select name="is_verified" class="form-control">
+                <option value="">Tous les statuts</option>
+                <option value="true" {% if request.GET.is_verified == 'true' %}selected{% endif %}>Vérifié</option>
+                <option value="false" {% if request.GET.is_verified == 'false' %}selected{% endif %}>Non vérifié</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-group">
+              <label>&nbsp;</label>
+              <button type="submit" class="btn btn-primary form-control">
+                <i class="ti-search"></i> Filtrer
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Liste des utilisateurs -->
+<div class="row">
+  <div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">Liste des utilisateurs</h4>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Photo</th>
+                <th>Nom complet</th>
+                <th>Email</th>
+                <th>Type</th>
+                <th>Statut</th>
+                <th>Inscription</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+              <tr>
+                <td>
+                  {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                  {% else %}
+                    <img src="{% static 'images/faces/face1.jpg' %}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                  {% endif %}
+                </td>
+                <td>
+                  <strong>{{ user.full_name|default:user.username }}</strong>
+                  <br><small class="text-muted">@{{ user.username }}</small>
+                </td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <span class="badge badge-{% if user.user_type == 'admin' %}danger{% elif user.user_type == 'teacher' %}warning{% else %}info{% endif %}">
+                    {{ user.get_user_type_display }}
+                  </span>
+                </td>
+                <td>
+                  {% if user.is_verified %}
+                    <span class="badge badge-success"><i class="ti-check"></i> Vérifié</span>
+                  {% else %}
+                    <span class="badge badge-warning"><i class="ti-time"></i> En attente</span>
+                  {% endif %}
+                  {% if user.is_active %}
+                    <span class="badge badge-success"><i class="ti-check"></i> Actif</span>
+                  {% else %}
+                    <span class="badge badge-danger"><i class="ti-close"></i> Inactif</span>
+                  {% endif %}
+                </td>
+                <td>{{ user.created_at|date:"d/m/Y" }}</td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <a href="{% url 'accounts:profile_detail' user.pk %}" class="btn btn-sm btn-outline-primary">
+                      <i class="ti-eye"></i>
+                    </a>
+                    {% if user != request.user %}
+                    <button class="btn btn-sm btn-outline-warning" onclick="toggleUserStatus({{ user.pk }})">
+                      {% if user.is_active %}
+                        <i class="ti-lock"></i>
+                      {% else %}
+                        <i class="ti-unlock"></i>
+                      {% endif %}
+                    </button>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center">
+                  <div class="py-4">
+                    <i class="ti-user icon-lg text-muted"></i>
+                    <p class="text-muted mt-2">Aucun utilisateur trouvé</p>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Navigation des pages">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.user_type %}user_type={{ request.GET.user_type }}&{% endif %}{% if request.GET.is_verified %}is_verified={{ request.GET.is_verified }}&{% endif %}page={{ page_obj.previous_page_number }}">Précédent</a>
+              </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+              {% if page_obj.number == num %}
+                <li class="page-item active">
+                  <span class="page-link">{{ num }}</span>
+                </li>
+              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.user_type %}user_type={{ request.GET.user_type }}&{% endif %}{% if request.GET.is_verified %}is_verified={{ request.GET.is_verified }}&{% endif %}page={{ num }}">{{ num }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.user_type %}user_type={{ request.GET.user_type }}&{% endif %}{% if request.GET.is_verified %}is_verified={{ request.GET.is_verified }}&{% endif %}page={{ page_obj.next_page_number }}">Suivant</a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleUserStatus(userId) {
+  if (confirm('Êtes-vous sûr de vouloir modifier le statut de cet utilisateur ?')) {
+    // Ici vous pouvez ajouter une requête AJAX pour modifier le statut
+    console.log('Toggle user ' + userId);
+  }
+}
+</script>
+{% endblock %}

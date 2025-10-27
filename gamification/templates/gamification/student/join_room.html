@@ -1,0 +1,53 @@
+{% extends 'gamification/base_gamification.html' %}
+{% load static %}
+
+{% block title %}Rejoindre une Room - EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-door-open"></i> Rejoindre une Room</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label for="room_code" class="form-label">Code de la Room *</label>
+                            <input type="text" class="form-control form-control-lg" id="room_code" 
+                                   name="room_code" placeholder="Ex: ABC123" 
+                                   maxlength="8" required autofocus>
+                            <small class="text-muted">Entrez le code fourni par votre enseignant</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> Rejoindre
+                            </button>
+                            <a href="{% url 'gamification:student_room_list' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Mes Rooms
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info -->
+            <div class="alert alert-info mt-4">
+                <h5><i class="bi bi-info-circle"></i> Comment rejoindre une room ?</h5>
+                <ol class="mb-0">
+                    <li>Demandez le code de la room à votre enseignant</li>
+                    <li>Entrez le code ci-dessus</li>
+                    <li>Cliquez sur "Rejoindre"</li>
+                    <li>Attendez que l'enseignant démarre la room</li>
+                    <li>Commencez le quiz !</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,210 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Profil de {{ profile_user.username }} - Dashboard Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12 grid-margin">
+    <div class="row">
+      <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+        <h3 class="font-weight-bold">Profil de {{ profile_user.full_name|default:profile_user.username }}</h3>
+        <h6 class="font-weight-normal mb-0">Détails complets de l'utilisateur</h6>
+      </div>
+      <div class="col-12 col-xl-4">
+        <div class="justify-content-end d-flex">
+          <a href="{% url 'accounts:users_list' %}" class="btn btn-light">
+            <i class="ti-arrow-left"></i> Retour à la liste
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-4 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <div class="text-center">
+          {% if profile_user.profile_picture %}
+            <img src="{{ profile_user.profile_picture.url }}" alt="Profile" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+          {% else %}
+            <img src="{% static 'images/faces/face28.jpg' %}" alt="Profile" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+          {% endif %}
+          <h4 class="card-title">{{ profile_user.full_name|default:profile_user.username }}</h4>
+          <p class="card-description">
+            <span class="badge badge-{% if profile_user.user_type == 'admin' %}danger{% elif profile_user.user_type == 'teacher' %}warning{% else %}info{% endif %}">
+              {{ profile_user.get_user_type_display }}
+            </span>
+          </p>
+          <div class="mt-2">
+            {% if profile_user.is_verified %}
+              <span class="badge badge-success"><i class="ti-check"></i> Compte vérifié</span>
+            {% else %}
+              <span class="badge badge-warning"><i class="ti-time"></i> En attente</span>
+            {% endif %}
+            <br>
+            {% if profile_user.is_active %}
+              <span class="badge badge-success mt-2"><i class="ti-check"></i> Actif</span>
+            {% else %}
+              <span class="badge badge-danger mt-2"><i class="ti-close"></i> Inactif</span>
+            {% endif %}
+          </div>
+        </div>
+        
+        {% if is_own_profile or user.user_type == 'admin' %}
+        <div class="mt-4 text-center">
+          {% if is_own_profile %}
+            <a href="{% url 'accounts:edit_profile' %}" class="btn btn-primary btn-sm btn-block">
+              <i class="ti-pencil"></i> Modifier le profil
+            </a>
+            <a href="{% url 'accounts:change_password' %}" class="btn btn-warning btn-sm btn-block">
+              <i class="ti-lock"></i> Changer le mot de passe
+            </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-8 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">Informations personnelles</h4>
+        
+        <div class="row mt-4">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-user mr-2"></i>Nom d'utilisateur</label>
+              <p class="text-muted">{{ profile_user.username }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-email mr-2"></i>Email</label>
+              <p class="text-muted">{{ profile_user.email }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-id-badge mr-2"></i>Prénom</label>
+              <p class="text-muted">{{ profile_user.first_name|default:"Non renseigné" }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-id-badge mr-2"></i>Nom</label>
+              <p class="text-muted">{{ profile_user.last_name|default:"Non renseigné" }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-mobile mr-2"></i>Téléphone</label>
+              <p class="text-muted">{{ profile_user.phone_number|default:"Non renseigné" }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-calendar mr-2"></i>Date de naissance</label>
+              <p class="text-muted">{{ profile_user.date_of_birth|date:"d F Y"|default:"Non renseignée" }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="font-weight-bold"><i class="ti-comment mr-2"></i>Biographie</label>
+          <p class="text-muted">{{ profile_user.bio|default:"Aucune biographie" }}</p>
+        </div>
+        
+        <hr>
+        
+        <h5 class="mt-4"><i class="ti-location-pin mr-2"></i>Adresse</h5>
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-home mr-2"></i>Adresse complète</label>
+              <p class="text-muted">
+                {% if profile_user.address %}
+                  {{ profile_user.address }}
+                  {% if profile_user.city %}, {{ profile_user.city }}{% endif %}
+                  {% if profile_user.country %}, {{ profile_user.country }}{% endif %}
+                {% else %}
+                  Non renseignée
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-map-alt mr-2"></i>Ville</label>
+              <p class="text-muted">{{ profile_user.city|default:"Non renseignée" }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-flag mr-2"></i>Pays</label>
+              <p class="text-muted">{{ profile_user.country|default:"Non renseigné" }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <hr>
+        
+        <h5 class="mt-4"><i class="ti-info-alt mr-2"></i>Informations système</h5>
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-plus mr-2"></i>Membre depuis</label>
+              <p class="text-muted">{{ profile_user.created_at|date:"d F Y à H:i" }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-pencil-alt mr-2"></i>Dernière modification</label>
+              <p class="text-muted">{{ profile_user.updated_at|date:"d F Y à H:i" }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-shield mr-2"></i>Compte vérifié</label>
+              <p>
+                {% if profile_user.is_verified %}
+                  <span class="badge badge-success"><i class="ti-check"></i> Oui</span>
+                {% else %}
+                  <span class="badge badge-warning"><i class="ti-close"></i> Non</span>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="font-weight-bold"><i class="ti-power-off mr-2"></i>Compte actif</label>
+              <p>
+                {% if profile_user.is_active %}
+                  <span class="badge badge-success"><i class="ti-check"></i> Oui</span>
+                {% else %}
+                  <span class="badge badge-danger"><i class="ti-close"></i> Non</span>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

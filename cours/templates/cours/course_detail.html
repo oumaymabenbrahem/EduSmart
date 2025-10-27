@@ -1,0 +1,569 @@
+{% extends 'template_front/base_front.html' %}
+{% load static %}
+
+{% block title %}{{ course.title }} - Cours{% endblock %}
+
+{% block content %}
+<section class="course-detail section">
+  <div class="container">
+    <div class="row">
+      <!-- Contenu principal -->
+      <div class="col-lg-8">
+        <!-- Header du cours -->
+        <div class="course-header mb-4">
+          <div class="course-thumbnail mb-3">
+            {% if course.thumbnail %}
+            <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" class="img-fluid rounded">
+            {% else %}
+            <div class="bg-primary d-flex align-items-center justify-content-center text-white rounded"
+                 style="height: 300px;">
+              <i class="bi {{ course.subject.icon }} fs-1"></i>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="course-info">
+            <div class="d-flex align-items-center mb-2">
+              <span class="badge bg-{{ course.level|lower }} me-2">{{ course.get_level_display }}</span>
+              <span class="badge bg-secondary">{{ course.subject.name }}</span>
+            </div>
+
+            <h1 class="mb-3">{{ course.title }}</h1>
+
+            <div class="course-meta d-flex flex-wrap align-items-center mb-3">
+              <div class="me-4">
+                <i class="bi bi-person me-1"></i>
+                <strong>{{ course.instructor.get_full_name|default:course.instructor.username }}</strong>
+              </div>
+              <div class="me-4">
+                <i class="bi bi-clock me-1"></i>{{ course.duration_hours }} heures
+              </div>
+              <div class="me-4">
+                <i class="bi bi-eye me-1"></i>{{ course.total_views }} vues
+              </div>
+              <div>
+                <i class="bi bi-person-check me-1"></i>{{ course.total_enrollments }} inscrits
+              </div>
+            </div>
+
+            {% if course.average_rating > 0 %}
+            <div class="course-rating mb-3">
+              <div class="rating d-flex align-items-center">
+                {% for i in "12345"|make_list %}
+                <i class="bi bi-star{% if forloop.counter <= course.average_rating|floatformat:0 %}-fill{% endif %} text-warning me-1"></i>
+                {% endfor %}
+                <span class="fw-bold">{{ course.average_rating }}</span>
+                <span class="text-muted ms-2">({{ reviews|length }} avis)</span>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="course-actions mb-4">
+          {% if user.is_authenticated %}
+          {% if is_enrolled %}
+          <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>
+            Vous êtes inscrit à ce cours
+            <div class="mt-2">
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar" role="progressbar" style="width: {{ enrollment.progress_percentage }}%"
+                     aria-valuenow="{{ enrollment.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <small class="text-muted mt-1">{{ enrollment.progress_percentage }}% complété</small>
+            </div>
+          </div>
+          {% else %}
+          <a href="{% url 'cours:course_enroll' course.slug %}" class="btn btn-primary btn-lg me-2">
+            <i class="bi bi-plus-circle me-2"></i>S'inscrire au cours
+          </a>
+          {% endif %}
+          {% else %}
+          <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary btn-lg me-2">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter pour s'inscrire
+          </a>
+          {% endif %}
+
+          {% if is_enrolled %}
+          <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#progressModal">
+            <i class="bi bi-graph-up me-1"></i>Mettre à jour la progression
+          </button>
+          {% endif %}
+        </div>
+
+        <!-- Description -->
+        <div class="course-description mb-4">
+          <h3>Description</h3>
+          <div class="content">
+            {{ course.description|linebreaks }}
+          </div>
+        </div>
+
+        <!-- Objectifs -->
+        {% if course.objectives %}
+        <div class="course-objectives mb-4">
+          <h3>Objectifs d'apprentissage</h3>
+          <div class="content">
+            {{ course.objectives|linebreaks }}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Prérequis -->
+        {% if course.prerequisites %}
+        <div class="course-prerequisites mb-4">
+          <h3>Prérequis</h3>
+          <div class="content">
+            {{ course.prerequisites|linebreaks }}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Contenu du cours -->
+        <div class="course-content mb-4">
+          <h3>Contenu du cours</h3>
+          <div class="content">
+            {{ course.content|linebreaks }}
+          </div>
+        </div>
+
+        <!-- Gestion du contenu (enseignants) -->
+        {% if user.is_authenticated and user.user_type == 'teacher' and course.instructor == user %}
+        <div class="course-management mb-4">
+          <h3>Gestion du contenu</h3>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'cours:course_resource_create' course.slug %}" class="btn btn-outline-info">
+              <i class="bi bi-file-earmark-plus me-2"></i>Ajouter une ressource
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Modules du cours -->
+        {% if modules %}
+        <div class="course-modules mb-4">
+          <h3>Modules du cours</h3>
+          <div class="modules-list">
+            {% for module in modules %}
+            <div class="module-item mb-3 p-3 border rounded">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h5 class="mb-1">{{ module.title }}</h5>
+                  {% if module.description %}
+                  <p class="text-muted mb-2">{{ module.description }}</p>
+                  {% endif %}
+                </div>
+                {% if user.is_authenticated and user.user_type == 'teacher' and course.instructor == user %}
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'cours:course_module_edit' course.slug module.id %}"><i class="bi bi-pencil me-2"></i>Modifier</a></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'cours:course_module_delete' course.slug module.id %}" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce module ?')"><i class="bi bi-trash me-2"></i>Supprimer</a></li>
+                  </ul>
+                </div>
+                {% endif %}
+              </div>
+              {% if module.content_file %}
+              <div class="module-file">
+                <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                <a href="{{ module.content_file.url }}" target="_blank" class="text-decoration-none">
+                  Télécharger le fichier du module
+                </a>
+                <small class="text-muted ms-2">({{ module.content_file.size|filesizeformat }})</small>
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Ressources du cours -->
+        {% if resources %}
+        <div class="course-resources mb-4">
+          <h3>Ressources du cours</h3>
+          <div class="resources-list">
+            {% for resource in resources %}
+            <div class="resource-item mb-3 p-3 border rounded">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex align-items-start">
+                  {% if resource.resource_type == 'document' %}
+                  <i class="bi bi-file-earmark-text text-primary fs-4 me-3"></i>
+                  {% elif resource.resource_type == 'video' %}
+                  <i class="bi bi-play-circle text-danger fs-4 me-3"></i>
+                  {% elif resource.resource_type == 'link' %}
+                  <i class="bi bi-link-45deg text-info fs-4 me-3"></i>
+                  {% elif resource.resource_type == 'exercise' %}
+                  <i class="bi bi-pencil-square text-success fs-4 me-3"></i>
+                  {% elif resource.resource_type == 'quiz' %}
+                  <i class="bi bi-question-circle text-warning fs-4 me-3"></i>
+                  {% endif %}
+                  <div>
+                    <h6 class="mb-1">{{ resource.title }}</h6>
+                    {% if resource.description %}
+                    <p class="text-muted mb-2">{{ resource.description }}</p>
+                    {% endif %}
+                    <small class="badge bg-secondary">{{ resource.get_resource_type_display }}</small>
+                    {% if resource.module %}
+                    <small class="badge bg-light text-dark ms-2">Module: {{ resource.module.title }}</small>
+                    {% endif %}
+                  </div>
+                </div>
+                {% if user.is_authenticated and user.user_type == 'teacher' and course.instructor == user %}
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'cours:course_resource_edit' course.slug resource.id %}"><i class="bi bi-pencil me-2"></i>Modifier</a></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'cours:course_resource_delete' course.slug resource.id %}" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette ressource ?')"><i class="bi bi-trash me-2"></i>Supprimer</a></li>
+                  </ul>
+                </div>
+                {% endif %}
+              </div>
+              <div class="resource-actions">
+              {% if resource.file %}
+              <a href="{{ resource.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-download me-1"></i>Télécharger
+              </a>
+            
+        <a href="{% url 'cours:view_pdf_resource' resource.id %}" class="btn btn-sm btn-outline-info">
+            <i class="bi bi-eye me-1"></i>Voir PDF
+        </a>
+         
+
+              {% elif resource.url %}
+              <a href="{{ resource.url }}" target="_blank" class="btn btn-sm btn-outline-info">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir le lien
+              </a>
+              {% endif %}
+            </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Avis -->
+        {% if reviews %}
+        <div class="course-reviews mb-4">
+          <h3>Avis des étudiants</h3>
+          <div class="reviews-list">
+            {% for review in reviews %}
+            <div class="review-item mb-3 p-3 border rounded">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <strong>{{ review.student.get_full_name|default:review.student.username }}</strong>
+                  <div class="rating">
+                    {% for i in "12345"|make_list %}
+                    <i class="bi bi-star{% if forloop.counter <= review.rating %}-fill{% endif %} text-warning"></i>
+                    {% endfor %}
+                  </div>
+                </div>
+                <small class="text-muted">{{ review.created_at|date:"d/m/Y" }}</small>
+              </div>
+              {% if review.comment %}
+              <p class="mb-0">{{ review.comment }}</p>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Formulaire d'avis -->
+        {% if user.is_authenticated and is_enrolled %}
+        <div class="course-review-form mb-4">
+          <h3>Donner votre avis</h3>
+          <form method="post" action="{% url 'cours:course_review' course.slug %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label">Note (1-5 étoiles)</label>
+              <div class="rating-input">
+                {% for i in "12345"|make_list %}
+                <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}"
+                       {% if user_review and user_review.rating == i %}checked{% endif %} required>
+                <label for="star{{ i }}">
+                  <i class="bi bi-star{% if user_review and user_review.rating >= i %}-fill{% endif %}"></i>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="comment" class="form-label">Commentaire (optionnel)</label>
+              <textarea class="form-control" id="comment" name="comment" rows="3"
+                        placeholder="Partagez votre expérience...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              {% if user_review %}Modifier mon avis{% else %}Publier mon avis{% endif %}
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Informations complémentaires -->
+        <div class="course-sidebar">
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Informations</h5>
+            </div>
+            <div class="card-body">
+              <div class="info-item mb-3">
+                <i class="bi bi-person text-primary me-2"></i>
+                <div>
+                  <strong>Instructeur</strong><br>
+                  <small>{{ course.instructor.get_full_name|default:course.instructor.username }}</small>
+                </div>
+              </div>
+              <div class="info-item mb-3">
+                <i class="bi bi-book text-primary me-2"></i>
+                <div>
+                  <strong>Matière</strong><br>
+                  <small>{{ course.subject.name }}</small>
+                </div>
+              </div>
+              <div class="info-item mb-3">
+                <i class="bi bi-bar-chart text-primary me-2"></i>
+                <div>
+                  <strong>Niveau</strong><br>
+                  <small>{{ course.get_level_display }}</small>
+                </div>
+              </div>
+              <div class="info-item mb-3">
+                <i class="bi bi-clock text-primary me-2"></i>
+                <div>
+                  <strong>Durée</strong><br>
+                  <small>{{ course.duration_hours }} heures</small>
+                </div>
+              </div>
+              <div class="info-item">
+                <i class="bi bi-calendar text-primary me-2"></i>
+                <div>
+                  <strong>Créé le</strong><br>
+                  <small>{{ course.created_at|date:"d/m/Y" }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cours similaires -->
+          {% if similar_courses %}
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Cours similaires</h5>
+            </div>
+            <div class="card-body">
+              {% for similar_course in similar_courses %}
+              <div class="similar-course mb-3">
+                <h6>
+                  <a href="{{ similar_course.get_absolute_url }}" class="text-decoration-none">
+                    {{ similar_course.title }}
+                  </a>
+                </h6>
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">{{ similar_course.get_level_display }}</small>
+                  <small class="text-muted">{{ similar_course.total_views }} vues</small>
+                </div>
+              </div>
+              {% if not forloop.last %}<hr>{% endif %}
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal de progression -->
+{% if is_enrolled %}
+<div class="modal fade" id="progressModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Mettre à jour la progression</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'cours:course_progress' course.slug %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="progress" class="form-label">Progression actuelle: {{ enrollment.progress_percentage }}%</label>
+            <input type="range" class="form-range" id="progress" name="progress"
+                   min="0" max="100" value="{{ enrollment.progress_percentage }}">
+            <div class="d-flex justify-content-between">
+              <small class="text-muted">0%</small>
+              <small class="text-muted">100%</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Mettre à jour</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.course-detail {
+  padding: 60px 0;
+}
+
+.course-header {
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.course-thumbnail img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+}
+
+.course-info {
+  padding: 2rem;
+}
+
+.course-meta {
+  font-size: 0.9rem;
+}
+
+.course-actions {
+  background: #f8f9fa;
+  padding: 2rem;
+  border-radius: 0.5rem;
+}
+
+.course-description,
+.course-objectives,
+.course-prerequisites,
+.course-content,
+.course-management,
+.course-modules,
+.course-resources,
+.course-reviews,
+.course-review-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.course-description h3,
+.course-objectives h3,
+.course-prerequisites h3,
+.course-content h3,
+.course-management h3,
+.course-modules h3,
+.course-resources h3,
+.course-reviews h3,
+.course-review-form h3 {
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 0.5rem;
+}
+
+.content {
+  line-height: 1.6;
+}
+
+.reviews-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.rating-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rating-input input[type="radio"] {
+  display: none;
+}
+
+.rating-input label {
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #ddd;
+  transition: color 0.3s;
+}
+
+.rating-input input[type="radio"]:checked ~ label,
+.rating-input label:hover,
+.rating-input label:hover ~ label {
+  color: #ffc107;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+}
+
+.similar-course h6 {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.similar-course h6 a {
+  color: #2c3e50;
+}
+
+.similar-course h6 a:hover {
+  color: #3498db;
+}
+
+@media (max-width: 768px) {
+  .course-info {
+    padding: 1.5rem;
+  }
+
+  .course-actions {
+    padding: 1.5rem;
+  }
+
+  .course-description,
+  .course-objectives,
+  .course-prerequisites,
+  .course-content,
+  .course-management,
+  .course-modules,
+  .course-resources,
+  .course-reviews,
+  .course-review-form {
+    padding: 1.5rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Mise à jour en temps réel du range dans le modal
+  const progressRange = document.getElementById('progress');
+  if (progressRange) {
+    const progressLabel = progressRange.previousElementSibling;
+    progressRange.addEventListener('input', function() {
+      progressLabel.textContent = `Progression actuelle: ${this.value}%`;
+    });
+  }
+});
+</script>
+{% endblock %}

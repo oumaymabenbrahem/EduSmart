@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Centre des Réalisations - EduSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .achievement-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    
+    .badge-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .badge-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .badge-card.earned {
+        border: 2px solid #28a745;
+    }
+    
+    .badge-card.locked {
+        opacity: 0.6;
+        background: #f8f9fa;
+    }
+    
+    .badge-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 1rem;
+        position: relative;
+    }
+    
+    .badge-common { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
+    .badge-uncommon { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .badge-rare { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+    .badge-epic { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    .badge-legendary { background: linear-gradient(135deg, #f1c40f, #f39c12); }
+    
+    .badge-glow {
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .badge-card.earned .badge-glow {
+        opacity: 0.3;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.3; }
+        50% { transform: scale(1.05); opacity: 0.6; }
+        100% { transform: scale(1); opacity: 0.3; }
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-ring {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 1rem;
+    }
+    
+    .progress-ring-circle {
+        stroke: #e9ecef;
+        stroke-width: 8;
+        fill: transparent;
+        r: 52;
+        cx: 60;
+        cy: 60;
+    }
+    
+    .progress-ring-progress {
+        stroke: #667eea;
+        stroke-width: 8;
+        stroke-linecap: round;
+        fill: transparent;
+        r: 52;
+        cx: 60;
+        cy: 60;
+        stroke-dasharray: 326.73;
+        stroke-dashoffset: 326.73;
+        transition: stroke-dashoffset 1s ease;
+    }
+    
+    .recent-badge {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        border-left: 4px solid #28a745;
+    }
+    
+    .filter-tabs {
+        background: white;
+        border-radius: 10px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .filter-tab {
+        border: none;
+        background: transparent;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-tab.active {
+        background: #667eea;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="achievement-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="bi bi-award"></i>
+                    Centre des Réalisations
+                </h2>
+                <p class="mb-0">Collectionnez des badges en accomplissant des défis</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="h1 mb-0">{{ earned_badges.count }}/{{ stats.total_badges }}</div>
+                <small>Badges Obtenus</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Statistiques -->
+        <div class="col-lg-4">
+            <div class="stats-card">
+                <h5 class="mb-3">Progression Globale</h5>
+                <svg class="progress-ring">
+                    <circle class="progress-ring-circle"></circle>
+                    <circle class="progress-ring-progress" 
+                            style="stroke-dashoffset: {{ stats.completion_rate|floatformat:0|add:'-326.73'|add:'326.73' }}"></circle>
+                </svg>
+                <div class="h3 text-primary">{{ stats.completion_rate|floatformat:1 }}%</div>
+                <p class="text-muted mb-0">Badges Collectés</p>
+            </div>
+
+            <div class="stats-card">
+                <h6 class="mb-3">Répartition par Rareté</h6>
+                {% for rarity in stats.rarity_distribution %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-capitalize">{{ rarity.badge__rarity }}</span>
+                        <span class="badge bg-secondary">{{ rarity.count }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Badges récents -->
+            <h5 class="mb-3">Récemment Obtenus</h5>
+            {% for achievement in recent_achievements %}
+                <div class="recent-badge">
+                    <div class="d-flex align-items-center">
+                        <div class="badge-icon badge-{{ achievement.badge.rarity }} me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                            <i class="{{ achievement.badge.icon }} text-white"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ achievement.badge.name }}</h6>
+                            <small class="text-muted">{{ achievement.earned_at|timesince }} ago</small>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">Aucun badge récent</p>
+            {% endfor %}
+        </div>
+
+        <!-- Collection de badges -->
+        <div class="col-lg-8">
+            <!-- Filtres -->
+            <div class="filter-tabs">
+                <div class="btn-group w-100" role="group">
+                    <button type="button" class="filter-tab active" data-filter="all">
+                        Tous ({{ stats.total_badges }})
+                    </button>
+                    <button type="button" class="filter-tab" data-filter="earned">
+                        Obtenus ({{ earned_badges.count }})
+                    </button>
+                    <button type="button" class="filter-tab" data-filter="locked">
+                        Verrouillés ({{ available_badges.count }})
+                    </button>
+                </div>
+            </div>
+
+            <!-- Badges obtenus -->
+            <div class="badge-section" data-section="earned">
+                <h5 class="mb-3">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    Badges Obtenus
+                </h5>
+                <div class="row">
+                    {% for user_badge in earned_badges %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="badge-card earned">
+                                <div class="badge-icon badge-{{ user_badge.badge.rarity }}">
+                                    <div class="badge-glow badge-{{ user_badge.badge.rarity }}"></div>
+                                    <i class="{{ user_badge.badge.icon }} text-white"></i>
+                                </div>
+                                <div class="text-center">
+                                    <h6 class="mb-1">{{ user_badge.badge.name }}</h6>
+                                    <p class="small text-muted mb-2">{{ user_badge.badge.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-{{ user_badge.badge.rarity }} text-capitalize">
+                                            {{ user_badge.badge.rarity }}
+                                        </span>
+                                        <small class="text-success">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                            {{ user_badge.earned_at|date:"d/m/Y" }}
+                                        </small>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span class="badge bg-warning">+{{ user_badge.badge.points_reward }} pts</span>
+                                        <span class="badge bg-info">+{{ user_badge.badge.experience_reward }} XP</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Badges disponibles -->
+            <div class="badge-section" data-section="locked">
+                <h5 class="mb-3">
+                    <i class="bi bi-lock-fill text-warning"></i>
+                    Badges à Débloquer
+                </h5>
+                <div class="row">
+                    {% for badge in available_badges %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="badge-card locked">
+                                <div class="badge-icon badge-{{ badge.rarity }}">
+                                    <i class="{{ badge.icon }} text-white"></i>
+                                </div>
+                                <div class="text-center">
+                                    <h6 class="mb-1">{{ badge.name }}</h6>
+                                    <p class="small text-muted mb-2">{{ badge.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-{{ badge.rarity }} text-capitalize">
+                                            {{ badge.rarity }}
+                                        </span>
+                                        <small class="text-warning">
+                                            <i class="bi bi-lock-fill"></i>
+                                            Verrouillé
+                                        </small>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">{{ badge.condition_description }}</small>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span class="badge bg-outline-warning">+{{ badge.points_reward }} pts</span>
+                                        <span class="badge bg-outline-info">+{{ badge.experience_reward }} XP</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="text-center mt-4">
+        <h5 class="mb-3">Gagnez Plus de Badges</h5>
+        <div class="btn-group" role="group">
+            <a href="{% url 'gamification:ai_generator' %}" class="btn btn-primary">
+                <i class="bi bi-robot me-2"></i>
+                Faire un Quiz
+            </a>
+            <a href="{% url 'gamification:learning_path' %}" class="btn btn-outline-primary">
+                <i class="bi bi-map me-2"></i>
+                Mon Parcours
+            </a>
+            <a href="{% url 'gamification:live_leaderboard' %}" class="btn btn-outline-success">
+                <i class="bi bi-trophy me-2"></i>
+                Classement
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des filtres
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const badgeSections = document.querySelectorAll('.badge-section');
+    
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Désactiver tous les onglets
+            filterTabs.forEach(t => t.classList.remove('active'));
+            // Activer l'onglet cliqué
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            
+            // Afficher/masquer les sections
+            badgeSections.forEach(section => {
+                if (filter === 'all') {
+                    section.style.display = 'block';
+                } else if (section.dataset.section === filter) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        });
+    });
+    
+    // Animation du cercle de progression
+    const progressCircle = document.querySelector('.progress-ring-progress');
+    if (progressCircle) {
+        const completionRate = {{ stats.completion_rate|default:0 }};
+        const circumference = 2 * Math.PI * 52;
+        const offset = circumference - (completionRate / 100) * circumference;
+        
+        setTimeout(() => {
+            progressCircle.style.strokeDashoffset = offset;
+        }, 500);
+    }
+    
+    // Animation des cartes de badges
+    const badgeCards = document.querySelectorAll('.badge-card');
+    badgeCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
+});
+</script>
+{% endblock %}

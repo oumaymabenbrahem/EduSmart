@@ -1,0 +1,198 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Créer une réponse - EduSmart</title>
+  <!-- plugins:css -->
+  <link rel="stylesheet" href="{% static 'vendors/feather/feather.css' %}">
+  <link rel="stylesheet" href="{% static 'vendors/ti-icons/css/themify-icons.css' %}">
+  <link rel="stylesheet" href="{% static 'vendors/css/vendor.bundle.base.css' %}">
+  <!-- endinject -->
+  <!-- inject:css -->
+  <link rel="stylesheet" href="{% static 'css/vertical-layout-light/style.css' %}">
+  <!-- endinject -->
+  <link rel="shortcut icon" href="{% static 'images/favicon.png' %}" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+    <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
+      <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
+        <a class="navbar-brand brand-logo mr-5" href="{% url 'template_back:dashboard' %}"><img src="{% static 'images/logo.svg' %}" class="mr-2" alt="logo"/></a>
+        <a class="navbar-brand brand-logo-mini" href="{% url 'template_back:dashboard' %}"><img src="{% static 'images/logo-mini.svg' %}" alt="logo"/></a>
+      </div>
+      <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
+        <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
+          <span class="icon-menu"></span>
+        </button>
+        <ul class="navbar-nav navbar-nav-right">
+          <li class="nav-item nav-profile dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
+              {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="profile"/>
+              {% else %}
+                <img src="{% static 'images/faces/face28.jpg' %}" alt="profile"/>
+              {% endif %}
+            </a>
+            <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
+              <div class="dropdown-header text-center">
+                <strong>{{ user.full_name|default:user.username }}</strong>
+                <div class="small text-muted">{{ user.get_user_type_display }}</div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                <i class="ti-user text-primary"></i>
+                Mon Profil
+              </a>
+              <a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                <i class="ti-power-off text-primary"></i>
+                Déconnexion
+              </a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                      <h4 class="card-title mb-0">Créer une réponse officielle</h4>
+                      <p class="card-description">
+                        Réponse à la réclamation: <strong>{{ reclamation.titre }}</strong>
+                      </p>
+                    </div>
+                    <a href="{% url 'reclamations:detail' reclamation.pk %}" class="btn btn-outline-secondary">
+                      <i class="ti-arrow-left"></i> Retour
+                    </a>
+                  </div>
+
+                  <!-- Informations de la réclamation -->
+                  <div class="alert alert-info">
+                    <div class="row">
+                      <div class="col-md-6">
+                        <strong>Utilisateur:</strong> {{ reclamation.utilisateur.get_full_name|default:reclamation.utilisateur.username }}<br>
+                        <strong>Type:</strong> {{ reclamation.type_reclamation.name }}<br>
+                        <strong>Priorité:</strong> {{ reclamation.get_priorite_display }}
+                      </div>
+                      <div class="col-md-6">
+                        <strong>Statut:</strong> {{ reclamation.get_statut_display }}<br>
+                        <strong>Créée le:</strong> {{ reclamation.created_at|date:"d/m/Y à H:i" }}<br>
+                        <strong>Assignée à:</strong> {{ reclamation.assigne_a.username|default:"Non assigné" }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Formulaire -->
+                  <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                      <label for="{{ form.titre.id_for_label }}">Titre de la réponse</label>
+                      {{ form.titre }}
+                      {% if form.titre.errors %}
+                        <div class="text-danger">{{ form.titre.errors }}</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.contenu.id_for_label }}">Contenu de la réponse</label>
+                      {{ form.contenu }}
+                      {% if form.contenu.errors %}
+                        <div class="text-danger">{{ form.contenu.errors }}</div>
+                      {% endif %}
+                      <small class="form-text text-muted">
+                        Rédigez une réponse claire et complète à la réclamation de l'utilisateur.
+                      </small>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label for="{{ form.statut.id_for_label }}">Statut de publication</label>
+                          {{ form.statut }}
+                          {% if form.statut.errors %}
+                            <div class="text-danger">{{ form.statut.errors }}</div>
+                          {% endif %}
+                          <small class="form-text text-muted">
+                            Choisissez "Brouillon" pour sauvegarder sans publier, ou "Publier" pour rendre visible à l'utilisateur.
+                          </small>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label for="{{ form.fichier_joint.id_for_label }}">Fichier joint (optionnel)</label>
+                          {{ form.fichier_joint }}
+                          {% if form.fichier_joint.errors %}
+                            <div class="text-danger">{{ form.fichier_joint.errors }}</div>
+                          {% endif %}
+                          <small class="form-text text-muted">
+                            Vous pouvez joindre un document (PDF, Word, image) à votre réponse.
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <div class="form-check">
+                        {{ form.notifier_utilisateur }}
+                        <label class="form-check-label" for="{{ form.notifier_utilisateur.id_for_label }}">
+                          Notifier l'utilisateur par email lors de la publication
+                        </label>
+                      </div>
+                      {% if form.notifier_utilisateur.errors %}
+                        <div class="text-danger">{{ form.notifier_utilisateur.errors }}</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                      <a href="{% url 'reclamations:detail' reclamation.pk %}" class="btn btn-light">
+                        <i class="ti-close"></i> Annuler
+                      </a>
+                      <button type="submit" class="btn btn-primary">
+                        <i class="ti-check"></i> Créer la réponse
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <!-- partial:partials/_footer.html -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2024. EduSmart. Tous droits réservés.</span>
+          </div>
+        </footer>
+        <!-- partial -->
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <!-- plugins:js -->
+  <script src="{% static 'vendors/js/vendor.bundle.base.js' %}"></script>
+  <!-- endinject -->
+  <!-- inject:js -->
+  <script src="{% static 'js/off-canvas.js' %}"></script>
+  <script src="{% static 'js/hoverable-collapse.js' %}"></script>
+  <script src="{% static 'js/template.js' %}"></script>
+  <script src="{% static 'js/settings.js' %}"></script>
+  <!-- endinject -->
+</body>
+
+</html>

@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messagerie - EduSmart{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: calc(100vh - 120px);
+        background: #f5f7fa;
+    }
+    
+    .chat-sidebar {
+        height: 100%;
+        background: white;
+        border-right: 1px solid #e0e0e0;
+        overflow-y: auto;
+    }
+    
+    .chat-header {
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .chat-search {
+        padding: 15px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .chat-search input {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 25px;
+        font-size: 14px;
+    }
+    
+    .conversation-list {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+    }
+    
+    .conversation-item {
+        padding: 15px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.2s;
+        position: relative;
+    }
+    
+    .conversation-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .conversation-item.active {
+        background: #e3f2fd;
+        border-left: 3px solid #667eea;
+    }
+    
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 18px;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .conversation-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .conversation-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .conversation-preview {
+        color: #666;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .conversation-time {
+        font-size: 12px;
+        color: #999;
+    }
+    
+    .unread-badge {
+        background: #667eea;
+        color: white;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: bold;
+        margin-left: 10px;
+    }
+    
+    .online-status {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        position: absolute;
+        bottom: 18px;
+        left: 53px;
+        border: 2px solid white;
+    }
+    
+    .online-status.online {
+        background: #4caf50;
+    }
+    
+    .online-status.away {
+        background: #ff9800;
+    }
+    
+    .online-status.offline {
+        background: #9e9e9e;
+    }
+    
+    .chat-welcome {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        background: white;
+        flex-direction: column;
+        color: #666;
+    }
+    
+    .chat-welcome i {
+        font-size: 80px;
+        color: #667eea;
+        margin-bottom: 20px;
+    }
+    
+    .new-chat-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 20px;
+    }
+    
+    .new-chat-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+    }
+    
+    .empty-state i {
+        font-size: 60px;
+        color: #ddd;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="row h-100 g-0">
+        <!-- Sidebar avec liste des conversations -->
+        <div class="col-md-4 col-lg-3 chat-sidebar">
+            <div class="chat-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-comments me-2"></i>
+                    Messagerie
+                </h4>
+                <small>{{ request.user.get_full_name|default:request.user.username }}</small>
+            </div>
+            
+            <div class="chat-search">
+                <input type="text" id="conversation-search" placeholder="🔍 Rechercher une conversation..." />
+            </div>
+            
+            <div class="text-center p-3">
+                <a href="{% url 'chat:search_users' %}" class="new-chat-btn">
+                    <i class="fas fa-plus me-2"></i>Nouvelle conversation
+                </a>
+            </div>
+            
+            {% if rooms_data %}
+                <ul class="conversation-list" id="conversation-list">
+                    {% for data in rooms_data %}
+                    <li class="conversation-item d-flex" data-room-id="{{ data.room.id }}" 
+                        onclick="window.location.href='{% url 'chat:conversation_detail' data.room.id %}'">
+                        <div class="position-relative">
+                            <div class="user-avatar">
+                                {{ data.other_user.username|first|upper }}
+                            </div>
+                            <span class="online-status offline"></span>
+                        </div>
+                        <div class="conversation-info">
+                            <div class="conversation-name">
+                                <span>
+                                    {{ data.other_user.get_full_name|default:data.other_user.username }}
+                                    {% if data.other_user.is_staff %}
+                                        <i class="fas fa-chalkboard-teacher text-primary ms-1" title="Formateur"></i>
+                                    {% endif %}
+                                </span>
+                                {% if data.last_message %}
+                                    <span class="conversation-time">
+                                        {{ data.last_message.created_at|timesince }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="conversation-preview">
+                                {% if data.last_message %}
+                                    {% if data.last_message.sender == request.user %}
+                                        Vous: 
+                                    {% endif %}
+                                    {{ data.last_message.content|truncatewords:8 }}
+                                {% else %}
+                                    <em>Aucun message</em>
+                                {% endif %}
+                                {% if data.unread_count > 0 %}
+                                    <span class="unread-badge">{{ data.unread_count }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Aucune conversation</p>
+                    <small>Commencez une nouvelle conversation avec un formateur ou un étudiant</small>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Zone de chat principale -->
+        <div class="col-md-8 col-lg-9">
+            <div class="chat-welcome">
+                <i class="fas fa-comments"></i>
+                <h3>Bienvenue dans votre messagerie</h3>
+                <p>Sélectionnez une conversation pour commencer à discuter</p>
+                <a href="{% url 'chat:search_users' %}" class="new-chat-btn">
+                    <i class="fas fa-user-plus me-2"></i>Démarrer une conversation
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Recherche dans les conversations
+    document.getElementById('conversation-search').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        const items = document.querySelectorAll('.conversation-item');
+        
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if (text.includes(query)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+    
+    // Mettre à jour le nombre de messages non lus
+    function updateUnreadCount() {
+        fetch('{% url "chat:get_unread_count" %}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.unread_count > 0) {
+                    document.title = `(${data.unread_count}) Messagerie - EduSmart`;
+                } else {
+                    document.title = 'Messagerie - EduSmart';
+                }
+            });
+    }
+    
+    // Vérifier les nouveaux messages toutes les 10 secondes
+    setInterval(updateUnreadCount, 10000);
+</script>
+{% endblock %}

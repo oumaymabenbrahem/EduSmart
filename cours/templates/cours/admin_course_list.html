@@ -1,0 +1,251 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container-fluid py-4">
+        <!-- Header avec recherche et filtres -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4 class="mb-0">
+                            <i class="ti-book me-2"></i>
+                            Liste des Cours
+                        </h4>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <a href="{% url 'cours:course_create' %}" class="btn btn-light">
+                            <i class="ti-plus me-1"></i>Nouveau Cours
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="ti-search"></i>
+                            </span>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Rechercher un cours..." 
+                                   value="{{ search_query }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <select name="subject" class="form-select">
+                            <option value="">Toutes les matières</option>
+                            {% for subject in subjects %}
+                                <option value="{{ subject.slug }}" {% if current_subject == subject.slug %}selected{% endif %}>
+                                    {{ subject.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <select name="level" class="form-select">
+                            <option value="">Tous les niveaux</option>
+                            <option value="beginner" {% if current_level == 'beginner' %}selected{% endif %}>Débutant</option>
+                            <option value="intermediate" {% if current_level == 'intermediate' %}selected{% endif %}>Intermédiaire</option>
+                            <option value="advanced" {% if current_level == 'advanced' %}selected{% endif %}>Avancé</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <select name="status" class="form-select">
+                            <option value="">Tous les statuts</option>
+                            <option value="published" {% if current_status == 'published' %}selected{% endif %}>Publié</option>
+                            <option value="draft" {% if current_status == 'draft' %}selected{% endif %}>Brouillon</option>
+                            <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archivé</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Liste des cours -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Miniature</th>
+                        <th>Titre</th>
+                        <th>Matière</th>
+                        <th>Niveau</th>
+                        <th>Statut</th>
+                        <th>Instructeur</th>
+                        <th>Inscrits</th>
+                        <th>Note</th>
+                        <th>Créé le</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr>
+                            <td>
+                                {% if course.thumbnail %}
+                                    <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" class="rounded" style="width: 60px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center rounded" style="width: 60px; height: 40px;">
+                                        <i class="ti-book text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ course.title }}</strong>
+                                <br><small class="text-muted">{{ course.duration_hours }}h</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ course.subject.name }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ course.get_level_display }}</span>
+                            </td>
+                            <td>
+                                <span class="badge {% if course.status == 'published' %}bg-success{% elif course.status == 'draft' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    {{ course.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ course.instructor.get_full_name|default:course.instructor.username }}
+                                <br><small class="text-muted">@{{ course.instructor.username }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">
+                                    <i class="ti-user"></i> {{ course.enrollments_count|default:0 }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if course.avg_rating %}
+                                    <span class="text-warning">
+                                        <i class="ti-star"></i> {{ course.avg_rating|floatformat:1 }}/5
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ course.created_at|date:"d/m/Y" }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'cours:course_detail' course.slug %}" class="btn btn-sm btn-outline-primary" title="Voir">
+                                        <i class="ti-eye"></i>
+                                    </a>
+                                    <a href="#" class="btn btn-sm btn-outline-info" title="Modifier">
+                                        <i class="ti-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('{{ course.slug }}')" title="Supprimer">
+                                        <i class="ti-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center">
+                                <div class="py-4">
+                                    <i class="ti-book icon-lg text-muted"></i>
+                                    <p class="text-muted mt-2">Aucun cours trouvé</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if courses.has_other_pages %}
+            <nav aria-label="Navigation des pages" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if courses.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_level %}&level={{ current_level }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">
+                                <i class="ti-angle-double-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in courses.paginator.page_range %}
+                        {% if courses.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > courses.number|add:'-3' and num < courses.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_level %}&level={{ current_level }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if courses.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ courses.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_level %}&level={{ current_level }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">
+                                <i class="ti-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce cours ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form id="deleteForm" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit du formulaire de recherche
+    const form = document.querySelector('form');
+    if (form) {
+        const inputs = form.querySelectorAll('input, select');
+
+        inputs.forEach(input => {
+            input.addEventListener('change', () => form.submit());
+            if (input.type === 'text') {
+                let timeout;
+                input.addEventListener('input', () => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => form.submit(), 500);
+                });
+            }
+        });
+    }
+});
+
+function confirmDelete(slug) {
+    const form = document.getElementById('deleteForm');
+    form.action = `/cours/${slug}/delete/`;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

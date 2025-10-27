@@ -1,0 +1,270 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Liste des utilisateurs - EduSmart{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container py-4">
+        <!-- Header avec recherche et filtres -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4 class="mb-0">
+                            <i class="bi bi-people me-2"></i>
+                            Liste des utilisateurs
+                        </h4>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <span class="badge bg-light text-dark fs-6">
+                            {{ page_obj.paginator.count }} utilisateur{{ page_obj.paginator.count|pluralize }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Rechercher par nom, email, nom d'utilisateur..." 
+                                   value="{{ search_query }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <select name="user_type" class="form-select">
+                            <option value="">Tous les types</option>
+                            {% for value, label in user_types %}
+                                <option value="{{ value }}" {% if user_type_filter == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel me-1"></i>Filtrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Liste des utilisateurs -->
+        {% if page_obj %}
+            <div class="row">
+                {% for user in page_obj %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 user-card">
+                        <div class="card-body text-center">
+                            <!-- Photo de profil -->
+                            <div class="mb-3">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture.url }}" alt="Profile" 
+                                         class="rounded-circle" width="80" height="80" style="object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center" 
+                                         style="width: 80px; height: 80px;">
+                                        <i class="bi bi-person-fill display-6 text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Informations utilisateur -->
+                            <h5 class="card-title mb-1">
+                                {{ user.full_name|default:user.username }}
+                            </h5>
+                            <p class="text-muted small mb-2">{{ user.email }}</p>
+                            
+                            <!-- Badge du type d'utilisateur -->
+                            <span class="user-type-badge user-type-{{ user.user_type }} mb-3 d-inline-block">
+                                {{ user.get_user_type_display }}
+                            </span>
+                            
+                            <!-- Informations supplémentaires -->
+                            <div class="small text-muted mb-3">
+                                <div class="mb-1">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    Membre depuis {{ user.created_at|timesince }}
+                                </div>
+                                {% if user.last_login %}
+                                <div class="mb-1">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Dernière connexion {{ user.last_login|timesince }} ago
+                                </div>
+                                {% endif %}
+                                {% if user.phone_number %}
+                                <div class="mb-1">
+                                    <i class="bi bi-telephone me-1"></i>
+                                    {{ user.phone_number }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Statut de vérification -->
+                            <div class="mb-3">
+                                {% if user.is_verified %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>Vérifié
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-clock me-1"></i>En attente
+                                    </span>
+                                {% endif %}
+                                
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-person-check me-1"></i>Actif
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-person-x me-1"></i>Inactif
+                                    </span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="d-grid">
+                                <a href="{% url 'accounts:profile_detail' user.pk %}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye me-1"></i>Voir le profil
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Navigation des pages" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if user_type_filter %}&user_type={{ user_type_filter }}{% endif %}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+        {% else %}
+            <!-- Aucun utilisateur trouvé -->
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-people display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted">Aucun utilisateur trouvé</h4>
+                    <p class="text-muted">
+                        {% if search_query or user_type_filter %}
+                            Aucun utilisateur ne correspond à vos critères de recherche.
+                        {% else %}
+                            Il n'y a pas encore d'utilisateurs dans le système.
+                        {% endif %}
+                    </p>
+                    {% if search_query or user_type_filter %}
+                    <a href="{% url 'accounts:users_list' %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Réinitialiser les filtres
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.user-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.user-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation d'entrée des cartes
+    const userCards = document.querySelectorAll('.user-card');
+    userCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Auto-submit du formulaire de recherche avec délai
+    const searchInput = document.querySelector('input[name="search"]');
+    const userTypeSelect = document.querySelector('select[name="user_type"]');
+    let searchTimeout;
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.form.submit();
+            }, 500);
+        });
+    }
+    
+    if (userTypeSelect) {
+        userTypeSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+});
+</script>
+{% endblock %}

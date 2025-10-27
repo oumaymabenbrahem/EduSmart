@@ -1,0 +1,224 @@
+{% extends 'base_front.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - EduSmart{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/student.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="student-evaluations">
+    <!-- Header Section -->
+    <div class="evaluations-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-icon">
+                    <i class="bi bi-journal-check"></i>
+                </div>
+                <div class="header-text">
+                    <h1 class="header-title">{{ title }}</h1>
+                    {% if is_teacher %}
+                        <p class="header-subtitle">Gérez et consultez toutes les évaluations</p>
+                    {% else %}
+                        <p class="header-subtitle">Découvrez et passez vos évaluations disponibles</p>
+                    {% endif %}
+                </div>
+                {% if is_teacher %}
+                <div class="header-actions">
+                    <a href="{% url 'evaluation:create' %}" class="btn-create-evaluation">
+                        <i class="bi bi-plus-lg"></i>
+                        Nouvelle évaluation
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container main-content">
+        {% if evaluations_data %}
+            <div class="evaluations-grid">
+                {% for data in evaluations_data %}
+                <div class="evaluation-card {% if not is_teacher and data.is_completed %}completed{% endif %}">
+                    <div class="card-header">
+                        <div class="evaluation-icon">
+                            {% if is_teacher %}
+                                <i class="bi bi-journal-text"></i>
+                            {% elif data.is_completed %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            {% else %}
+                                <i class="bi bi-journal-text"></i>
+                            {% endif %}
+                        </div>
+                        <div class="evaluation-status">
+                            {% if is_teacher %}
+                                {% if data.evaluation.is_published %}
+                                    <span class="status-badge published">
+                                        <i class="bi bi-eye"></i>
+                                        Publiée
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge draft">
+                                        <i class="bi bi-eye-slash"></i>
+                                        Brouillon
+                                    </span>
+                                {% endif %}
+                            {% elif data.is_completed %}
+                                <span class="status-badge completed">
+                                    <i class="bi bi-check-circle"></i>
+                                    Terminée
+                                </span>
+                            {% elif data.attempt and data.attempt.status == 'in_progress' %}
+                                <span class="status-badge in-progress">
+                                    <i class="bi bi-clock"></i>
+                                    En cours
+                                </span>
+                            {% else %}
+                                <span class="status-badge available">
+                                    <i class="bi bi-play-circle"></i>
+                                    Disponible
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <h3 class="evaluation-title">{{ data.evaluation.title }}</h3>
+                        <p class="evaluation-description">{{ data.evaluation.description|truncatechars:100 }}</p>
+
+                        <div class="evaluation-meta">
+                            <div class="meta-item">
+                                <i class="bi bi-question-circle"></i>
+                                <span>{{ data.evaluation.questions_count }} questions</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-star"></i>
+                                <span>{{ data.evaluation.total_points }} points</span>
+                            </div>
+                            {% if data.evaluation.start_date %}
+                            <div class="meta-item">
+                                <i class="bi bi-calendar-event"></i>
+                                <span>Début : {{ data.evaluation.start_date|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            {% endif %}
+                            {% if data.evaluation.end_date %}
+                            <div class="meta-item">
+                                <i class="bi bi-calendar-x"></i>
+                                <span>Échéance : {{ data.evaluation.end_date|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if not is_teacher and data.attempt and data.attempt.status == 'completed' %}
+                        <div class="evaluation-score">
+                            <div class="score-display">
+                                <div class="score-circle" style="--percentage: {{ data.attempt.score_percentage }}">
+                                    <span class="score-value">{{ data.attempt.score_percentage }}%</span>
+                                </div>
+                                <div class="score-details">
+                                    <span class="score-text">{{ data.attempt.total_score }}/{{ data.attempt.max_score }}</span>
+                                    <span class="score-label">points obtenus</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-actions">
+                        {% if is_teacher %}
+                            <a href="{% url 'evaluation:create' %}?edit={{ data.evaluation.id }}" class="btn-edit">
+                                <i class="bi bi-pencil"></i>
+                                Modifier
+                            </a>
+                        {% else %}
+                            {% if data.is_completed %}
+                                <a href="{% url 'evaluation:results' data.evaluation.id %}" class="btn-results">
+                                    <i class="bi bi-eye"></i>
+                                    Voir les résultats
+                                </a>
+                            {% elif data.can_take %}
+                                <a href="{% url 'evaluation:take_evaluation' data.evaluation.id %}" class="btn-take-evaluation">
+                                    {% if data.attempt %}
+                                        <i class="bi bi-play-fill"></i>
+                                        Continuer l'évaluation
+                                    {% else %}
+                                        <i class="bi bi-play-circle"></i>
+                                        Commencer l'évaluation
+                                    {% endif %}
+                                </a>
+                            {% else %}
+                                <span class="evaluation-unavailable">
+                                    <i class="bi bi-lock"></i>
+                                    Non disponible
+                                </span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-evaluations">
+                <div class="no-evaluations-icon">
+                    <i class="bi bi-journal-x"></i>
+                </div>
+                <h3 class="no-evaluations-title">
+                    {% if is_teacher %}
+                        Aucune évaluation créée
+                    {% else %}
+                        Aucune évaluation disponible
+                    {% endif %}
+                </h3>
+                <p class="no-evaluations-text">
+                    {% if is_teacher %}
+                        Commencez par créer votre première évaluation pour vos étudiants.
+                    {% else %}
+                        Il n'y a actuellement aucune évaluation disponible. Revenez plus tard ou contactez votre enseignant.
+                    {% endif %}
+                </p>
+                {% if is_teacher %}
+                    <a href="{% url 'evaluation:create' %}" class="btn-create-first">
+                        <i class="bi bi-plus-lg"></i>
+                        Créer ma première évaluation
+                    </a>
+                {% else %}
+                    <a href="{% url 'home' %}" class="btn-back-home">
+                        <i class="bi bi-house"></i>
+                        Retour à l'accueil
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des cartes au scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.evaluation-card').forEach(card => {
+        observer.observe(card);
+    });
+
+    // Animation des cercles de score
+    document.querySelectorAll('.score-circle').forEach(circle => {
+        const percentage = circle.style.getPropertyValue('--percentage');
+        circle.style.setProperty('--percentage', percentage);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends 'template_front/base_front.html' %}
+{% load static %}
+
+{% block title %}Nouvelle Réclamation - {{ block.super }}{% endblock %}
+
+{% block content %}
+<section id="reclamation-create" class="reclamation-create section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="section-title text-center">
+          <h2>Nouvelle Réclamation</h2>
+          <p>Signalez un problème ou une insatisfaction</p>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label for="{{ form.titre.id_for_label }}" class="form-label">
+                    <i class="bi bi-pencil me-2"></i>Titre de la réclamation *
+                  </label>
+                  {{ form.titre }}
+                  {% if form.titre.errors %}
+                    <div class="text-danger small mt-1">
+                      {% for error in form.titre.errors %}
+                        <div>{{ error }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="{{ form.type_reclamation.id_for_label }}" class="form-label">
+                    <i class="bi bi-tag me-2"></i>Type de réclamation *
+                  </label>
+                  {{ form.type_reclamation }}
+                  {% if form.type_reclamation.errors %}
+                    <div class="text-danger small mt-1">
+                      {% for error in form.type_reclamation.errors %}
+                        <div>{{ error }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="{{ form.priorite.id_for_label }}" class="form-label">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Priorité
+                  </label>
+                  {{ form.priorite }}
+                  {% if form.priorite.errors %}
+                    <div class="text-danger small mt-1">
+                      {% for error in form.priorite.errors %}
+                        <div>{{ error }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label for="{{ form.description.id_for_label }}" class="form-label">
+                    <i class="bi bi-text-paragraph me-2"></i>Description détaillée *
+                  </label>
+                  {{ form.description }}
+                  <div class="form-text">
+                    Décrivez en détail votre problème, les étapes pour le reproduire, et tout autre information utile.
+                  </div>
+                  {% if form.description.errors %}
+                    <div class="text-danger small mt-1">
+                      {% for error in form.description.errors %}
+                        <div>{{ error }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label for="{{ form.url_probleme.id_for_label }}" class="form-label">
+                    <i class="bi bi-link me-2"></i>URL du problème (optionnel)
+                  </label>
+                  {{ form.url_probleme }}
+                  <div class="form-text">
+                    Si le problème concerne une page spécifique, indiquez son URL.
+                  </div>
+                  {% if form.url_probleme.errors %}
+                    <div class="text-danger small mt-1">
+                      {% for error in form.url_probleme.errors %}
+                        <div>{{ error }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label for="{{ form.fichier_joint.id_for_label }}" class="form-label">
+                    <i class="bi bi-paperclip me-2"></i>Fichier joint (optionnel)
+                  </label>
+                  {{ form.fichier_joint }}
+                  <div class="form-text">
+                    Vous pouvez joindre une capture d'écran ou un document pour illustrer votre problème.
+                    Formats acceptés: PDF, DOC, DOCX, JPG, JPEG, PNG, GIF
+                  </div>
+                  {% if form.fichier_joint.errors %}
+                    <div class="text-danger small mt-1">
+                      {% for error in form.fichier_joint.errors %}
+                        <div>{{ error }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Informations sur les types de réclamations -->
+              <div class="row">
+                <div class="col-md-12 mb-4">
+                  <div class="card bg-light">
+                    <div class="card-body">
+                      <h6 class="card-title">
+                        <i class="bi bi-info-circle me-2"></i>Types de réclamations disponibles
+                      </h6>
+                      <div class="row">
+                        {% for type_reclamation in types_reclamation %}
+                        <div class="col-md-6 mb-2">
+                          <div class="d-flex align-items-center">
+                            <i class="{{ type_reclamation.icon }} me-2" style="color: {{ type_reclamation.color }};"></i>
+                            <div>
+                              <strong>{{ type_reclamation.name }}</strong>
+                              {% if type_reclamation.description %}
+                                <br><small class="text-muted">{{ type_reclamation.description }}</small>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12 text-center">
+                  <button type="submit" class="btn btn-primary btn-lg me-3">
+                    <i class="bi bi-send me-2"></i>Créer la réclamation
+                  </button>
+                  <a href="{% url 'reclamations:list' %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-arrow-left me-2"></i>Retour
+                  </a>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-remplir l'URL du problème avec l'URL de la page précédente
+    const urlField = document.getElementById('{{ form.url_probleme.id_for_label }}');
+    if (urlField && document.referrer && !urlField.value) {
+        urlField.value = document.referrer;
+    }
+});
+</script>
+{% endblock %}

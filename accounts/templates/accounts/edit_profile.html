@@ -1,0 +1,278 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Modifier le profil - EduSmart{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-pencil me-2"></i>
+                            Modifier mon profil
+                        </h4>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        <form method="post" enctype="multipart/form-data" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- Photo de profil -->
+                            <div class="text-center mb-4">
+                                <div class="position-relative d-inline-block">
+                                    {% if user.profile_picture %}
+                                        <img src="{{ user.profile_picture.url }}" alt="Profile" class="rounded-circle" width="120" height="120" style="object-fit: cover;" id="profilePreview">
+                                    {% else %}
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;" id="profilePreview">
+                                            <i class="bi bi-person-fill display-4 text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <label for="{{ form.profile_picture.id_for_label }}" class="position-absolute bottom-0 end-0 btn btn-primary btn-sm rounded-circle" style="width: 35px; height: 35px;">
+                                        <i class="bi bi-camera"></i>
+                                    </label>
+                                </div>
+                                <div class="mt-2">
+                                    {{ form.profile_picture }}
+                                    {% if form.profile_picture.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.profile_picture.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Informations personnelles -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="bi bi-person me-1"></i>Prénom
+                                    </label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.first_name.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="bi bi-person me-1"></i>Nom
+                                    </label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.last_name.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="bi bi-envelope me-1"></i>Email
+                                    </label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.email.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="bi bi-telephone me-1"></i>Téléphone
+                                    </label>
+                                    {{ form.phone_number }}
+                                    {% if form.phone_number.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.phone_number.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.date_of_birth.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-calendar3 me-1"></i>Date de naissance
+                                </label>
+                                {{ form.date_of_birth }}
+                                {% if form.date_of_birth.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.date_of_birth.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.bio.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-chat-text me-1"></i>Biographie
+                                </label>
+                                {{ form.bio }}
+                                <div class="form-text">Parlez-nous un peu de vous (maximum 500 caractères)</div>
+                                {% if form.bio.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.bio.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Adresse -->
+                            <h5 class="mt-4 mb-3">
+                                <i class="bi bi-geo-alt me-2"></i>Adresse
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.address.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-house me-1"></i>Adresse
+                                </label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.address.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.city.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="bi bi-building me-1"></i>Ville
+                                    </label>
+                                    {{ form.city }}
+                                    {% if form.city.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.city.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.country.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="bi bi-flag me-1"></i>Pays
+                                    </label>
+                                    {{ form.country }}
+                                    {% if form.country.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.country.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {% for error in form.non_field_errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="d-flex gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg me-2"></i>Enregistrer les modifications
+                                </button>
+                                <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-lg me-2"></i>Annuler
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Prévisualisation de l'image de profil
+    const profileInput = document.getElementById('{{ form.profile_picture.id_for_label }}');
+    const profilePreview = document.getElementById('profilePreview');
+    
+    if (profileInput) {
+        profileInput.style.display = 'none';
+        
+        profileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (profilePreview.tagName === 'IMG') {
+                        profilePreview.src = e.target.result;
+                    } else {
+                        // Remplacer le div par une image
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = 'Profile';
+                        img.className = 'rounded-circle';
+                        img.style.width = '120px';
+                        img.style.height = '120px';
+                        img.style.objectFit = 'cover';
+                        img.id = 'profilePreview';
+                        profilePreview.parentNode.replaceChild(img, profilePreview);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Compteur de caractères pour la biographie
+    const bioTextarea = document.getElementById('{{ form.bio.id_for_label }}');
+    if (bioTextarea) {
+        const maxLength = 500;
+        const counter = document.createElement('div');
+        counter.className = 'form-text text-end';
+        counter.style.fontSize = '0.8rem';
+        
+        function updateCounter() {
+            const remaining = maxLength - bioTextarea.value.length;
+            counter.textContent = `${bioTextarea.value.length}/${maxLength} caractères`;
+            counter.className = remaining < 50 ? 'form-text text-end text-warning' : 'form-text text-end text-muted';
+        }
+        
+        bioTextarea.parentNode.appendChild(counter);
+        bioTextarea.addEventListener('input', updateCounter);
+        updateCounter();
+    }
+    
+    // Animation d'entrée
+    const card = document.querySelector('.card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+        card.style.transition = 'all 0.6s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+    }, 100);
+});
+</script>
+{% endblock %}

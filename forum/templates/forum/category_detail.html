@@ -1,0 +1,145 @@
+{% extends 'base_front.html' %}
+{% load static %}
+{% load forum_tags %}
+
+{% block title %}{{ category.name }} - Forum EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'forum:index' %}">Forum</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Category Header -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi {{ category.icon }} text-primary" style="font-size: 2.5rem;"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h2 class="mb-2">{{ category.name }}</h2>
+                    <p class="text-muted mb-0">{{ category.description }}</p>
+                </div>
+                {% if user.is_authenticated %}
+                <div>
+                    <a href="{% url 'forum:topic_create' category.slug %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Nouveau Sujet
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Topics List -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Sujets de Discussion</h5>
+                <small class="text-muted">{{ topics.paginator.count }} sujet{{ topics.paginator.count|pluralize }}</small>
+            </div>
+        </div>
+        <div class="list-group list-group-flush">
+            {% for topic in topics %}
+            <a href="{% url 'forum:topic_detail' category.slug topic.slug %}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-2">
+                            <h6 class="mb-0 me-2">{{ topic.title }}</h6>
+                            {% if topic.status == 'closed' %}
+                            <span class="badge bg-secondary">Fermé</span>
+                            {% elif topic.status == 'pinned' %}
+                            <span class="badge bg-warning text-dark">Épinglé</span>
+                            {% endif %}
+                            
+                            {% comment %}
+                            {# Badge de popularité - désactivé pour performance #}
+                            {% popularity_badge topic %}
+                            {% trending_badge topic %}
+                            {% endcomment %}
+                        </div>
+                        <p class="mb-2 text-muted small">{{ topic.content|truncatewords:20|striptags }}</p>
+                        <div class="d-flex align-items-center text-muted small">
+                            <span class="me-3">
+                                <i class="bi bi-person"></i> {{ topic.author.get_full_name|default:topic.author.username }}
+                            </span>
+                            <span class="me-3">
+                                <i class="bi bi-clock"></i> {{ topic.created_at|timesince }}
+                            </span>
+                            <span class="me-3">
+                                <i class="bi bi-eye"></i> {{ topic.views }} vue{{ topic.views|pluralize }}
+                            </span>
+                            {% if topic.tags %}
+                            <div class="d-flex gap-1">
+                                {% for tag in topic.tags.split %}
+                                <span class="badge bg-light text-dark">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-end ms-3">
+                        <div class="text-primary fw-bold" style="font-size: 1.2rem;">{{ topic.posts_count }}</div>
+                        <small class="text-muted">réponse{{ topic.posts_count|pluralize }}</small>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="list-group-item text-center py-5">
+                <i class="bi bi-chat-dots text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3 mb-0">Aucun sujet pour le moment.</p>
+                {% if user.is_authenticated %}
+                <a href="{% url 'forum:topic_create' category.slug %}" class="btn btn-primary mt-3">
+                    Créer le premier sujet
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if topics.has_other_pages %}
+    <nav aria-label="Topics pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if topics.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ topics.previous_page_number }}">Précédent</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Précédent</span>
+            </li>
+            {% endif %}
+
+            {% for num in topics.paginator.page_range %}
+                {% if topics.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > topics.number|add:'-3' and num < topics.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if topics.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ topics.next_page_number }}">Suivant</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Suivant</span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

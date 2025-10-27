@@ -1,0 +1,134 @@
+{% extends 'base_front.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Modifier{% else %}Créer{% endif %} un sujet - Forum EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'forum:index' %}">Forum</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'forum:category_detail' category.slug %}">{{ category.name }}</a></li>
+                    <li class="breadcrumb-item active">{% if form.instance.pk %}Modifier{% else %}Nouveau{% endif %} sujet</li>
+                </ol>
+            </nav>
+
+            <!-- Form Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-pencil-square"></i> 
+                        {% if form.instance.pk %}Modifier le sujet{% else %}Créer un nouveau sujet{% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if ai_blocked %}
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-robot"></i> Modération IA Activée
+                        </h5>
+                        <p class="mb-2">Notre système de modération automatique a détecté un contenu potentiellement inapproprié dans votre message.</p>
+                        <hr>
+                        <p class="mb-0 small">
+                            <strong>Score de confiance :</strong> {{ ai_score|floatformat:2 }}
+                            <br>
+                            <strong>Action :</strong> Veuillez reformuler votre message pour qu'il respecte notre charte de bonne conduite.
+                        </p>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Erreur :</strong> Veuillez corriger les erreurs ci-dessous.
+                    </div>
+                    {% endif %}
+
+                    <form method="post" id="topic-form">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label fw-bold">Titre du sujet <span class="text-danger">*</span></label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">Soyez clair et descriptif pour aider les autres à comprendre votre sujet.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_content" class="form-label fw-bold">Contenu <span class="text-danger">*</span></label>
+                            {{ form.content }}
+                            {% if form.content.errors %}
+                            <div class="text-danger small mt-1">{{ form.content.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">
+                                Décrivez votre question ou sujet en détail. Vous pouvez utiliser le formatage Markdown.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_tags" class="form-label fw-bold">Tags</label>
+                            {{ form.tags }}
+                            {% if form.tags.errors %}
+                            <div class="text-danger small mt-1">{{ form.tags.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">
+                                Séparez les tags par des virgules (ex: python, django, débutant)
+                            </small>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="{% url 'forum:category_detail' category.slug %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> 
+                                {% if form.instance.pk %}Enregistrer les modifications{% else %}Créer le sujet{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- AI Popularity Prediction Widget -->
+            {% if not form.instance.pk %}
+            <div class="mt-4" id="popularity-prediction">
+                <div class="alert alert-info">
+                    <i class="bi bi-robot"></i> Remplissez le formulaire pour voir la prédiction de popularité par IA...
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Help Card -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-info-circle"></i> Conseils pour rédiger un bon sujet</h6>
+                    <ul class="mb-0 small">
+                        <li>Choisissez un titre clair et descriptif</li>
+                        <li>Expliquez votre problème ou question en détail</li>
+                        <li>Ajoutez des tags pertinents pour faciliter la recherche</li>
+                        <li>Soyez respectueux envers les autres membres</li>
+                        <li>Vérifiez que votre question n'a pas déjà été posée</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- AI Protection Badge -->
+            <div class="text-center mt-4">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2">
+                    <i class="bi bi-shield-check"></i> Contenu modéré par IA
+                    <small class="d-block mt-1" style="font-weight: normal;">Protection automatique contre les contenus inappropriés</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="{% static 'forum/js/popularity_predictor.js' %}"></script>
+{% endblock %}
+{% endblock %}

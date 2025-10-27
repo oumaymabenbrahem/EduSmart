@@ -1,0 +1,77 @@
+{% if error %}
+<div class="alert alert-warning alert-sm">
+    <small>⚠️ Prédiction non disponible</small>
+</div>
+{% else %}
+<div class="card category-popularity-widget">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">🤖 Analyse IA</h6>
+            <span class="badge badge-{{ prediction.prediction_color }}">
+                {{ prediction.prediction_emoji }} {{ prediction.prediction_label }}
+            </span>
+        </div>
+        
+        <div class="mb-2">
+            <small class="text-muted">Confiance:</small>
+            <div class="progress" style="height: 15px;">
+                <div class="progress-bar bg-{{ prediction.prediction_color }}" 
+                     role="progressbar" 
+                     style="width: {{ prediction.confidence }}%"
+                     aria-valuenow="{{ prediction.confidence }}" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                    {{ prediction.confidence|floatformat:0 }}%
+                </div>
+            </div>
+        </div>
+        
+        <div class="row text-center mt-3">
+            <div class="col-4">
+                <div class="border-end">
+                    <h6 class="mb-0">{{ prediction.features.total_topics }}</h6>
+                    <small class="text-muted">Topics</small>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="border-end">
+                    <h6 class="mb-0">{{ prediction.features.total_views }}</h6>
+                    <small class="text-muted">Vues</small>
+                </div>
+            </div>
+            <div class="col-4">
+                <h6 class="mb-0 
+                    {% if prediction.features.momentum > 0 %}text-success
+                    {% elif prediction.features.momentum < 0 %}text-danger
+                    {% else %}text-muted
+                    {% endif %}">
+                    {% if prediction.features.momentum > 0 %}+{% endif %}{{ prediction.features.momentum|floatformat:1 }}%
+                </h6>
+                <small class="text-muted">Momentum</small>
+            </div>
+        </div>
+        
+        {% if prediction.features.momentum > 10 %}
+        <div class="alert alert-warning alert-sm mt-2 mb-0">
+            <small>🚀 Catégorie en forte croissance!</small>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<style>
+.category-popularity-widget {
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.category-popularity-widget .card-body {
+    padding: 1rem;
+}
+
+.alert-sm {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+}
+</style>

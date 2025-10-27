@@ -1,0 +1,509 @@
+{% extends 'gamification/base_gamification.html' %}
+
+{% block title %}{{ attempt.quiz.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quiz-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .quiz-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .quiz-progress {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        height: 8px;
+        margin: 1rem 0;
+        overflow: hidden;
+    }
+    
+    .quiz-progress-fill {
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+    
+    .timer-container {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .timer {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    .timer.warning {
+        color: #ffc107;
+        animation: pulse 1s infinite;
+    }
+    
+    .timer.danger {
+        color: #dc3545;
+        animation: pulse 0.5s infinite;
+    }
+    
+    .question-container {
+        padding: 2rem;
+    }
+    
+    .question-card {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .question-number {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    
+    .option-button {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        text-align: left;
+        display: flex;
+        align-items: center;
+    }
+    
+    .option-button:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+        transform: translateY(-2px);
+    }
+    
+    .option-button.selected {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .option-letter {
+        background: #667eea;
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .quiz-navigation {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .question-nav {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .question-nav-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid #e9ecef;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: bold;
+    }
+    
+    .question-nav-btn:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .question-nav-btn.answered {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .question-nav-btn.current {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+    }
+    
+    .submit-section {
+        text-align: center;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 15px;
+        margin-top: 2rem;
+    }
+    
+    .submit-btn {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+        padding: 1rem 3rem;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+    }
+    
+    .submit-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+</style>
+{% endblock %}
+
+{% block gamification_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="quiz-container">
+            <!-- Header du quiz -->
+            <div class="quiz-header">
+                <h2 class="mb-2">{{ attempt.quiz.title }}</h2>
+                <p class="mb-0 opacity-75">{{ attempt.quiz.description }}</p>
+                
+                <!-- Progression -->
+                <div class="quiz-progress">
+                    <div class="quiz-progress-fill" id="progressBar" style="width: 0%"></div>
+                </div>
+                
+                <!-- Timer -->
+                <div class="timer-container">
+                    <div class="timer" id="timer">{{ time_limit }}</div>
+                    <div class="text-center">
+                        <small>Temps restant (secondes)</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Questions -->
+            <div class="question-container">
+                <form id="quizForm">
+                    {% csrf_token %}
+                    {% for question in questions %}
+                    <div class="question-card" id="question-{{ question.id }}" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
+                        <div class="question-number">{{ forloop.counter }}</div>
+                        <h4 class="mb-3">{{ question.question_text }}</h4>
+                        
+                        {% if question.question_type == 'multiple_choice' %}
+                            {% for option_letter, option_text in question.get_options %}
+                            <div class="option-button" onclick="selectOption('{{ question.id }}', '{{ option_letter }}')">
+                                <div class="option-letter">{{ option_letter }}</div>
+                                <div>{{ option_text }}</div>
+                            </div>
+                            {% endfor %}
+                        {% elif question.question_type == 'true_false' %}
+                            <div class="option-button" onclick="selectOption('{{ question.id }}', 'True')">
+                                <div class="option-letter">V</div>
+                                <div>Vrai</div>
+                            </div>
+                            <div class="option-button" onclick="selectOption('{{ question.id }}', 'False')">
+                                <div class="option-letter">F</div>
+                                <div>Faux</div>
+                            </div>
+                        {% endif %}
+                        
+                        <input type="hidden" name="question_{{ question.id }}" id="answer_{{ question.id }}" value="">
+                    </div>
+                    {% endfor %}
+                </form>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="quiz-navigation">
+                <div class="question-nav">
+                    {% for question in questions %}
+                    <div class="question-nav-btn {% if forloop.first %}current{% endif %}" 
+                         id="nav-{{ question.id }}" 
+                         onclick="goToQuestion({{ question.id }})">
+                        {{ forloop.counter }}
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" onclick="previousQuestion()" id="prevBtn" disabled>
+                        <i class="bi bi-arrow-left me-2"></i>Précédent
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="nextQuestion()" id="nextBtn">
+                        Suivant<i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Section de soumission -->
+            <div class="submit-section" id="submitSection" style="display: none;">
+                <h4 class="mb-3">Terminer le quiz</h4>
+                <p class="text-muted mb-3">Vérifiez vos réponses avant de soumettre</p>
+                <button type="button" class="submit-btn" onclick="submitQuiz()">
+                    <i class="bi bi-check-circle me-2"></i>Soumettre le quiz
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation -->
+<div class="modal fade" id="submitModal" tabindex="-1" aria-labelledby="submitModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="submitModalLabel">Confirmer la soumission</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir soumettre votre quiz ?</p>
+                <div id="quizSummary"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" onclick="confirmSubmit()">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentQuestionIndex = 0;
+let timeLeft = {{ time_limit }};
+let timerInterval;
+let answers = {};
+let questions = {{ questions|length }};
+
+// Initialiser le timer
+function startTimer() {
+    timerInterval = setInterval(function() {
+        timeLeft--;
+        updateTimer();
+        
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            submitQuiz();
+        }
+    }, 1000);
+}
+
+function updateTimer() {
+    const timerElement = document.getElementById('timer');
+    timerElement.textContent = timeLeft;
+    
+    if (timeLeft <= 60) {
+        timerElement.classList.add('warning');
+    }
+    if (timeLeft <= 30) {
+        timerElement.classList.remove('warning');
+        timerElement.classList.add('danger');
+    }
+}
+
+function updateProgress() {
+    const answered = Object.keys(answers).length;
+    const progress = (answered / questions) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+}
+
+function selectOption(questionId, option) {
+    answers[questionId] = option;
+    document.getElementById('answer_' + questionId).value = option;
+    
+    // Mettre à jour l'apparence
+    const questionCard = document.getElementById('question-' + questionId);
+    const optionButtons = questionCard.querySelectorAll('.option-button');
+    optionButtons.forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.onclick.toString().includes(option)) {
+            btn.classList.add('selected');
+        }
+    });
+    
+    // Mettre à jour la navigation
+    updateNavigation();
+    updateProgress();
+}
+
+function updateNavigation() {
+    for (let i = 0; i < questions; i++) {
+        const questionId = document.querySelectorAll('.question-card')[i].id.split('-')[1];
+        const navBtn = document.getElementById('nav-' + questionId);
+        
+        if (answers[questionId]) {
+            navBtn.classList.add('answered');
+        } else {
+            navBtn.classList.remove('answered');
+        }
+        
+        if (i === currentQuestionIndex) {
+            navBtn.classList.add('current');
+        } else {
+            navBtn.classList.remove('current');
+        }
+    }
+}
+
+function goToQuestion(questionId) {
+    // Masquer toutes les questions
+    document.querySelectorAll('.question-card').forEach(card => {
+        card.style.display = 'none';
+    });
+    
+    // Afficher la question sélectionnée
+    document.getElementById('question-' + questionId).style.display = 'block';
+    
+    // Mettre à jour l'index
+    currentQuestionIndex = Array.from(document.querySelectorAll('.question-card')).findIndex(
+        card => card.id === 'question-' + questionId
+    );
+    
+    updateNavigation();
+    updateButtons();
+}
+
+function nextQuestion() {
+    if (currentQuestionIndex < questions - 1) {
+        currentQuestionIndex++;
+        goToQuestion(document.querySelectorAll('.question-card')[currentQuestionIndex].id.split('-')[1]);
+    } else {
+        showSubmitSection();
+    }
+}
+
+function previousQuestion() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        goToQuestion(document.querySelectorAll('.question-card')[currentQuestionIndex].id.split('-')[1]);
+    }
+}
+
+function updateButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    prevBtn.disabled = currentQuestionIndex === 0;
+    
+    if (currentQuestionIndex === questions - 1) {
+        nextBtn.style.display = 'none';
+        document.getElementById('submitSection').style.display = 'block';
+    } else {
+        nextBtn.style.display = 'inline-block';
+        document.getElementById('submitSection').style.display = 'none';
+    }
+}
+
+function showSubmitSection() {
+    document.getElementById('submitSection').style.display = 'block';
+    document.getElementById('nextBtn').style.display = 'none';
+}
+
+function submitQuiz() {
+    const answered = Object.keys(answers).length;
+    const summary = `
+        <div class="alert alert-info">
+            <strong>Résumé :</strong><br>
+            Questions répondues : ${answered}/${questions}<br>
+            Temps utilisé : ${Math.floor(({{ time_limit }} - timeLeft) / 60)}m ${({{ time_limit }} - timeLeft) % 60}s
+        </div>
+    `;
+    
+    document.getElementById('quizSummary').innerHTML = summary;
+    
+    const modal = new bootstrap.Modal(document.getElementById('submitModal'));
+    modal.show();
+}
+
+function confirmSubmit() {
+    // Préparer les données
+    const formData = new FormData();
+    formData.append('time_taken', {{ time_limit }} - timeLeft);
+    
+    Object.keys(answers).forEach(questionId => {
+        formData.append('question_' + questionId, answers[questionId]);
+    });
+    
+    // Obtenir le token CSRF
+    const csrfTokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+    const csrfToken = csrfTokenElement ? csrfTokenElement.value : '';
+    
+    if (!csrfToken) {
+        alert('Erreur de sécurité : Token CSRF manquant');
+        return;
+    }
+    
+    // Soumettre
+    fetch('{% url "gamification:submit_quiz" attempt.id %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Rediriger vers les résultats
+            window.location.href = '{% url "gamification:quiz_results" attempt.id %}';
+        } else {
+            alert('Erreur lors de la soumission : ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erreur lors de la soumission du quiz');
+    });
+}
+
+// Initialiser
+document.addEventListener('DOMContentLoaded', function() {
+    startTimer();
+    updateNavigation();
+    updateButtons();
+});
+</script>
+{% endblock %}

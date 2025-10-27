@@ -1,0 +1,82 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Modifier Évaluation{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-4">
+          <h4 class="card-title mb-0">Modifier l'Évaluation</h4>
+          <a href="{% url 'evaluation:admin_list' %}" class="btn btn-secondary">
+            <i class="mdi mdi-arrow-left"></i> Retour à la liste
+          </a>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-md-8">
+              <div class="form-group">
+                <label for="{{ form.title.id_for_label }}">Titre</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                  <div class="text-danger">{{ form.title.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <div class="text-danger">{{ form.description.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.start_date.id_for_label }}">Date de début</label>
+                {{ form.start_date }}
+                {% if form.start_date.errors %}
+                  <div class="text-danger">{{ form.start_date.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.end_date.id_for_label }}">Date de fin</label>
+                {{ form.end_date }}
+                {% if form.end_date.errors %}
+                  <div class="text-danger">{{ form.end_date.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <div class="form-check">
+                  {{ form.is_published }}
+                  <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                    Publier l'évaluation
+                  </label>
+                </div>
+                {% if form.is_published.errors %}
+                  <div class="text-danger">{{ form.is_published.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="mdi mdi-content-save"></i> Enregistrer les modifications
+            </button>
+            <a href="{% url 'evaluation:admin_list' %}" class="btn btn-secondary ml-2">
+              Annuler
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

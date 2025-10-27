@@ -1,0 +1,25 @@
+# Dépendances pour le système de gamification EduSmart
+
+# IA et génération de contenu
+openai>=1.0.0
+python-dotenv>=1.0.0
+
+# Base de données et cache
+redis>=4.5.0
+celery>=5.3.0
+
+# Traitement d'images pour les badges
+Pillow>=10.0.0
+
+# Analyse et statistiques
+numpy>=1.24.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+
+# APIs et intégrations
+requests>=2.31.0
+httpx>=0.24.0
+
+# Utilitaires
+python-dateutil>=2.8.0
+pytz>=2023.3

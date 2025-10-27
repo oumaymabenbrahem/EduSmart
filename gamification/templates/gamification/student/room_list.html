@@ -1,0 +1,90 @@
+{% extends 'gamification/base_gamification.html' %}
+{% load static %}
+
+{% block title %}Mes Rooms - EduSmart{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="bi bi-door-open"></i> Mes Rooms</h2>
+                <a href="{% url 'gamification:join_room' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Rejoindre une Room
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if my_rooms %}
+        <div class="row">
+            {% for participation in my_rooms %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="card-title mb-1">{{ participation.room.title }}</h5>
+                                <small class="text-muted">Code: <strong>{{ participation.room.room_code }}</strong></small>
+                            </div>
+                            {% if participation.room.status == 'waiting' %}
+                                <span class="badge bg-warning">En attente</span>
+                            {% elif participation.room.status == 'active' %}
+                                <span class="badge bg-success">Active</span>
+                            {% elif participation.room.status == 'completed' %}
+                                <span class="badge bg-secondary">Terminée</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ participation.room.description }}</p>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="bi bi-book"></i> Quiz: {{ participation.room.quiz.title }}<br>
+                                <i class="bi bi-person"></i> Enseignant: {{ participation.room.teacher.get_full_name|default:participation.room.teacher.username }}<br>
+                                <i class="bi bi-people"></i> Participants: {{ participation.room.total_participants }}
+                            </small>
+                        </div>
+
+                        <!-- Statut du participant -->
+                        <div class="mb-3">
+                            {% if participation.status == 'joined' %}
+                                <span class="badge bg-info">Rejoint</span>
+                            {% elif participation.status == 'in_progress' %}
+                                <span class="badge bg-warning">En cours</span>
+                            {% elif participation.status == 'completed' %}
+                                <span class="badge bg-success">Terminé</span>
+                            {% elif participation.status == 'abandoned' %}
+                                <span class="badge bg-danger">Abandonné</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <a href="{% url 'gamification:room_detail_student' participation.room.room_code %}" 
+                           class="btn btn-sm btn-primary">
+                            <i class="bi bi-eye"></i> Voir les détails
+                        </a>
+                        {% if participation.status == 'completed' and participation.result %}
+                            <a href="{% url 'gamification:room_result' participation.room.room_code %}" 
+                               class="btn btn-sm btn-success">
+                                <i class="bi bi-bar-chart"></i> Résultats
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">Vous n'avez pas encore rejoint de room.</p>
+            <a href="{% url 'gamification:join_room' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Rejoindre une Room
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

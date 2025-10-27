@@ -1,0 +1,372 @@
+{% extends 'template_back/base_admin.html' %}
+{% load static %}
+
+{% block title %}Réclamation #{{ reclamation.id }} - EduSmart{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+          <div class="row">
+            <div class="col-md-12 grid-margin">
+              <div class="row">
+                <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+                  <h3 class="font-weight-bold">Réclamation #{{ reclamation.id }}</h3>
+                  <h6 class="font-weight-normal mb-0">{{ reclamation.titre }}</h6>
+                </div>
+                <div class="col-12 col-xl-4">
+                  <div class="justify-content-end d-flex">
+                    <a href="{% url 'reclamations:admin_list' %}" class="btn btn-secondary btn-sm mr-2">
+                      <i class="ti-arrow-left"></i> Retour à la liste
+                    </a>
+                    {% if user.is_staff or user.user_type in 'admin,teacher' %}
+                    <a href="{% url 'reclamations:edit' reclamation.pk %}" class="btn btn-primary btn-sm">
+                      <i class="ti-pencil"></i> Modifier
+                    </a>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Informations principales -->
+            <div class="col-md-8 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                      <h4 class="card-title">{{ reclamation.titre }}</h4>
+                      <p class="text-muted">
+                        <i class="ti-user"></i> {{ reclamation.utilisateur.username }}
+                        <span class="mx-2">•</span>
+                        <i class="ti-calendar"></i> {{ reclamation.created_at|date:"d/m/Y à H:i" }}
+                      </p>
+                    </div>
+                    <div class="text-right">
+                      <span class="badge badge-priority-{{ reclamation.priorite }} mb-2">
+                        {{ reclamation.get_priorite_display }}
+                      </span><br>
+                      <span class="badge badge-status-{{ reclamation.statut }}">
+                        {{ reclamation.get_statut_display }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <h5>Description</h5>
+                    <div class="border-left border-primary pl-3">
+                      {{ reclamation.description|linebreaks }}
+                    </div>
+                  </div>
+
+                  {% if reclamation.url_probleme %}
+                  <div class="mb-4">
+                    <h5>URL du problème</h5>
+                    <a href="{{ reclamation.url_probleme }}" target="_blank" class="text-primary">
+                      <i class="ti-link"></i> {{ reclamation.url_probleme }}
+                    </a>
+                  </div>
+                  {% endif %}
+
+                  {% if reclamation.fichier_joint %}
+                  <div class="mb-4">
+                    <h5>Fichier joint</h5>
+                    <a href="{{ reclamation.fichier_joint.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                      <i class="ti-download"></i> Télécharger le fichier
+                    </a>
+                  </div>
+                  {% endif %}
+
+                  <!-- Réponses administrateur -->
+                  {% if reponses_admin %}
+                  <div class="mt-4 pt-4 border-top">
+                    <h5><i class="ti-shield"></i> Réponses officielles ({{ reponses_admin.count }})</h5>
+                    {% for reponse in reponses_admin %}
+                    <div class="card mt-3 {% if reponse.statut == 'brouillon' %}border-warning{% else %}border-success{% endif %}">
+                      <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                          <h6 class="mb-0">{{ reponse.titre }}</h6>
+                          <div>
+                            {% if reponse.statut == 'brouillon' %}
+                              <span class="badge badge-warning">Brouillon</span>
+                            {% else %}
+                              <span class="badge badge-success">Publiée</span>
+                            {% endif %}
+                            <div class="dropdown d-inline">
+                              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+                                Actions
+                              </button>
+                              <div class="dropdown-menu">
+                                <a class="dropdown-item" href="{% url 'reclamations:admin_response_edit' reclamation.pk reponse.pk %}">
+                                  <i class="ti-pencil"></i> Modifier
+                                </a>
+                                <a class="dropdown-item text-danger" href="#" onclick="deleteResponse({{ reponse.pk }})">
+                                  <i class="ti-trash"></i> Supprimer
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <small class="text-muted">
+                          Par {{ reponse.administrateur.username }} 
+                          {% if reponse.date_publication %}
+                            le {{ reponse.date_publication|date:"d/m/Y à H:i" }}
+                          {% endif %}
+                          {% if reponse.lu_par_utilisateur %}
+                            <span class="badge badge-info ml-2">Lu par l'utilisateur</span>
+                          {% endif %}
+                        </small>
+                        <div class="mt-2">{{ reponse.contenu|linebreaks }}</div>
+                        {% if reponse.fichier_joint %}
+                        <div class="mt-2">
+                          <a href="{{ reponse.fichier_joint.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="ti-download"></i> Fichier joint
+                          </a>
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+
+                  <!-- Formulaire de réponse rapide -->
+                  {% if user.is_staff or user.user_type in 'admin,teacher' %}
+                  <div class="mt-4 pt-4 border-top">
+                    <h5><i class="ti-comment"></i> Réponse rapide</h5>
+                    <form method="post" enctype="multipart/form-data">
+                      {% csrf_token %}
+                      <div class="form-group">
+                        {{ reponse_form.contenu }}
+                      </div>
+                      <div class="form-check mb-3">
+                        {{ reponse_form.notifier_utilisateur }}
+                        <label class="form-check-label" for="{{ reponse_form.notifier_utilisateur.id_for_label }}">
+                          Notifier l'utilisateur par email
+                        </label>
+                      </div>
+                      <div class="d-flex justify-content-between">
+                        <button type="submit" name="add_admin_response" class="btn btn-success btn-sm">
+                          <i class="ti-check"></i> Publier la réponse
+                        </button>
+                        <a href="{% url 'reclamations:admin_response_create' reclamation.pk %}" class="btn btn-outline-primary btn-sm">
+                          <i class="ti-plus"></i> Réponse détaillée
+                        </a>
+                      </div>
+                    </form>
+                  </div>
+
+                  <!-- Actions rapides pour admin -->
+                  <div class="mt-4 pt-4 border-top">
+                    <h5>Actions rapides</h5>
+                    <div class="btn-group" role="group">
+                      {% if reclamation.statut == 'ouverte' %}
+                      <button class="btn btn-warning btn-sm" onclick="changeStatus('en_cours')">
+                        <i class="ti-control-play"></i> Marquer en cours
+                      </button>
+                      {% endif %}
+                      
+                      {% if reclamation.statut in 'ouverte,en_cours' %}
+                      <button class="btn btn-info btn-sm" onclick="changeStatus('en_attente')">
+                        <i class="ti-time"></i> En attente
+                      </button>
+                      <button class="btn btn-success btn-sm" onclick="changeStatus('resolue')">
+                        <i class="ti-check"></i> Marquer résolu
+                      </button>
+                      {% endif %}
+                      
+                      {% if reclamation.statut == 'resolue' %}
+                      <button class="btn btn-secondary btn-sm" onclick="changeStatus('fermee')">
+                        <i class="ti-lock"></i> Fermer
+                      </button>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Sidebar avec informations -->
+            <div class="col-md-4 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">Informations</h4>
+                  
+                  <div class="mb-3">
+                    <strong>Type:</strong><br>
+                    <span class="badge badge-info">{{ reclamation.type_reclamation.name }}</span>
+                  </div>
+
+                  <div class="mb-3">
+                    <strong>Utilisateur:</strong><br>
+                    {{ reclamation.utilisateur.username }}
+                    {% if reclamation.utilisateur.email %}
+                    <small class="text-muted d-block">{{ reclamation.utilisateur.email }}</small>
+                    {% endif %}
+                  </div>
+
+                  {% if reclamation.assigne_a %}
+                  <div class="mb-3">
+                    <strong>Assigné à:</strong><br>
+                    {{ reclamation.assigne_a.username }}
+                  </div>
+                  {% else %}
+                  <div class="mb-3">
+                    <strong>Assignation:</strong><br>
+                    <span class="text-muted">Non assigné</span>
+                  </div>
+                  {% endif %}
+
+                  <div class="mb-3">
+                    <strong>Créée le:</strong><br>
+                    {{ reclamation.created_at|date:"d/m/Y à H:i" }}
+                  </div>
+
+                  <div class="mb-3">
+                    <strong>Dernière modification:</strong><br>
+                    {{ reclamation.updated_at|date:"d/m/Y à H:i" }}
+                  </div>
+
+                  {% if reclamation.date_resolution %}
+                  <div class="mb-3">
+                    <strong>Résolue le:</strong><br>
+                    {{ reclamation.date_resolution|date:"d/m/Y à H:i" }}
+                  </div>
+                  {% endif %}
+
+                  {% if reclamation.is_overdue %}
+                  <div class="mb-3">
+                    <span class="badge badge-danger">
+                      <i class="ti-alert"></i> En retard
+                    </span>
+                  </div>
+                  {% endif %}
+
+                  {% if reclamation.navigateur or reclamation.systeme_exploitation %}
+                  <hr>
+                  <h5>Informations techniques</h5>
+                  
+                  {% if reclamation.navigateur %}
+                  <div class="mb-2">
+                    <strong>Navigateur:</strong><br>
+                    <small>{{ reclamation.navigateur }}</small>
+                  </div>
+                  {% endif %}
+
+                  {% if reclamation.systeme_exploitation %}
+                  <div class="mb-2">
+                    <strong>Système:</strong><br>
+                    <small>{{ reclamation.systeme_exploitation }}</small>
+                  </div>
+                  {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commentaires et historique -->
+          <div class="row">
+            <div class="col-md-6 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">Commentaires</h4>
+                  
+                  {% if commentaires %}
+                  <div class="timeline">
+                    {% for commentaire in commentaires %}
+                    <div class="timeline-item">
+                      <div class="d-flex justify-content-between">
+                        <strong>{{ commentaire.auteur.username }}</strong>
+                        <small class="text-muted">{{ commentaire.created_at|date:"d/m/Y H:i" }}</small>
+                      </div>
+                      <p class="mt-2">{{ commentaire.contenu|linebreaks }}</p>
+                      {% if commentaire.fichier_joint %}
+                      <a href="{{ commentaire.fichier_joint.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                        <i class="ti-paperclip"></i> Fichier joint
+                      </a>
+                      {% endif %}
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <p class="text-muted">Aucun commentaire pour le moment.</p>
+                  {% endif %}
+
+                  <!-- Formulaire d'ajout de commentaire pour admin -->
+                  {% if user.is_staff or user.user_type in 'admin,teacher' %}
+                  <div class="mt-4 pt-4 border-top">
+                    <h5>Ajouter un commentaire</h5>
+                    <form method="post" enctype="multipart/form-data">
+                      {% csrf_token %}
+                      <div class="form-group">
+                        <textarea name="contenu" class="form-control" rows="3" placeholder="Votre commentaire..."></textarea>
+                      </div>
+                      <div class="form-group">
+                        <input type="file" name="fichier_joint" class="form-control-file">
+                        <small class="text-muted">Fichier optionnel</small>
+                      </div>
+                      <div class="form-group">
+                        <div class="form-check">
+                          <input type="checkbox" name="is_internal" class="form-check-input" id="internal">
+                          <label class="form-check-label" for="internal">
+                            Commentaire interne (non visible par l'utilisateur)
+                          </label>
+                        </div>
+                      </div>
+                      <button type="submit" name="add_comment" class="btn btn-primary btn-sm">
+                        <i class="ti-comment"></i> Ajouter le commentaire
+                      </button>
+                    </form>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">Historique des modifications</h4>
+                  
+                  {% if historique %}
+                  <div class="timeline">
+                    {% for suivi in historique %}
+                    <div class="timeline-item">
+                      <div class="d-flex justify-content-between">
+                        <strong>{{ suivi.modifie_par.username }}</strong>
+                        <small class="text-muted">{{ suivi.created_at|date:"d/m/Y H:i" }}</small>
+                      </div>
+                      <p class="mt-2">
+                        Statut changé de <span class="badge badge-secondary">{{ suivi.ancien_statut }}</span>
+                        vers <span class="badge badge-primary">{{ suivi.nouveau_statut }}</span>
+                      </p>
+                      {% if suivi.commentaire %}
+                      <p class="text-muted"><em>{{ suivi.commentaire }}</em></p>
+                      {% endif %}
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <p class="text-muted">Aucune modification enregistrée.</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <!-- partial:partials/_footer.html -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2024. EduSmart. Tous droits réservés.</span>
+          </div>
+        </footer>
+        <!-- partial -->
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+{% endblock %}

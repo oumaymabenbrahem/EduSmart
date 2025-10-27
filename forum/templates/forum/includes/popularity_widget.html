@@ -1,0 +1,43 @@
+<!-- Widget de popularité pour un topic -->
+<div class="popularity-widget">
+    <div class="d-flex align-items-center gap-2">
+        <!-- Badge principal -->
+        <span class="badge bg-{{ color }} bg-opacity-75">
+            {{ icon }} {{ category }}
+        </span>
+        
+        <!-- Badge trending si applicable -->
+        {% if is_trending %}
+        <span class="badge bg-danger pulse-animation">
+            <i class="bi bi-graph-up-arrow"></i> TRENDING
+        </span>
+        {% endif %}
+        
+        <!-- Score (optionnel) -->
+        <small class="text-muted">{{ score }}/100</small>
+    </div>
+    
+    <!-- Mini stats -->
+    <div class="mt-1 small text-muted">
+        <i class="bi bi-eye"></i> {{ views }} •
+        <i class="bi bi-chat"></i> {{ posts_count }}
+    </div>
+</div>
+
+<style>
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+</style>

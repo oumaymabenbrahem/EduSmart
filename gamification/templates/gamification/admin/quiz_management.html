@@ -1,0 +1,304 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Gestion des Quiz{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quiz-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--quiz-color, #007bff);
+    }
+    
+    .quiz-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .quiz-stats {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #007bff;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-edit {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-view {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .create-quiz-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 1rem 2rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .create-quiz-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-panel">
+    <div class="content-wrapper">
+        <!-- En-tête -->
+        <div class="row">
+            <div class="col-12">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="icon-book-open menu-icon"></i>
+                        Gestion des Quiz
+                    </h1>
+                    <p class="page-description">Créer, modifier et gérer tous les quiz de la plateforme</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{% url 'gamification:select_quiz' %}" class="create-quiz-btn">
+                            <i class="icon-plus me-2"></i>Créer un Nouveau Quiz
+                        </a>
+                        <a href="{% url 'gamification:admin_dashboard' %}" class="btn btn-outline-secondary ms-2">
+                            <i class="icon-arrow-left me-2"></i>Retour au Dashboard
+                        </a>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary fs-6">{{ quizzes.count }} Quiz au total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="row">
+            <div class="col-12">
+                <div class="filter-section">
+                    <h4 class="mb-3">Filtres</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Matière</label>
+                            <select class="form-select" id="subjectFilter">
+                                <option value="">Toutes les matières</option>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.slug }}">{{ subject.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Difficulté</label>
+                            <select class="form-select" id="difficultyFilter">
+                                <option value="">Tous les niveaux</option>
+                                {% for difficulty in difficulties %}
+                                <option value="{{ difficulty.level }}">{{ difficulty.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" id="typeFilter">
+                                <option value="">Tous les types</option>
+                                <option value="ai_generated">Générés par IA</option>
+                                <option value="manual">Manuels</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des quiz -->
+        <div class="row">
+            <div class="col-12">
+                {% for quiz in quizzes %}
+                <div class="quiz-card" data-subject="{{ quiz.subject.slug }}" data-difficulty="{{ quiz.difficulty.level }}" data-type="{% if quiz.is_ai_generated %}ai_generated{% else %}manual{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h5 class="mb-2">
+                                {{ quiz.title }}
+                                {% if quiz.is_ai_generated %}
+                                <span class="badge bg-info ms-2">IA</span>
+                                {% else %}
+                                <span class="badge bg-secondary ms-2">Manuel</span>
+                                {% endif %}
+                            </h5>
+                            <p class="text-muted mb-2">{{ quiz.description|truncatechars:100 }}</p>
+                            
+                            <div class="d-flex gap-3 mb-2">
+                                <span class="badge" style="background-color: {{ quiz.subject.color }}; color: white;">
+                                    <i class="{{ quiz.subject.icon }} me-1"></i>{{ quiz.subject.name }}
+                                </span>
+                                <span class="badge bg-warning text-dark">
+                                    Niveau {{ quiz.difficulty.level }}
+                                </span>
+                                <span class="badge bg-success">
+                                    {{ quiz.questions.count }} questions
+                                </span>
+                                <span class="badge bg-primary">
+                                    {{ quiz.time_limit }} min
+                                </span>
+                            </div>
+                            
+                            <div class="quiz-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ quiz.attempt_count|default:0 }}</div>
+                                    <div class="stat-label">Tentatives</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ quiz.avg_score|floatformat:1|default:"0" }}%</div>
+                                    <div class="stat-label">Score Moyen</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ quiz.points_available }}</div>
+                                    <div class="stat-label">Points</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ quiz.passing_score }}%</div>
+                                    <div class="stat-label">Réussite</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <a href="{% url 'gamification:quiz_detail' quiz.slug %}" class="btn-action btn-view">
+                                <i class="icon-eye me-1"></i>Voir
+                            </a>
+                            <a href="/admin/gamification/quiz/{{ quiz.id }}/change/" class="btn-action btn-edit">
+                                <i class="icon-pencil me-1"></i>Modifier
+                            </a>
+                            <a href="/admin/gamification/quiz/{{ quiz.id }}/delete/" class="btn-action btn-delete">
+                                <i class="icon-trash me-1"></i>Supprimer
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Créé le {{ quiz.created_at|date:"d/m/Y à H:i" }}
+                            {% if quiz.created_by %}
+                                par {{ quiz.created_by.get_full_name|default:quiz.created_by.username }}
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="icon-book-open display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted mb-3">Aucun quiz trouvé</h4>
+                    <p class="text-muted mb-4">Commencez par créer votre premier quiz !</p>
+                    <a href="{% url 'gamification:select_quiz' %}" class="create-quiz-btn">
+                        <i class="icon-plus me-2"></i>Créer un Quiz
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Filtrage des quiz
+document.addEventListener('DOMContentLoaded', function() {
+    const subjectFilter = document.getElementById('subjectFilter');
+    const difficultyFilter = document.getElementById('difficultyFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    
+    function filterQuizzes() {
+        const selectedSubject = subjectFilter.value;
+        const selectedDifficulty = difficultyFilter.value;
+        const selectedType = typeFilter.value;
+        
+        const quizCards = document.querySelectorAll('.quiz-card');
+        
+        quizCards.forEach(card => {
+            const subject = card.dataset.subject;
+            const difficulty = card.dataset.difficulty;
+            const type = card.dataset.type;
+            
+            let show = true;
+            
+            if (selectedSubject && subject !== selectedSubject) show = false;
+            if (selectedDifficulty && difficulty !== selectedDifficulty) show = false;
+            if (selectedType && type !== selectedType) show = false;
+            
+            card.style.display = show ? 'block' : 'none';
+        });
+    }
+    
+    subjectFilter.addEventListener('change', filterQuizzes);
+    difficultyFilter.addEventListener('change', filterQuizzes);
+    typeFilter.addEventListener('change', filterQuizzes);
+});
+</script>
+{% endblock %}

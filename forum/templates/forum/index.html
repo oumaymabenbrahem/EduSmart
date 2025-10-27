@@ -1,0 +1,144 @@
+{% extends 'base_front.html' %}
+{% load static %}
+{% load forum_tags %}
+
+{% block title %}Forum - EduSmart{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- En-tête du forum -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="display-5 fw-bold">
+                <i class="bi bi-chat-dots me-3"></i>Forum de Discussion
+            </h1>
+            <p class="lead text-muted">Échangez avec la communauté EduSmart</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            {% if user.is_authenticated %}
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                Choisissez une catégorie pour créer un sujet
+            </div>
+            {% else %}
+            <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-chat-square-text display-4 mb-2"></i>
+                    <h3 class="mb-0">{{ total_topics }}</h3>
+                    <p class="mb-0">Sujets</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-chat-left-dots display-4 mb-2"></i>
+                    <h3 class="mb-0">{{ total_posts }}</h3>
+                    <p class="mb-0">Réponses</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-people display-4 mb-2"></i>
+                    <h3 class="mb-0">{{ total_topics|add:total_posts }}</h3>
+                    <p class="mb-0">Participations</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 3 Catégories les Plus Populaires (IA) - Section désactivée pour performance -->
+    <!-- Pour réactiver: décommentez la section dans le fichier template -->
+
+    <!-- Catégories -->
+    <h2 class="mb-4">Catégories</h2>
+    <div class="row">
+        {% for category in categories %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm hover-shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        <div class="me-3">
+                            <i class="bi {{ category.icon }} display-4 text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h4 class="card-title d-flex align-items-center gap-2">
+                                <a href="{% url 'forum:category_detail' category.slug %}" class="text-decoration-none">
+                                    {{ category.name }}
+                                </a>
+                            </h4>
+                            <p class="text-muted small mb-2">{{ category.description }}</p>
+                            
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-chat-square-text me-1"></i>{{ category.topics_count }} sujets
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Aucune catégorie disponible pour le moment.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Sujets récents -->
+    {% if recent_topics %}
+    <div class="mt-5">
+        <h2 class="mb-4">Discussions Récentes</h2>
+        <div class="list-group">
+            {% for topic in recent_topics %}
+            <a href="{% url 'forum:topic_detail' topic.category.slug topic.slug %}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1">{{ topic.title }}</h5>
+                        <p class="text-muted mb-1 small">
+                            <i class="bi bi-folder me-1"></i>{{ topic.category.name }}
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-person me-1"></i>{{ topic.author.username }}
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-chat-left-dots me-1"></i>{{ topic.posts_count }}
+                        </span>
+                        <span class="badge bg-info">
+                            <i class="bi bi-eye me-1"></i>{{ topic.views }}
+                        </span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.hover-shadow {
+    transition: box-shadow 0.3s ease;
+}
+.hover-shadow:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+{% endblock %}

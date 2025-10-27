@@ -1,0 +1,492 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Administration des Réclamations - EduSmart</title>
+  <!-- plugins:css -->
+  <link rel="stylesheet" href="{% static 'vendors/feather/feather.css' %}">
+  <link rel="stylesheet" href="{% static 'vendors/ti-icons/css/themify-icons.css' %}">
+  <link rel="stylesheet" href="{% static 'vendors/css/vendor.bundle.base.css' %}">
+  <!-- endinject -->
+  <!-- Plugin css for this page -->
+  <link rel="stylesheet" href="{% static 'vendors/datatables.net-bs4/dataTables.bootstrap4.css' %}">
+  <link rel="stylesheet" href="{% static 'vendors/ti-icons/css/themify-icons.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'js/select.dataTables.min.css' %}">
+  <!-- End plugin css for this page -->
+  <!-- inject:css -->
+  <link rel="stylesheet" href="{% static 'css/vertical-layout-light/style.css' %}">
+  <!-- endinject -->
+  <link rel="shortcut icon" href="{% static 'images/favicon.png' %}" />
+  <style>
+  .badge-priority-basse { background-color: #28a745; }
+  .badge-priority-normale { background-color: #17a2b8; }
+  .badge-priority-haute { background-color: #ffc107; color: #000; }
+  .badge-priority-urgente { background-color: #dc3545; }
+
+  .badge-status-ouverte { background-color: #007bff; }
+  .badge-status-en_cours { background-color: #ffc107; color: #000; }
+  .badge-status-en_attente { background-color: #fd7e14; }
+  .badge-status-resolue { background-color: #28a745; }
+  .badge-status-fermee { background-color: #6c757d; }
+  .badge-status-rejetee { background-color: #dc3545; }
+  </style>
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+    <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
+      <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
+        <a class="navbar-brand brand-logo mr-5" href="{% url 'template_back:dashboard' %}"><img src="{% static 'images/logo.svg' %}" class="mr-2" alt="logo"/></a>
+        <a class="navbar-brand brand-logo-mini" href="{% url 'template_back:dashboard' %}"><img src="{% static 'images/logo-mini.svg' %}" alt="logo"/></a>
+      </div>
+      <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
+        <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
+          <span class="icon-menu"></span>
+        </button>
+        <ul class="navbar-nav mr-lg-2">
+          <li class="nav-item nav-search d-none d-lg-block">
+            <div class="input-group">
+              <div class="input-group-prepend hover-cursor" id="navbar-search-icon">
+                <span class="input-group-text" id="search">
+                  <i class="icon-search"></i>
+                </span>
+              </div>
+              <input type="text" class="form-control" id="navbar-search-input" placeholder="Rechercher..." aria-label="search" aria-describedby="search">
+            </div>
+          </li>
+        </ul>
+        <ul class="navbar-nav navbar-nav-right">
+          <li class="nav-item nav-profile dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
+              {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="profile"/>
+              {% else %}
+                <img src="{% static 'images/faces/face28.jpg' %}" alt="profile"/>
+              {% endif %}
+            </a>
+            <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
+              <div class="dropdown-header text-center">
+                <strong>{{ user.full_name|default:user.username }}</strong>
+                <div class="small text-muted">{{ user.get_user_type_display }}</div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                <i class="ti-user text-primary"></i>
+                Mon Profil
+              </a>
+              <a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                <i class="ti-power-off text-primary"></i>
+                Déconnexion
+              </a>
+            </div>
+          </li>
+        </ul>
+        <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
+          <span class="icon-menu"></span>
+        </button>
+      </div>
+    </nav>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- partial:partials/_sidebar.html -->
+      <nav class="sidebar sidebar-offcanvas" id="sidebar">
+        <ul class="nav">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'template_back:dashboard' %}">
+              <i class="icon-grid menu-icon"></i>
+              <span class="menu-title">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'template_front:index' %}">
+              <i class="icon-home menu-icon"></i>
+              <span class="menu-title">Site Web</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#user-management" aria-expanded="false" aria-controls="user-management">
+              <i class="icon-head menu-icon"></i>
+              <span class="menu-title">Gestion Utilisateurs</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="user-management">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:users_list' %}">Liste des Utilisateurs</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}">Ajouter Utilisateur</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:profile' %}">Mon Profil</a></li>
+              </ul>
+            </div>
+          </li>
+          
+          <li class="nav-item">
+            <a class="nav-link {% if 'evaluation' in request.path %}active{% endif %}" data-toggle="collapse" href="#evaluation-management" aria-expanded="{% if 'evaluation' in request.path %}true{% else %}false{% endif %}" aria-controls="evaluation-management">
+              <i class="icon-notebook menu-icon"></i>
+              <span class="menu-title">Gestion Évaluations</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse {% if 'evaluation' in request.path %}show{% endif %}" id="evaluation-management">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'create' %}active{% endif %}" href="{% url 'evaluation:create' %}">Créer Évaluation</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'admin_list' %}active{% endif %}" href="{% url 'evaluation:admin_list' %}">Liste des Évaluations</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Statistiques</a></li>
+              </ul>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link {% if 'cours' in request.path %}active{% endif %}" data-toggle="collapse" href="#course-management" aria-expanded="{% if 'cours' in request.path %}true{% else %}false{% endif %}" aria-controls="course-management">
+              <i class="icon-book menu-icon"></i>
+              <span class="menu-title">Gestion de Cours</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse {% if 'cours' in request.path %}show{% endif %}" id="course-management">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link" href="{% url 'cours:admin_course_list' %}">Liste des Cours</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'cours:course_create' %}">Créer un Cours</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'cours:subject_list' %}">Gestion Matières</a></li>
+              </ul>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link {% if 'forum' in request.path and 'template_back' in request.resolver_match.namespace %}active{% endif %}" data-toggle="collapse" href="#forum-management" aria-expanded="{% if 'forum' in request.path and 'template_back' in request.resolver_match.namespace %}true{% else %}false{% endif %}" aria-controls="forum-management">
+              <i class="mdi mdi-forum menu-icon"></i>
+              <span class="menu-title">Gestion Forum</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse {% if 'forum' in request.path and 'template_back' in request.resolver_match.namespace %}show{% endif %}" id="forum-management">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link" href="{% url 'template_back:forum_categories_list' %}">Catégories du Forum</a></li>
+              </ul>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link {% if 'reclamations' in request.path %}active{% endif %}" data-toggle="collapse" href="#reclamations-management" aria-expanded="{% if 'reclamations' in request.path %}true{% else %}false{% endif %}" aria-controls="reclamations-management">
+              <i class="icon-exclamation menu-icon"></i>
+              <span class="menu-title">Gestion Réclamations</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse {% if 'reclamations' in request.path %}show{% endif %}" id="reclamations-management">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link" href="{% url 'reclamations:admin_list' %}">Toutes les Réclamations</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'reclamations:list' %}">Mes Réclamations</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'reclamations:create' %}">Créer Réclamation</a></li>
+              </ul>
+            </div>
+          </li>
+        </ul>
+      </nav>
+      <!-- partial -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-md-12 grid-margin">
+              <div class="row">
+                <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+                  <h3 class="font-weight-bold">Administration des Réclamations</h3>
+                  <h6 class="font-weight-normal mb-0">Gestion et suivi de toutes les réclamations utilisateurs</h6>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Statistiques -->
+          <div class="row">
+            <div class="col-md-2 mb-4 stretch-card transparent">
+              <div class="card card-tale">
+                <div class="card-body">
+                  <p class="mb-4">Total</p>
+                  <p class="fs-30 mb-2">{{ stats.total }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2 mb-4 stretch-card transparent">
+              <div class="card card-dark-blue">
+                <div class="card-body">
+                  <p class="mb-4">Ouvertes</p>
+                  <p class="fs-30 mb-2">{{ stats.ouvertes }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2 mb-4 stretch-card transparent">
+              <div class="card card-light-blue">
+                <div class="card-body">
+                  <p class="mb-4">En cours</p>
+                  <p class="fs-30 mb-2">{{ stats.en_cours }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2 mb-4 stretch-card transparent">
+              <div class="card card-light-danger">
+                <div class="card-body">
+                  <p class="mb-4">En attente</p>
+                  <p class="fs-30 mb-2">{{ stats.en_attente }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2 mb-4 stretch-card transparent">
+              <div class="card card-tale">
+                <div class="card-body">
+                  <p class="mb-4">Résolues</p>
+                  <p class="fs-30 mb-2">{{ stats.resolues }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2 mb-4 stretch-card transparent">
+              <div class="card card-dark-blue">
+                <div class="card-body">
+                  <p class="mb-4">Urgentes</p>
+                  <p class="fs-30 mb-2">{{ stats.urgentes }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtres -->
+          <div class="row">
+            <div class="col-md-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">Filtres et Recherche</h4>
+                  <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label">Recherche</label>
+                      {{ form.search }}
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Type</label>
+                      {{ form.type_reclamation }}
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Statut</label>
+                      {{ form.statut }}
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Priorité</label>
+                      {{ form.priorite }}
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Assignation</label>
+                      <select name="assigne" class="form-control">
+                        <option value="">Toutes</option>
+                        <option value="moi" {% if assigne_filter == 'moi' %}selected{% endif %}>Mes assignations</option>
+                        <option value="non_assigne" {% if assigne_filter == 'non_assigne' %}selected{% endif %}>Non assignées</option>
+                      </select>
+                    </div>
+                    <div class="col-md-1">
+                      <label class="form-label">&nbsp;</label>
+                      <button type="submit" class="btn btn-primary form-control">
+                        <i class="ti-search"></i>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liste des réclamations -->
+          <div class="row">
+            <div class="col-md-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title">Liste des Réclamations</h4>
+                    <a href="{% url 'reclamations:create' %}" class="btn btn-primary btn-sm">
+                      <i class="ti-plus"></i> Nouvelle Réclamation
+                    </a>
+                  </div>
+                  
+                  {% if page_obj %}
+                  <div class="table-responsive">
+                    <table class="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Titre</th>
+                          <th>Utilisateur</th>
+                          <th>Type</th>
+                          <th>Priorité</th>
+                          <th>Statut</th>
+                          <th>Assigné à</th>
+                          <th>Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for reclamation in page_obj %}
+                        <tr>
+                          <td>#{{ reclamation.id }}</td>
+                          <td>
+                            <a href="{% url 'reclamations:detail' reclamation.pk %}" class="text-decoration-none">
+                              {{ reclamation.titre|truncatechars:50 }}
+                            </a>
+                            {% if reclamation.is_overdue %}
+                              <span class="badge badge-danger badge-pill ml-1">En retard</span>
+                            {% endif %}
+                          </td>
+                          <td>{{ reclamation.utilisateur.username }}</td>
+                          <td>
+                            <span class="badge badge-info">
+                              {{ reclamation.type_reclamation.name }}
+                            </span>
+                          </td>
+                          <td>
+                            <span class="badge badge-priority-{{ reclamation.priorite }}">
+                              {{ reclamation.get_priorite_display }}
+                            </span>
+                          </td>
+                          <td>
+                            <span class="badge badge-status-{{ reclamation.statut }}">
+                              {{ reclamation.get_statut_display }}
+                            </span>
+                          </td>
+                          <td>
+                            {% if reclamation.assigne_a %}
+                              {{ reclamation.assigne_a.username }}
+                            {% else %}
+                              <span class="text-muted">Non assigné</span>
+                            {% endif %}
+                          </td>
+                          <td>{{ reclamation.created_at|date:"d/m/Y H:i" }}</td>
+                          <td>
+                            <div class="dropdown">
+                              <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown">
+                                Actions
+                              </button>
+                              <div class="dropdown-menu">
+                                <a class="dropdown-item" href="{% url 'reclamations:detail' reclamation.pk %}">
+                                  <i class="ti-eye"></i> Voir
+                                </a>
+                                <a class="dropdown-item" href="{% url 'reclamations:edit' reclamation.pk %}">
+                                  <i class="ti-pencil"></i> Modifier
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" onclick="changeStatus({{ reclamation.pk }}, 'en_cours')">
+                                  <i class="ti-control-play"></i> Marquer en cours
+                                </a>
+                                <a class="dropdown-item" href="#" onclick="changeStatus({{ reclamation.pk }}, 'resolue')">
+                                  <i class="ti-check"></i> Marquer résolu
+                                </a>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Pagination -->
+                  {% if page_obj.has_other_pages %}
+                  <nav aria-label="Pagination des réclamations" class="mt-3">
+                    <ul class="pagination justify-content-center">
+                      {% if page_obj.has_previous %}
+                        <li class="page-item">
+                          <a class="page-link" href="?page=1">Première</a>
+                        </li>
+                        <li class="page-item">
+                          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédente</a>
+                        </li>
+                      {% endif %}
+
+                      <li class="page-item active">
+                        <span class="page-link">
+                          Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+                        </span>
+                      </li>
+
+                      {% if page_obj.has_next %}
+                        <li class="page-item">
+                          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivante</a>
+                        </li>
+                        <li class="page-item">
+                          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Dernière</a>
+                        </li>
+                      {% endif %}
+                    </ul>
+                  </nav>
+                  {% endif %}
+
+                  {% else %}
+                  <div class="text-center py-5">
+                    <i class="ti-inbox display-1 text-muted"></i>
+                    <h3 class="mt-3">Aucune réclamation</h3>
+                    <p class="text-muted">Aucune réclamation ne correspond à vos critères de recherche.</p>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <!-- partial:partials/_footer.html -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2024. EduSmart. Tous droits réservés.</span>
+          </div>
+        </footer>
+        <!-- partial -->
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <!-- plugins:js -->
+  <script src="{% static 'vendors/js/vendor.bundle.base.js' %}"></script>
+  <!-- endinject -->
+  <!-- Plugin js for this page -->
+  <script src="{% static 'vendors/datatables.net/jquery.dataTables.js' %}"></script>
+  <script src="{% static 'vendors/datatables.net-bs4/dataTables.bootstrap4.js' %}"></script>
+  <script src="{% static 'js/dataTables.select.min.js' %}"></script>
+
+  <!-- End plugin js for this page -->
+  <!-- inject:js -->
+  <script src="{% static 'js/off-canvas.js' %}"></script>
+  <script src="{% static 'js/hoverable-collapse.js' %}"></script>
+  <script src="{% static 'js/template.js' %}"></script>
+  <script src="{% static 'js/settings.js' %}"></script>
+  <script src="{% static 'js/todolist.js' %}"></script>
+  <!-- endinject -->
+  <!-- Custom js for this page-->
+  <script src="{% static 'js/dashboard.js' %}"></script>
+  <script src="{% static 'js/Chart.roundedBarCharts.js' %}"></script>
+  <!-- End custom js for this page-->
+
+  <script>
+  function changeStatus(reclamationId, newStatus) {
+      if (confirm('Êtes-vous sûr de vouloir changer le statut de cette réclamation ?')) {
+          fetch(`/reclamations/${reclamationId}/change-status/`, {
+              method: 'POST',
+              headers: {
+                  'X-CSRFToken': '{{ csrf_token }}',
+                  'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: 'statut=' + newStatus
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  location.reload();
+              } else {
+                  alert('Erreur: ' + data.error);
+              }
+          })
+          .catch(error => {
+              console.error('Error:', error);
+              alert('Une erreur est survenue');
+          });
+      }
+  }
+  </script>
+</body>
+
+</html>

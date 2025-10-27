@@ -1,0 +1,307 @@
+{% extends 'gamification/base_gamification.html' %}
+
+{% block title %}Mon Profil Gamification{% endblock %}
+
+{% block gamification_content %}
+<!-- Profil utilisateur -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-4">
+        <div class="gamification-card p-4 text-center">
+            <div class="mb-3">
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="Profile" class="rounded-circle" width="120" height="120">
+                {% else %}
+                    <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                        <i class="bi bi-person-fill display-4 text-muted"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <h4 class="mb-1">{{ user.full_name|default:user.username }}</h4>
+            <p class="text-muted mb-3">{{ user.email }}</p>
+            
+            <!-- Niveau et progression -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold">Niveau {{ user_profile.level }}</span>
+                    <span class="text-muted">{{ user_profile.experience_points }} XP</span>
+                </div>
+                <div class="level-progress">
+                    <div class="level-progress-fill" style="width: {{ user_profile.get_level_progress }}%"></div>
+                </div>
+                <small class="text-muted">Progression vers le niveau {{ user_profile.level|add:1 }}</small>
+            </div>
+            
+            <!-- Statistiques principales -->
+            <div class="row text-center">
+                <div class="col-6">
+                    <div class="fw-bold text-primary">{{ user_profile.total_points }}</div>
+                    <small class="text-muted">Points</small>
+                </div>
+                <div class="col-6">
+                    <div class="fw-bold text-warning">{{ user_profile.get_rank }}</div>
+                    <small class="text-muted">Rang</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8 mb-4">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-graph-up me-2 text-primary"></i>
+                Statistiques détaillées
+            </h3>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-trophy-fill"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user_profile.quizzes_completed }}</h4>
+                        <p class="text-muted mb-0">Quiz complétés</p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user_profile.quizzes_passed }}</h4>
+                        <p class="text-muted mb-0">Quiz réussis</p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-fire"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user_profile.current_streak }}</h4>
+                        <p class="text-muted mb-0">Série actuelle</p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user_profile.average_score|floatformat:1 }}%</h4>
+                        <p class="text-muted mb-0">Score moyen</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Badges obtenus -->
+{% if user_badges %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <div class="row align-items-center mb-3">
+                <div class="col-md-8">
+                    <h3 class="mb-0">
+                        <i class="bi bi-award-fill me-2 text-warning"></i>
+                        Mes badges ({{ user_badges.count }})
+                    </h3>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{% url 'gamification:my_badges' %}" class="btn btn-gamification-warning">
+                        <i class="bi bi-arrow-right me-2"></i>Voir tous
+                    </a>
+                </div>
+            </div>
+            <div class="row">
+                {% for user_badge in user_badges|slice:":6" %}
+                <div class="col-md-4 col-lg-2 mb-3">
+                    <div class="badge-item" style="--badge-color: {{ user_badge.badge.color }}">
+                        <div class="mb-2">
+                            <i class="{{ user_badge.badge.icon }} display-6"></i>
+                        </div>
+                        <h6 class="mb-1">{{ user_badge.badge.name }}</h6>
+                        <small class="opacity-75">{{ user_badge.badge.description|truncatechars:30 }}</small>
+                        <div class="mt-2">
+                            <small class="opacity-75">{{ user_badge.earned_at|date:"d/m/Y" }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Statistiques par matière -->
+{% if subject_stats %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-book-fill me-2 text-info"></i>
+                Performance par matière
+            </h3>
+            <div class="row">
+                {% for subject, stats in subject_stats.items %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="quiz-card" style="--quiz-color: {{ subject.color }}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">{{ subject.name }}</h6>
+                            <i class="{{ subject.icon }}"></i>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="fw-bold text-primary">{{ stats.attempts }}</div>
+                                <small class="text-muted">Tentatives</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold text-success">{{ stats.average_score|floatformat:0 }}%</div>
+                                <small class="text-muted">Moyenne</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold text-warning">{{ stats.passed }}</div>
+                                <small class="text-muted">Réussis</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tentatives récentes -->
+{% if recent_attempts %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <div class="row align-items-center mb-3">
+                <div class="col-md-8">
+                    <h3 class="mb-0">
+                        <i class="bi bi-clock-history me-2 text-success"></i>
+                        Tentatives récentes
+                    </h3>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{% url 'gamification:my_attempts' %}" class="btn btn-gamification-secondary">
+                        <i class="bi bi-arrow-right me-2"></i>Voir tout
+                    </a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Quiz</th>
+                            <th>Matière</th>
+                            <th>Score</th>
+                            <th>Points</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attempt in recent_attempts %}
+                        <tr>
+                            <td>
+                                <strong>{{ attempt.quiz.title }}</strong>
+                                <br>
+                                <small class="text-muted">Tentative {{ attempt.attempt_number }}</small>
+                            </td>
+                            <td>
+                                <span class="badge" style="background-color: {{ attempt.quiz.subject.color }}; color: white;">
+                                    {{ attempt.quiz.subject.name }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-bold {% if attempt.is_passed %}text-success{% else %}text-danger{% endif %}">
+                                    {{ attempt.percentage|floatformat:0 }}%
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-primary">{{ attempt.points_earned }}</span>
+                                <br>
+                                <small class="text-warning">+{{ attempt.experience_earned }} XP</small>
+                            </td>
+                            <td>
+                                <small>{{ attempt.started_at|date:"d/m/Y H:i" }}</small>
+                            </td>
+                            <td>
+                                <a href="{% url 'gamification:quiz_results' attempt.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Réalisations -->
+{% if user_achievements %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="gamification-card p-4">
+            <h3 class="mb-4">
+                <i class="bi bi-star-fill me-2 text-warning"></i>
+                Mes réalisations
+            </h3>
+            <div class="row">
+                {% for user_achievement in user_achievements %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="badge-item" style="--badge-color: #ffc107">
+                        <div class="mb-2">
+                            <i class="{{ user_achievement.achievement.icon }} display-6"></i>
+                        </div>
+                        <h6 class="mb-1">{{ user_achievement.achievement.name }}</h6>
+                        <p class="mb-2">{{ user_achievement.achievement.description }}</p>
+                        <div class="d-flex justify-content-between">
+                            <small class="opacity-75">{{ user_achievement.earned_at|date:"d/m/Y" }}</small>
+                            <small class="fw-bold">+{{ user_achievement.achievement.points_reward }} pts</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animation des barres de progression
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.level-progress-fill');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500);
+    });
+    
+    // Animation des cartes de statistiques
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

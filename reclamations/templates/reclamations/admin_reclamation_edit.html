@@ -1,0 +1,200 @@
+{% extends 'template_back/base_admin.html' %}
+{% load static %}
+
+{% block title %}Modifier Réclamation #{{ reclamation.id }} - EduSmart{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+          <div class="row">
+            <div class="col-md-12 grid-margin">
+              <div class="row">
+                <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+                  <h3 class="font-weight-bold">Modifier Réclamation #{{ reclamation.id }}</h3>
+                  <h6 class="font-weight-normal mb-0">{{ reclamation.titre }}</h6>
+                </div>
+                <div class="col-12 col-xl-4">
+                  <div class="justify-content-end d-flex">
+                    <a href="{% url 'reclamations:admin_list' %}" class="btn btn-secondary btn-sm">
+                      <i class="ti-arrow-left"></i> Retour à la liste
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-8 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">Informations de la réclamation</h4>
+                  
+                  {% if messages %}
+                    {% for message in messages %}
+                      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+
+                  <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                      <label for="{{ form.titre.id_for_label }}">Titre</label>
+                      {{ form.titre }}
+                      {% if form.titre.errors %}
+                        <div class="text-danger">{{ form.titre.errors.0 }}</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.type_reclamation.id_for_label }}">Type de réclamation</label>
+                      {{ form.type_reclamation }}
+                      {% if form.type_reclamation.errors %}
+                        <div class="text-danger">{{ form.type_reclamation.errors.0 }}</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.description.id_for_label }}">Description</label>
+                      {{ form.description }}
+                      {% if form.description.errors %}
+                        <div class="text-danger">{{ form.description.errors.0 }}</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label for="{{ form.priorite.id_for_label }}">Priorité</label>
+                          {{ form.priorite }}
+                          {% if form.priorite.errors %}
+                            <div class="text-danger">{{ form.priorite.errors.0 }}</div>
+                          {% endif %}
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group">
+                          <label for="{{ form.statut.id_for_label }}">Statut</label>
+                          {{ form.statut }}
+                          {% if form.statut.errors %}
+                            <div class="text-danger">{{ form.statut.errors.0 }}</div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.assigne_a.id_for_label }}">Assigné à</label>
+                      {{ form.assigne_a }}
+                      {% if form.assigne_a.errors %}
+                        <div class="text-danger">{{ form.assigne_a.errors.0 }}</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.url_probleme.id_for_label }}">URL du problème</label>
+                      {{ form.url_probleme }}
+                      {% if form.url_probleme.errors %}
+                        <div class="text-danger">{{ form.url_probleme.errors.0 }}</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                      <label for="{{ form.fichier_joint.id_for_label }}">Fichier joint</label>
+                      {{ form.fichier_joint }}
+                      {% if reclamation.fichier_joint %}
+                        <div class="mt-2">
+                          <small class="text-muted">Fichier actuel: 
+                            <a href="{{ reclamation.fichier_joint.url }}" target="_blank">{{ reclamation.fichier_joint.name }}</a>
+                          </small>
+                        </div>
+                      {% endif %}
+                      {% if form.fichier_joint.errors %}
+                        <div class="text-danger">{{ form.fichier_joint.errors.0 }}</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                      <button type="submit" class="btn btn-primary mr-2">
+                        <i class="ti-save"></i> Enregistrer les modifications
+                      </button>
+                      <a href="{% url 'reclamations:admin_list' %}" class="btn btn-light">
+                        Annuler
+                      </a>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">Informations système</h4>
+                  
+                  <div class="mb-3">
+                    <strong>Utilisateur:</strong><br>
+                    {{ reclamation.utilisateur.username }}
+                    <small class="text-muted d-block">{{ reclamation.utilisateur.email }}</small>
+                  </div>
+
+                  <div class="mb-3">
+                    <strong>Créée le:</strong><br>
+                    {{ reclamation.created_at|date:"d/m/Y à H:i" }}
+                  </div>
+
+                  <div class="mb-3">
+                    <strong>Dernière modification:</strong><br>
+                    {{ reclamation.updated_at|date:"d/m/Y à H:i" }}
+                  </div>
+
+                  {% if reclamation.date_resolution %}
+                  <div class="mb-3">
+                    <strong>Résolue le:</strong><br>
+                    {{ reclamation.date_resolution|date:"d/m/Y à H:i" }}
+                  </div>
+                  {% endif %}
+
+                  {% if reclamation.navigateur %}
+                  <div class="mb-3">
+                    <strong>Navigateur:</strong><br>
+                    <small>{{ reclamation.navigateur }}</small>
+                  </div>
+                  {% endif %}
+
+                  {% if reclamation.systeme_exploitation %}
+                  <div class="mb-3">
+                    <strong>Système:</strong><br>
+                    <small>{{ reclamation.systeme_exploitation }}</small>
+                  </div>
+                  {% endif %}
+
+                  <div class="mt-4">
+                    <a href="{% url 'reclamations:detail' reclamation.pk %}" class="btn btn-info btn-sm btn-block">
+                      <i class="ti-eye"></i> Voir les détails complets
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <!-- partial:partials/_footer.html -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2024. EduSmart. Tous droits réservés.</span>
+          </div>
+        </footer>
+        <!-- partial -->
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+{% endblock %}
